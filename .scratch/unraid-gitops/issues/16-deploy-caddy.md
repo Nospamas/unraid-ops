@@ -29,9 +29,20 @@ Do:
 - **Issue and verify the `*.rbrb.in` wildcard.** Use Let's Encrypt **staging**
   first — DNS-01 failures are easy to hit and the production rate limits are
   unforgiving.
+- **Add the `(internal)` snippet from [05](05-remote-access.md)** to the global
+  Caddyfile config, and apply `caddy.import: internal` to the proof service
+  below.
+- **Verify source-IP preservation — do not assume it.** The `internal` guard is
+  `remote_ip 192.168.1.0/24 100.64.0.0/10`, which is worthless if Caddy sees a
+  docker bridge address instead of the client. Docker's iptables DNAT preserves
+  the source IP; the userland-proxy path does not. Log or echo the observed
+  `remote_ip` for a request from a LAN client and confirm it is a `192.168.1.x`.
+  If it is `172.x`, the guard silently admits everything and the whole default-
+  deny posture is fiction — that is a finding, and it blocks 05's convention
+  until solved.
 - **Prove it end to end on one service.** Pick a harmless one and label it, then
   confirm `https://<it>.rbrb.in` resolves and serves a valid certificate from the
-  LAN.
+  LAN — and that a request from outside both CIDRs gets a 403.
 
 Blocked by [07](07-repo-layout-and-conventions.md) for where the files live,
 [11](11-stand-up-komodo.md) because Komodo must exist to build or deploy

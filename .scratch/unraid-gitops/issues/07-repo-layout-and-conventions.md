@@ -46,6 +46,23 @@ carry:**
   service needs one — beside its compose file, or a separate `build/` tree — and
   whether `Build` TOML sits with the `Stack` TOML.
 
+**[05](05-remote-access.md) adds a convention the layout must enforce, and one
+more workload:**
+
+- **Default-deny is a layout concern, not a Caddy concern.** Every service
+  carries a `caddy.import: internal` label admitting only `192.168.1.0/24` and
+  `100.64.0.0/10`; a service meant to face the internet must **declare that
+  explicitly**, and the declaration must be conspicuous in review. This belongs
+  in the add-a-service checklist as a default, not an option — the whole point is
+  that publishing can never be a side effect of adding a service. Decide where
+  the `(internal)` Caddyfile snippet itself lives, given `caddy-docker-proxy`
+  takes global config from the Caddy container's own labels or a mounted base
+  Caddyfile.
+- **CoreDNS is a ninth workload** ([17](17-deploy-coredns.md)), and an unusual
+  one: it publishes on an **explicit host address** (`100.126.56.26:53`) rather
+  than a port on all interfaces. If the layout has a convention for how ports are
+  declared, it needs to accommodate that.
+
 Settle:
 
 - **Directory shape** — one compose file per service, or one stack grouping the

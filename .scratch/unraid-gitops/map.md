@@ -41,6 +41,16 @@ where some containers are git-owned and some stay on unraid's Docker tab.
 Portainer is excluded as a workload, and [02](issues/02-choose-reconcile-mechanism.md)
 has now settled its fate: **removed**, once its two stacks are adopted. Komodo's
 own three containers take its place as the box's only non-workload tenants.
+Two workloads have since been *added* by decisions rather than adopted from the
+box: **Caddy** ([04](issues/04-reverse-proxy-and-domain.md)) and **CoreDNS**
+([05](issues/05-remote-access.md)) — so the count is eight adopted, plus
+homepage, Caddy and CoreDNS built new.
+
+**Default-private, explicit publish** ([05](issues/05-remote-access.md)): every
+service is guarded to LAN + tailnet by default and **nothing is published to the
+internet**. A service meant to face outward must declare it, conspicuously, in
+its own file. Treat this as standing policy for any new service a ticket adds —
+publishing is never a side effect.
 
 **Secret severity**: the human has ruled these assets low-value — a NordVPN
 *client* key (grants VPN egress as them, no access to the box, LAN or tailnet)
@@ -55,11 +65,12 @@ came for free is removed. Two carve-outs stay live because they are about
 *future*
 exposure, not the current leak: auth in front of calibre's login, and if the
 calibre password turns out to be reused elsewhere that is the human's call, made
-outside this map. **Correction from [04](issues/04-reverse-proxy-and-domain.md):**
-this note previously said 04 *and* 05 would decide that auth. 04 declined it —
-it ruled services **LAN-only for now**, so nothing is on the internet and there
-is nothing to defend yet. The question falls wholly to
-[05](issues/05-remote-access.md), and only bites if something is published.
+outside this map. **Correction from [04](issues/04-reverse-proxy-and-domain.md)
+and [05](issues/05-remote-access.md):** this note once said 04 *and* 05 would
+decide that auth. Both declined, correctly — nothing is on the internet, so
+there is nothing to defend. 05 removed the deadline rather than answering: auth
+is now **fog**, live only once something is actually published. Do not expect a
+ticket to be holding it.
 
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
@@ -130,6 +141,21 @@ concrete artifact would settle an argument faster than discussion.
   `192.168.1.195`, **grey cloud**; services are **LAN-only for now** and
   split-horizon is deferred. Adds a **sixth live secret**: a zone-scoped
   Cloudflare DNS-edit token.
+- [05 — Decide the remote access approach](issues/05-remote-access.md)
+  — **split-horizon after all, built now**, because 04 over-priced it:
+  Cloudflare's public record *already is* the LAN view, so only the tailnet half
+  needs overriding — one container, no router or DHCP change. **CoreDNS** (stock
+  image, Corefile in git, no state) answers `*.rbrb.in` → `100.126.56.26`, bound
+  to **`100.126.56.26:53` only** to dodge `tailscaled`'s `100.100.100.100:53` and
+  stay off the LAN. **Tailscale Split DNS** points `rbrb.in` at it; **MagicDNS is
+  a hard prerequisite**, and there is no static-record alternative. A subnet
+  router was declined (silently shadowed by any remote `192.168.1.0/24`), as was
+  pointing the wildcard at the tailnet IP (breaks non-tailnet household
+  devices). **Nothing is published** — plex reaches the outside on its own
+  `32400` path, bypassing Caddy entirely — but everything is built as if it will
+  be: **default-deny to LAN + tailnet on every service**, publishing an explicit
+  per-service opt-in. Auth was **not** settled; it went back to the fog. No new
+  secrets.
 
 ## Not yet specified
 
@@ -161,14 +187,23 @@ concrete artifact would settle an argument faster than discussion.
   [07](issues/07-repo-layout-and-conventions.md)'s layout and on Portainer's
   actual removal. **Rotation was ruled not worth doing now, and did not happen as
   a side effect of 03** — see Notes.
-- **Split-horizon DNS, and a local resolver to serve it.**
-  [04](issues/04-reverse-proxy-and-domain.md) chose single public records
-  pointing at `192.168.1.195` *for now*, with the human noting split-horizon is
-  "probably worth working on the basis of in future". This site has no local DNS
-  at all — no pihole, that is the home-ops site — so it means standing up a
-  resolver, which is a service the map has not scoped. Fog because what forces
-  it is unknown: [05](issues/05-remote-access.md) may settle the tailnet path
-  with a subnet router and leave split-horizon unneeded indefinitely.
+- **Authentication in front of the services.** The map twice expected a ticket to
+  settle what sits in front of calibre's login and qbittorrent's WebUI; 04 and
+  then [05](issues/05-remote-access.md) both declined, because with nothing
+  published there is nothing to defend. 05 built the **gate** — default-deny to
+  LAN + tailnet, publishing an explicit opt-in — but deliberately not the
+  defence. Fog because the trigger has not fired. It becomes sharp the moment
+  either is true: **a service is actually published** (the human named a future
+  status page as the likely first), or **the LAN stops being trusted** — guest
+  wifi or IoT on `192.168.1.0/24` would do it. Until then there is nothing to
+  decide, and no ticket should be opened for it.
+- **Whether the LAN half of split-horizon ever needs its own resolver.**
+  [05](issues/05-remote-access.md) leans on Cloudflare's public record *being*
+  the LAN view, which works precisely because nothing is published. If a
+  forwarded port is ever wanted, the wildcard must point at the public IP and
+  the LAN view needs somewhere else to come from — either hairpin NAT or a
+  second CoreDNS view. Fog, and it stays fog unless publishing happens; noted so
+  the coupling is not rediscovered the hard way.
 - **Monitoring and alerting** for the stack. Suspected, unsharp; may fall out of
   scope entirely once the stack is running.
 
