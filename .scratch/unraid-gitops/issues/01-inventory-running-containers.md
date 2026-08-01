@@ -79,5 +79,6 @@ Facts later tickets lean on:
 
 Two secrets leaked through the probe's redactor and were scrubbed from the repo:
 the calibre GUI password (XML `Mask="true"` element text) and the NordVPN
-WireGuard private key (YAML `KEY: "value"`). Both need rotating; the redactor now
-covers all three shapes.
+WireGuard private key (YAML `KEY: "value"`). The redactor now covers all three
+shapes. **Rotation was ruled not worth doing** — both are low-severity and were
+already plaintext on the box; see the map's Secret severity note.

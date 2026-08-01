@@ -42,6 +42,17 @@ Portainer is excluded: it is currently the deploying tool, not a workload, and
 whether it survives at all falls out of
 [02 — Choose the reconcile mechanism](issues/02-choose-reconcile-mechanism.md).
 
+**Secret severity**: the human has ruled these assets low-value — a NordVPN
+*client* key (grants VPN egress as them, no access to the box, LAN or tailnet)
+and a calibre GUI password on a LAN-only service. Both were already plaintext on
+the box before this effort touched them. **Do not re-raise rotation as a blocker
+or a finding**; 03 will re-issue the WireGuard key as a side effect of picking a
+mechanism anyway. Two carve-outs stay live because they are about *future*
+exposure, not the current leak: [04](issues/04-reverse-proxy-and-domain.md) and
+[05](issues/05-remote-access.md) will put calibre's login on the internet, so
+whatever auth sits in front of it is decided there; and if the calibre password
+turns out to be reused elsewhere that is the human's call, made outside this map.
+
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
 concrete artifact would settle an argument faster than discussion.
@@ -94,11 +105,11 @@ concrete artifact would settle an argument faster than discussion.
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. What backs it up, and what a rebuild-from-scratch actually takes, is
   unclear until the layout exists.
-- **Secret rotation and hygiene on the box.** Ticket 01 found the NordVPN
-  WireGuard key and the calibre GUI password sitting in plaintext on `/boot` and
-  in Portainer's appdata, and leaked both in the process of reading them. Once
-  [03](issues/03-secrets-handling.md) picks a mechanism, there is a follow-on
-  question about what happens to the plaintext copies left behind.
+- **Secret hygiene on the box.** Ticket 01 found the NordVPN WireGuard key and
+  the calibre GUI password sitting in plaintext on `/boot` and in Portainer's
+  appdata. Once [03](issues/03-secrets-handling.md) picks a mechanism, there is
+  a follow-on question about what happens to the plaintext copies left behind.
+  **Rotation was ruled not worth doing now** — see Notes.
 - **Publishing to GitHub.** Known future step, deliberately deferred until a few
   investigation tickets have landed.
 - **Monitoring and alerting** for the stack. Suspected, unsharp; may fall out of

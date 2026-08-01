@@ -179,5 +179,11 @@ Both scrubbed from this repo, both disclosed to the agent's context:
 2. **NordVPN WireGuard private key** — stored as YAML `KEY: "value"` in the
    Portainer compose, which the same redactor also missed.
 
-Rotate both. The lesson for any future probe: redact on *three* shapes —
-`KEY=value`, `KEY: value`, and XML element text.
+**Ruled not worth rotating** (2026-08-01): both are low-severity — a NordVPN
+client key grants VPN egress but no access to the box, LAN or tailnet, and
+calibre is LAN-only today. Both were already plaintext on the box beforehand, so
+the marginal exposure is small. 03 will re-issue the WireGuard key anyway as a
+side effect of picking a secrets mechanism. See the map's Secret severity note.
+
+The lesson for any future probe: redact on *three* shapes — `KEY=value`,
+`KEY: value`, and XML element text. Only the first was covered.
