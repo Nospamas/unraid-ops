@@ -27,6 +27,13 @@ reference for *taste* only: the SOPS habit, Renovate for image tags, and the
 shape of the existing gethomepage config at
 `kubernetes/apps/self-hosted/homepage/app/config/`.
 
+**Box access**: the unraid box is reached through its Web UI over tailscale, and
+the human drives it. No SSH, no agent access to the host. Any ticket needing
+something from the box hands over a precise checklist — commands to run, output
+to paste back — and works from what comes back. This makes otherwise-AFK tickets
+HITL wherever they touch the box. Direct access can be granted later if the
+hand-off proves too slow; until then, assume it is not there.
+
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
 concrete artifact would settle an argument faster than discussion.

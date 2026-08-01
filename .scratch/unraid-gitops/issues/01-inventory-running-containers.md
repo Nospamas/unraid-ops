@@ -1,13 +1,22 @@
 # 01 — Inventory the containers already running on the box
 
-Type: task
+Type: task (HITL)
 Status: open
 
 ## Question
 
 Nothing here is a decision — but every decision downstream is blocked until we
 can see what we are adopting. Capture the current state of the unraid box as a
-committed markdown asset:
+committed markdown asset.
+
+**HITL**: there is no agent access to the box — the human drives it through the
+Web UI over tailscale (see the map's Box access note). So this ticket is worked
+as a hand-off: the session writes a copy-pasteable command checklist, the human
+runs it and pastes the output back, and the session turns that into the asset.
+Write the checklist to be run in one sitting, in the Web UI's terminal, with the
+commands ordered so the output can be pasted back in one block.
+
+Capture:
 
 - Every running container: name, image, exact tag, restart policy.
 - Port mappings, and which are exposed to the LAN.
@@ -25,5 +34,5 @@ committed markdown asset:
   installed.
 
 The answer records the asset's path plus the handful of facts later tickets will
-lean on: appdata root, the box's LAN address, and which services are already
-VPN-routed.
+lean on: appdata root, the box's LAN address, its tailscale hostname (ticket 05
+will care), and which services are already VPN-routed.

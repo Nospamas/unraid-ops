@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/nospamas/home-ops/**)",
+      "Read(//home/nospamas/home-ops/kubernetes/apps/self-hosted/homepage/app/config/**)",
+      "Read(//home/nospamas/.ssh/**)",
+      "Bash(git -C /home/nospamas/unraid-ops remote -v)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'Record box access as human-driven Web UI over tailscale *)"
+    ]
+  }
+}
