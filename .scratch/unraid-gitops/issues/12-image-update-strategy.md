@@ -31,6 +31,15 @@ The two candidates:
 The second cost is the crux, and it cuts against the destination: if git does
 not name the version, git does not fully describe the box.
 
+**[04](04-reverse-proxy-and-domain.md) adds a ninth image that neither candidate
+covers.** Caddy is **built**, not pulled — an `xcaddy` multi-stage Dockerfile in
+this repo. Komodo's `auto_update` watches registry digests and so cannot see it
+at all, and Renovate has to track *two* moving parts rather than a tag: the base
+`caddy` image tag **and** the `caddy-dns/cloudflare` Go module in the `xcaddy`
+line. Renovate does understand Dockerfile `FROM` lines and Go modules, but this
+needs saying out loud in the answer rather than being assumed. Settle what
+"update" means for a built image, and what triggers a rebuild.
+
 Settle:
 
 - **Which of the two**, or a split — e.g. pinned + Renovate for the *arr and

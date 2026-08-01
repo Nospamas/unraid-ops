@@ -27,6 +27,25 @@ the result to `CONTEXT.md`.
   the bullet below rather than leaving it open. Note the ordering: autostart off
   *before* compose takes the container.
 
+**[04](04-reverse-proxy-and-domain.md) adds three more things the layout must
+carry:**
+
+- **A shared external `proxy` docker network.** Caddy discovers services by
+  label, but it can only reach what shares a network with it. Every fronted
+  service joins `proxy` in addition to its own stack network — so the layout
+  needs a place to declare that network once and a convention for joining it.
+  This also interacts with the *arr → qbittorrent reachability problem
+  [01](01-inventory-running-containers.md) found and [06](06-qbittorrent-vpn-topology.md)
+  owns: a shared network may solve both, or may not, given
+  `network_mode: service:gluetun`.
+- **Routing lives in labels.** A service's hostname is a `caddy` label on its own
+  compose file, not central config — so "adding a service" grows a routing step,
+  and the add-a-service checklist must say what a standard label set looks like.
+- **A built image, not just pulled ones.** Caddy needs a Dockerfile in this repo
+  plus a Komodo `Build` resource in TOML. Decide where a Dockerfile lives when a
+  service needs one — beside its compose file, or a separate `build/` tree — and
+  whether `Build` TOML sits with the `Stack` TOML.
+
 Settle:
 
 - **Directory shape** — one compose file per service, or one stack grouping the

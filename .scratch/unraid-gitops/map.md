@@ -53,10 +53,13 @@ not — SOPS encrypts the existing value fine, so **rotation has not happened an
 is not scheduled**. The ruling stands unchanged; only the false belief that it
 came for free is removed. Two carve-outs stay live because they are about
 *future*
-exposure, not the current leak: [04](issues/04-reverse-proxy-and-domain.md) and
-[05](issues/05-remote-access.md) will put calibre's login on the internet, so
-whatever auth sits in front of it is decided there; and if the calibre password
-turns out to be reused elsewhere that is the human's call, made outside this map.
+exposure, not the current leak: auth in front of calibre's login, and if the
+calibre password turns out to be reused elsewhere that is the human's call, made
+outside this map. **Correction from [04](issues/04-reverse-proxy-and-domain.md):**
+this note previously said 04 *and* 05 would decide that auth. 04 declined it —
+it ruled services **LAN-only for now**, so nothing is on the internet and there
+is nothing to defend yet. The question falls wholly to
+[05](issues/05-remote-access.md), and only bites if something is published.
 
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
@@ -112,6 +115,21 @@ concrete artifact would settle an argument faster than discussion.
   purpose; the defended boundary is directory perms, not the file. **`PLEX_CLAIM`
   leaves the secret set** (one-shot token, plex already claimed), leaving five
   live values.
+- [04 — Choose the reverse proxy and the domain](issues/04-reverse-proxy-and-domain.md)
+  — **Caddy** (`caddy-docker-proxy`, label-driven) on **`rbrb.in`**, DNS on
+  **Cloudflare**, certs by **DNS-01 wildcard**. The domain is registered at
+  **Gandi** with nameservers delegated to Cloudflare — no transfer, since DNS-01
+  needs Cloudflare authoritative, not registrar. Traefik was reopened mid-grill
+  (stock image, native DNS-01) and **declined on purpose**; Caddy's missing
+  `caddy-dns/cloudflare` module is paid for by a **built image** — an `xcaddy`
+  Dockerfile in this repo, built on the box by a Komodo **Build** resource, with
+  no chicken-and-egg because Caddy does not run deploys. The acme.sh/lego
+  "cert-manager shape" was tested and fails on two verified facts: Caddy does
+  not watch cert files on disk, and acme.sh's docker deploy hook is broken in
+  daemon mode. Hostnames are **one namespace, LAN-pointed** — `*.rbrb.in` → A
+  `192.168.1.195`, **grey cloud**; services are **LAN-only for now** and
+  split-horizon is deferred. Adds a **sixth live secret**: a zone-scoped
+  Cloudflare DNS-edit token.
 
 ## Not yet specified
 
@@ -143,6 +161,14 @@ concrete artifact would settle an argument faster than discussion.
   [07](issues/07-repo-layout-and-conventions.md)'s layout and on Portainer's
   actual removal. **Rotation was ruled not worth doing now, and did not happen as
   a side effect of 03** — see Notes.
+- **Split-horizon DNS, and a local resolver to serve it.**
+  [04](issues/04-reverse-proxy-and-domain.md) chose single public records
+  pointing at `192.168.1.195` *for now*, with the human noting split-horizon is
+  "probably worth working on the basis of in future". This site has no local DNS
+  at all — no pihole, that is the home-ops site — so it means standing up a
+  resolver, which is a service the map has not scoped. Fog because what forces
+  it is unknown: [05](issues/05-remote-access.md) may settle the tailnet path
+  with a subnet router and leave split-horizon unneeded indefinitely.
 - **Monitoring and alerting** for the stack. Suspected, unsharp; may fall out of
   scope entirely once the stack is running.
 
