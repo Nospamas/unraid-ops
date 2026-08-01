@@ -1,7 +1,10 @@
 # 01 — Inventory the containers already running on the box
 
 Type: task (HITL)
-Status: open
+Status: closed
+Assignee: Nospamas
+Resolved: 2026-08-01
+Asset: [assets/01-inventory.md](../assets/01-inventory.md)
 
 ## Question
 
@@ -36,3 +39,45 @@ Capture:
 The answer records the asset's path plus the handful of facts later tickets will
 lean on: appdata root, the box's LAN address, its tailscale hostname (ticket 05
 will care), and which services are already VPN-routed.
+
+## Resolution
+
+Captured in two passes — the first template blew up on `.HostConfig.Sysctls`
+(Docker 27 omits absent map keys and `docker inspect --format` treats that as
+fatal), so section 5 was re-run without it. Asset:
+[assets/01-inventory.md](../assets/01-inventory.md), raw output alongside it.
+
+Facts later tickets lean on:
+
+- **appdata root** `/mnt/user/appdata`, media root `/mnt/user/Media`
+  (`books downloads movies music-rb music-reg podcasts temp tv`).
+- **LAN** `192.168.1.195`, **tailscale** node `tower` = `100.126.56.26`,
+  hostname `Tower`.
+- **Unraid 7.2.0, Docker 27.5.1, no `docker compose` on the host.** No Compose
+  Manager, no User Scripts plugin. Nothing on the box speaks compose except
+  Portainer, internally.
+- **The box is already two-tier**: Portainer runs `plex` (stack 1) and
+  `gluetun`+`qbittorrent` (stack 2) from compose files under
+  `/mnt/user/appdata/portainer/compose/`; the unraid Docker tab runs `sonarr`,
+  `radarr`, `prowlarr`, `calibre`, `lazylibrarian`, `PortainerCE`. Three of the
+  eight in-scope workloads therefore already have compose definitions to lift;
+  only five need translating from template XML. There is no plex template.
+- **VPN-routed**: `qbittorrent` only, via `network_mode: service:gluetun` — the
+  sidecar pattern ticket 06 was going to propose is already in place. Provider
+  is **NordVPN/WireGuard**, which has **no port forwarding**
+  (`VPN_PORT_FORWARDING=off`), so seeding is already crippled by provider
+  choice, not by topology.
+- The *arr services are on the default `bridge` network and gluetun is on
+  `qbittorrent_default`, so **qbittorrent is only reachable via the host**
+  at `192.168.1.195:30024`.
+- **Every image is `latest` and 5–8 months stale.** Nothing auto-updates.
+- **PUID/PGID diverge three ways** — qbittorrent writes downloads as 1001:1001,
+  the *arr read them as 99:100 with `UMASK=022`, plex is 1000:1000. Split out as
+  ticket 09.
+- **Homepage does not exist on the box.** Ticket 08 is a greenfield deploy, not
+  a migration; renamed accordingly.
+
+Two secrets leaked through the probe's redactor and were scrubbed from the repo:
+the calibre GUI password (XML `Mask="true"` element text) and the NordVPN
+WireGuard private key (YAML `KEY: "value"`). Both need rotating; the redactor now
+covers all three shapes.

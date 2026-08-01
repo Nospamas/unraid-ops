@@ -1,0 +1,320 @@
+########## 1. HOST
+version="7.2.0"
+kernel: 6.12.54-Unraid
+Docker version 27.5.1, build 9f9e405
+no docker compose plugin
+
+########## 2. PLUGINS (compose manager? user scripts? tailscale?)
+DiskSpaceManagement
+DiskSpaceManagement.plg
+community.applications
+community.applications.plg
+dockerMan
+dynamix
+dynamix.my.servers
+dynamix.system.temp
+dynamix.system.temp.plg
+intel-gpu-top
+intel-gpu-top.plg
+tailscale
+tailscale.plg
+unassigned.devices
+unassigned.devices-plus
+unassigned.devices-plus.plg
+unassigned.devices.plg
+unassigned.devices.preclear
+unassigned.devices.preclear.plg
+zip_manager
+zip_manager.plg
+--- compose manager projects:
+compose.manager not installed
+--- user scripts:
+user.scripts not installed
+
+########## 3. NETWORK
+--- host addresses:
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    inet 127.0.0.1/8 scope host lo
+6: br0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default qlen 1000
+    inet 192.168.1.195/24 brd 192.168.1.255 scope global dynamic noprefixroute br0
+8: br-4f813a0743df: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    inet 172.18.0.1/16 brd 172.18.255.255 scope global br-4f813a0743df
+9: docker0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default 
+    inet 172.17.0.1/16 brd 172.17.255.255 scope global docker0
+20: tailscale1: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1280 qdisc fq state UNKNOWN group default qlen 500
+    inet 100.126.56.26/32 scope global tailscale1
+--- tailscale:
+100.126.56.26  tower         Nospamas@       linux    -                                                           
+100.82.37.7    earth         Nospamas@       windows  -                                                           
+100.65.157.72  nospamas-dev  tagged-devices  linux    offline, last seen 321d ago                                 
+100.119.34.1   uranus        Nospamas@       windows  active; direct 205.250.15.25:41641, tx 11789348 rx 1817460  
+tailscale hostname: 
+--- docker networks:
+NETWORK ID     NAME                  DRIVER    SCOPE
+99b21ec8b1aa   br0                   macvlan   local
+3c012bbfc7e9   bridge                bridge    local
+ff9ada27ed11   host                  host      local
+9c4d3fd9080a   none                  null      local
+4f813a0743df   qbittorrent_default   bridge    local
+
+########## 4. CONTAINER SUMMARY
+NAMES           IMAGE                                    STATE     STATUS
+plex            lscr.io/linuxserver/plex:latest          running   Up 2 days
+qbittorrent     lscr.io/linuxserver/qbittorrent:latest   running   Up 2 days
+calibre         lscr.io/linuxserver/calibre              running   Up 2 days
+PortainerCE     portainer/portainer-ce:latest            running   Up 2 days
+lazylibrarian   lscr.io/linuxserver/lazylibrarian        running   Up 2 days
+prowlarr        lscr.io/linuxserver/prowlarr             running   Up 2 days
+sonarr          lscr.io/linuxserver/sonarr               running   Up 2 days
+radarr          lscr.io/linuxserver/radarr               running   Up 2 days
+gluetun         qmcgaw/gluetun:latest                    running   Up 2 days (healthy)
+
+########## 5. CONTAINER DETAIL
+===== plex
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== qbittorrent
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== calibre
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== PortainerCE
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== lazylibrarian
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== prowlarr
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== sonarr
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== radarr
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+===== gluetun
+template parsing error: template: :10:27: executing "" at <.HostConfig.Sysctls>: map has no entry for key "Sysctls"
+
+
+########## 6. ARRAY PATHS
+--- top-level shares:
+Media
+appdata
+system
+--- appdata:
+8.1M    /mnt/user/appdata/calibre
+7.0M    /mnt/user/appdata/gluetun
+205M    /mnt/user/appdata/lazylibrarian
+20G     /mnt/user/appdata/plexmediaserver
+920K    /mnt/user/appdata/portainer
+88M     /mnt/user/appdata/prowlarr
+16M     /mnt/user/appdata/qbittorrent
+3.0G    /mnt/user/appdata/radarr
+4.0K    /mnt/user/appdata/scratch
+383M    /mnt/user/appdata/sonarr
+0       /mnt/user/appdata/transcode
+--- homepage config files (git will own these):
+
+########## 7. UNRAID DOCKER TEMPLATES
+===== /boot/config/plugins/dockerMan/templates-user/my-PortainerCE.xml
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>PortainerCE</Name>
+  <Repository>portainer/portainer-ce:latest</Repository>
+  <Registry>https://hub.docker.com/r/portainer/portainer-ce/</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://forums.unraid.net/topic/69491-support-jj9987-portainer/</Support>
+  <Project>https://portainer.io</Project>
+  <Overview>Portainer is a lightweight management UI which allows you to easily manage your different Docker environments (Docker hosts or Swarm clusters). Portainer is meant to be as simple to deploy as it is to use. It consists of a single container that can run on any Docker engine (can be deployed as Linux container or a Windows native container, supports other platforms too). Portainer allows you to manage all your Docker resources (containers, images, volumes, networks and more) ! It is compatible with the standalone Docker engine and with Docker Swarm mode.</Overview>
+  <Category>Network:Management Productivity: Tools:Utilities</Category>
+  <WebUI>http://[IP]:[PORT:9000]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/EMP83/unraid-templates/main/PortainerCE/PortainerCE.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/EMP83/unraid-templates/main/PortainerCE/Portainer.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1763183442</DateInstalled>
+  <DonateText/>
+  <DonateLink/>
+  <Requires/>
+  <Config Name="Web Interface Port" Target="9000" Default="9000" Mode="tcp" Description="This is Portainer WebUI port." Type="Port" Display="always-hide" Required="true" Mask="{8}">9000</Config>
+  <Config Name="Edge Agent Port" Target="8000" Default="8000" Mode="tcp" Description="" Type="Port" Display="always" Required="true" Mask="false">8000</Config>
+  <Config Name="Config Storage Path" Target="/data" Default="/mnt/user/appdata/portainer" Mode="rw" Description="This is where Portainer will store it's configuration." Type="Path" Display="advanced-hide" Required="true" Mask="{8}">/mnt/user/appdata/portainer</Config>
+  <Config Name="Docker socket" Target="/var/run/docker.sock" Default="/var/run/docker.sock" Mode="rw" Description="This is needed for Portainer to connect to Docker." Type="Path" Display="advanced-hide" Required="true" Mask="{8}">/var/run/docker.sock</Config>
+  <TailscaleStateDir/>
+</Container>
+===== /boot/config/plugins/dockerMan/templates-user/my-calibre.xml
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>calibre</Name>
+  <Repository>lscr.io/linuxserver/calibre</Repository>
+  <Registry>https://github.com/orgs/linuxserver/packages/container/package/calibre</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/linuxserver/docker-calibre/issues/new/choose</Support>
+  <Project>https://calibre-ebook.com/</Project>
+  <Overview>Calibre(https://calibre-ebook.com/) is a powerful and easy to use e-book manager. Users say it's outstanding and a must-have. It'll allow you to do nearly everything and it takes things a step beyond normal e-book software. It's also completely free and open source and great for both casual users and computer experts.</Overview>
+  <Category>MediaApp:Books Tools:Utilities spotlight:</Category>
+  <WebUI>https://[IP]:[PORT:8181]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/linuxserver/templates/main/unraid/calibre.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/calibre-logo.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1764392772</DateInstalled>
+  <DonateText>Donations</DonateText>
+  <DonateLink>https://www.linuxserver.io/donate</DonateLink>
+  <Requires>br&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;This image is unprotected by default __**do not**__ expose it to the internet.br&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;Please read https://github.com/linuxserver/docker-calibre#security for more information.br&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;&amp;amp;nbsp;</Requires>
+  <Config Name="WebUI" Target="8080" Default="8080" Mode="tcp" Description="Calibre desktop gui (only for reverse proxy access)." Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Port: 8181" Target="8181" Default="8181" Mode="tcp" Description="Calibre desktop gui HTTPS." Type="Port" Display="always" Required="true" Mask="false">8181</Config>
+  <Config Name="Port: 8081" Target="8081" Default="8081" Mode="tcp" Description="Calibre webserver gui (needs to be enabled in gui settings first)." Type="Port" Display="always" Required="true" Mask="false">8081</Config>
+  <Config Name="PASSWORD" Target="PASSWORD" Default="" Mode="{3}" Description="Optionally set a password for the gui." Type="Variable" Display="always" Required="false" Mask="true"><<REDACTED-MASKED — needs a secret>></Config>
+  <Config Name="CLI_ARGS" Target="CLI_ARGS" Default="" Mode="{3}" Description="Optionally pass cli start arguments to calibre." Type="Variable" Display="always" Required="false" Mask="false"/>
+  <Config Name="library path" Target="/config/Calibre Library" Default="" Mode="rw" Description="" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/Media/books/</Config>
+  <Config Name="username" Target="CUSTOM_USER" Default="" Mode="" Description="" Type="Variable" Display="always" Required="false" Mask="false"><<REDACTED — needs a secret>></Config>
+  <Config Name="Appdata" Target="/config" Default="/mnt/user/appdata/calibre" Mode="rw" Description="Where calibre should store its database and library." Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/calibre</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">022</Config>
+  <TailscaleStateDir/>
+</Container>
+===== /boot/config/plugins/dockerMan/templates-user/my-lazylibrarian.xml
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>lazylibrarian</Name>
+  <Repository>lscr.io/linuxserver/lazylibrarian</Repository>
+  <Registry>https://github.com/orgs/linuxserver/packages/container/package/lazylibrarian</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/linuxserver/docker-lazylibrarian/issues/new/choose</Support>
+  <Project>https://lazylibrarian.gitlab.io/</Project>
+  <Overview>Lazylibrarian(https://lazylibrarian.gitlab.io/) is a program to follow authors and grab metadata for all your digital reading needs. It uses a combination of Goodreads Librarything and optionally GoogleBooks as sources for author info and book info.  This container is based on the DobyTang fork.</Overview>
+  <Category>MediaApp:Books MediaServer:Books</Category>
+  <WebUI>http://[IP]:[PORT:5299]</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/linuxserver/templates/main/unraid/lazylibrarian.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/lazylibrarian-logo.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1764222231</DateInstalled>
+  <DonateText>Donations</DonateText>
+  <DonateLink>https://www.linuxserver.io/donate</DonateLink>
+  <Requires/>
+  <Config Name="WebUI" Target="5299" Default="5299" Mode="tcp" Description="The port for the LazyLibrarian webinterface" Type="Port" Display="always" Required="true" Mask="false">5299</Config>
+  <Config Name="Path: /downloads" Target="/downloads" Default="" Mode="rw" Description="Download location" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/Media/downloads/</Config>
+  <Config Name="Path: /books" Target="/books" Default="" Mode="rw" Description="Books location" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/Media/books/</Config>
+  <Config Name="DOCKER_MODS" Target="DOCKER_MODS" Default="linuxserver/mods:universal-calibre|linuxserver/mods:lazylibrarian-ffmpeg" Mode="{3}" Description="Allows additional functionality to be added, e.g. the Calibredb import program (optional, more info below)" Type="Variable" Display="always" Required="false" Mask="false">linuxserver/mods:universal-calibre</Config>
+  <Config Name="Appdata" Target="/config" Default="/mnt/user/appdata/lazylibrarian" Mode="rw" Description="LazyLibrarian config" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/lazylibrarian</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">022</Config>
+  <TailscaleStateDir/>
+</Container>
+===== /boot/config/plugins/dockerMan/templates-user/my-prowlarr.xml
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>prowlarr</Name>
+  <Repository>lscr.io/linuxserver/prowlarr</Repository>
+  <Registry>https://github.com/orgs/linuxserver/packages/container/package/prowlarr</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/linuxserver/docker-prowlarr/issues/new/choose</Support>
+  <Project>https://github.com/Prowlarr/Prowlarr</Project>
+  <Overview>Prowlarr(https://github.com/Prowlarr/Prowlarr) is a indexer manager/proxy built on the popular arr .net/reactjs base stack to integrate with your various PVR apps. Prowlarr supports both Torrent Trackers and Usenet Indexers. It integrates seamlessly with Sonarr, Radarr, Lidarr, and Readarr offering complete management of your indexers with no per app Indexer setup required (we do it all).</Overview>
+  <Category>Downloaders: MediaApp:Other</Category>
+  <WebUI>http://[IP]:[PORT:9696]/system/status</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/linuxserver/templates/main/unraid/prowlarr.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/prowlarr-logo.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1764139340</DateInstalled>
+  <DonateText>Donations</DonateText>
+  <DonateLink>https://www.linuxserver.io/donate</DonateLink>
+  <Requires/>
+  <Config Name="WebUI" Target="9696" Default="9696" Mode="tcp" Description="The port for the Prowlarr web UI" Type="Port" Display="always" Required="true" Mask="false">9696</Config>
+  <Config Name="Appdata" Target="/config" Default="/mnt/user/appdata/prowlarr" Mode="rw" Description="Database and Prowlarr configs" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/prowlarr</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">022</Config>
+  <TailscaleStateDir/>
+</Container>
+===== /boot/config/plugins/dockerMan/templates-user/my-radarr.xml
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>radarr</Name>
+  <Repository>lscr.io/linuxserver/radarr</Repository>
+  <Registry>https://github.com/orgs/linuxserver/packages/container/package/radarr</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/linuxserver/docker-radarr/issues/new/choose</Support>
+  <Project>https://github.com/Radarr/Radarr</Project>
+  <Overview>Radarr(https://github.com/Radarr/Radarr) - A fork of Sonarr to work with movies &#xE0; la Couchpotato.</Overview>
+  <Category>MediaServer:Video Downloaders:</Category>
+  <WebUI>http://[IP]:[PORT:7878]/system/status</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/linuxserver/templates/main/unraid/radarr.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/radarr-logo.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1764139142</DateInstalled>
+  <DonateText>Donations</DonateText>
+  <DonateLink>https://www.linuxserver.io/donate</DonateLink>
+  <Requires/>
+  <Config Name="WebUI" Target="7878" Default="7878" Mode="tcp" Description="The port for the Radarr Web UI" Type="Port" Display="always" Required="true" Mask="false">7878</Config>
+  <Config Name="Path: /movies" Target="/movies" Default="" Mode="rw" Description="Location of Movie library on disk (See note in Application setup)" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/Media/movies/</Config>
+  <Config Name="Path: /downloads" Target="/downloads" Default="" Mode="rw" Description="Location of download managers output directory (See note in Application setup)" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/Media/downloads/</Config>
+  <Config Name="Appdata" Target="/config" Default="/mnt/user/appdata/radarr" Mode="rw" Description="Database and Radarr configs" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/radarr</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">022</Config>
+  <TailscaleStateDir/>
+</Container>
+===== /boot/config/plugins/dockerMan/templates-user/my-sonarr.xml
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>sonarr</Name>
+  <Repository>lscr.io/linuxserver/sonarr</Repository>
+  <Registry>https://github.com/orgs/linuxserver/packages/container/package/sonarr</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>bash</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/linuxserver/docker-sonarr/issues/new/choose</Support>
+  <Project>https://sonarr.tv/</Project>
+  <Overview>Sonarr(https://sonarr.tv/) (formerly NZBdrone) is a PVR for usenet and bittorrent users. It can monitor multiple RSS feeds for new episodes of your favorite shows and will grab, sort and rename them. It can also be configured to automatically upgrade the quality of files already downloaded when a better quality format becomes available.</Overview>
+  <Category>MediaServer:Video Downloaders:</Category>
+  <WebUI>http://[IP]:[PORT:8989]/system/status</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/linuxserver/templates/main/unraid/sonarr.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/sonarr-logo.png</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled>1764139213</DateInstalled>
+  <DonateText>Donations</DonateText>
+  <DonateLink>https://www.linuxserver.io/donate</DonateLink>
+  <Requires/>
+  <Config Name="WebUI" Target="8989" Default="8989" Mode="tcp" Description="The port for the Sonarr web interface" Type="Port" Display="always" Required="true" Mask="false">8989</Config>
+  <Config Name="Path: /tv" Target="/tv" Default="" Mode="rw" Description="Location of TV library on disk (See note in Application setup)" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/Media/tv/</Config>
+  <Config Name="Path: /downloads" Target="/downloads" Default="" Mode="rw" Description="Location of download managers output directory (See note in Application setup)" Type="Path" Display="always" Required="false" Mask="false">/mnt/user/Media/downloads/</Config>
+  <Config Name="Appdata" Target="/config" Default="/mnt/user/appdata/sonarr" Mode="rw" Description="Database and sonarr configs" Type="Path" Display="advanced" Required="true" Mask="false">/mnt/user/appdata/sonarr</Config>
+  <Config Name="PUID" Target="PUID" Default="99" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">99</Config>
+  <Config Name="PGID" Target="PGID" Default="100" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="true" Mask="false">100</Config>
+  <Config Name="UMASK" Target="UMASK" Default="022" Mode="{3}" Description="" Type="Variable" Display="advanced" Required="false" Mask="false">022</Config>
+  <TailscaleStateDir/>
+</Container>
+
+########## END

@@ -7,6 +7,26 @@ Status: open
 
 How does the unraid box get changes out of this repo and apply them?
 
+**Incumbency is not evidence.** Ticket 01 found Portainer already on the box,
+running a hand-made qbittorrent+gluetun stack. The human has ruled explicitly
+that this must *not* weigh in Portainer's favour here — judge it on the five
+criteria below like any other candidate, and be willing to conclude the stack
+should move off it. What is being kept is qbittorrent and gluetun, not the thing
+currently deploying them.
+
+**Hard constraint from [01](01-inventory-running-containers.md): there is no
+compose implementation on the box.** Unraid 7.2.0 ships Docker 27.5.1 with no
+`docker compose` plugin, and neither the Compose Manager nor the User Scripts
+plugin is installed. Every candidate must therefore either carry its own compose
+implementation inside a container, or install one somewhere that survives a
+reboot — unraid's OS lives in RAM and rebuilds from `/boot`. This bites the
+"plain `git pull` + `docker compose up -d`" option hardest.
+
+**Also settle Portainer's fate.** It currently runs two stacks (`plex`, and
+`gluetun`+`qbittorrent`) from `/mnt/user/appdata/portainer/compose/`. Whatever
+wins, say what happens to those two stacks and whether Portainer is removed,
+kept as a read-only UI, or kept as the mechanism.
+
 Compare, as a written asset in the repo:
 
 - **Komodo** — purpose-built GitOps for Docker hosts, watches a repo, applies

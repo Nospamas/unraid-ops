@@ -1,0 +1,769 @@
+########## 5. CONTAINER DETAIL (retry)
+===== plex
+image:        lscr.io/linuxserver/plex:latest
+restart:      unless-stopped
+network_mode: bridge
+networks:     bridge(ip=172.17.0.2) 
+ports:        32400/tcp->:32400 
+exposed:      1900/udp 32400/tcp 32410/udp 32412/udp 32413/udp 32414/udp 32469/tcp 5353/udp 8324/tcp 
+privileged:   false
+cap_add:      <no value>
+devices:      /dev/dri:/dev/dri 
+cmd:          <no value>
+mounts:
+  bind /mnt/user/Media/music-reg -> /mnt/music-reg (rw)
+  bind /mnt/user/Media/podcasts -> /mnt/podcasts (rw)
+  bind /mnt/user/appdata/transcode -> /mnt/transcode (rw)
+  bind /mnt/user/Media/tv -> /mnt/tv (rw)
+  bind /mnt/user/appdata/plexmediaserver -> /config (rw)
+  bind /etc/localtime -> /etc/localtime (ro)
+  bind /mnt/user/Media/movies -> /mnt/movies (rw)
+  bind /mnt/user/Media/music-rb -> /mnt/music-rb (rw)
+env:
+  PGID=1000
+  TZ=America/Vancouver
+  PLEX_CLAIM=<<REDACTED — needs a secret>>
+  VERSION=1.43.1.10495-10cfae054
+  PLEX_DOWNLOAD=https://downloads.plex.tv/plex-media-server-builds
+  PUID=1000
+  PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  HOME=/root
+  LANGUAGE=en_US.UTF-8
+  LANG=en_US.UTF-8
+  TERM=xterm
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+  S6_VERBOSITY=1
+  S6_STAGE2_HOOK=/docker-mods
+  VIRTUAL_ENV=/lsiopy
+  LSIO_FIRST_PARTY=true
+  NVIDIA_DRIVER_CAPABILITIES=compute,video,utility,graphics
+  DEBIAN_FRONTEND=noninteractive
+  PLEX_ARCH=amd64
+  PLEX_MEDIA_SERVER_APPLICATION_SUPPORT_DIR=/config/Library/Application Support
+  PLEX_MEDIA_SERVER_HOME=/usr/lib/plexmediaserver
+  PLEX_MEDIA_SERVER_MAX_PLUGIN_PROCS=6
+  PLEX_MEDIA_SERVER_USER=<<REDACTED — needs a secret>>
+  PLEX_MEDIA_SERVER_INFO_VENDOR=Docker
+  PLEX_MEDIA_SERVER_INFO_DEVICE=Docker Container (LinuxServer.io)
+  TMPDIR=/run/plex-temp
+  ATTACHED_DEVICES_PERMS=/dev/dri /dev/dvb -type c
+labels:
+  build_version=Linuxserver.io version:- 1.43.0.10492-121068a07-ls293 Build-date:- 2026-02-11T16:24:27+00:00
+  com.docker.compose.config-hash=<<REDACTED-HEX>>
+  com.docker.compose.container-number=1
+  com.docker.compose.depends_on=
+  com.docker.compose.image=sha256:<<REDACTED-HEX>>
+  com.docker.compose.oneoff=False
+  com.docker.compose.project=plex-media-server
+  com.docker.compose.project.config_files=/data/compose/1/docker-compose.yml
+  com.docker.compose.project.working_dir=/data/compose/1
+  com.docker.compose.service=plex
+  com.docker.compose.version=
+  maintainer=thelamer
+  org.opencontainers.image.authors=linuxserver.io
+  org.opencontainers.image.created=2026-02-11T16:24:27+00:00
+  org.opencontainers.image.description=[Plex](https://plex.tv) organizes video, music and photos from personal media libraries and streams them to smart TVs, streaming boxes and mobile devices. This container is packaged as a standalone Plex Media Server. Straightforward design and bulk actions mean getting things done faster.
+  org.opencontainers.image.documentation=https://docs.linuxserver.io/images/docker-plex
+  org.opencontainers.image.licenses=GPL-3.0-only
+  org.opencontainers.image.ref.name=<<REDACTED-HEX>>
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/linuxserver/docker-plex
+  org.opencontainers.image.title=Plex
+  org.opencontainers.image.url=https://github.com/linuxserver/docker-plex/packages
+  org.opencontainers.image.vendor=linuxserver.io
+  org.opencontainers.image.version=1.43.0.10492-121068a07-ls293
+
+===== qbittorrent
+image:        lscr.io/linuxserver/qbittorrent:latest
+restart:      unless-stopped
+network_mode: container:<<REDACTED-HEX>>
+networks:     
+ports:        
+exposed:      6881/tcp 6881/udp 8080/tcp 
+privileged:   false
+cap_add:      []
+devices:      
+cmd:          []
+mounts:
+  bind /mnt/user/appdata/qbittorrent -> /config (rw)
+  bind /mnt/user/Media/downloads -> /downloads (rw)
+env:
+  PGID=1001
+  TZ=UTC
+  WEBUI_PORT=30024
+  TORRENTING_PORT=6881
+  PUID=1001
+  PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  PS1=$(whoami)@$(hostname):$(pwd)\$ 
+  HOME=/config
+  TERM=xterm
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+  S6_VERBOSITY=1
+  S6_STAGE2_HOOK=/docker-mods
+  VIRTUAL_ENV=/lsiopy
+  LSIO_FIRST_PARTY=true
+  XDG_CONFIG_HOME=/config
+  XDG_DATA_HOME=/config
+labels:
+  build_version=Linuxserver.io version:- 5.1.2-r4-ls426 Build-date:- 2025-11-16T06:57:26+00:00
+  com.docker.compose.config-hash=<<REDACTED-HEX>>
+  com.docker.compose.container-number=1
+  com.docker.compose.depends_on=gluetun:service_started:true
+  com.docker.compose.image=sha256:<<REDACTED-HEX>>
+  com.docker.compose.oneoff=False
+  com.docker.compose.project=qbittorrent
+  com.docker.compose.project.config_files=/data/compose/2/docker-compose.yml
+  com.docker.compose.project.working_dir=/data/compose/2
+  com.docker.compose.replace=qbittorrent
+  com.docker.compose.service=qbittorrent
+  com.docker.compose.version=
+  maintainer=thespad
+  org.opencontainers.image.authors=linuxserver.io
+  org.opencontainers.image.created=2025-11-16T06:57:26+00:00
+  org.opencontainers.image.description=The [Qbittorrent](https://www.qbittorrent.org/) project aims to provide an open-source software alternative to µTorrent. qBittorrent is based on the Qt toolkit and libtorrent-rasterbar library.
+  org.opencontainers.image.documentation=https://docs.linuxserver.io/images/docker-qbittorrent
+  org.opencontainers.image.licenses=GPL-3.0-only
+  org.opencontainers.image.ref.name=<<REDACTED-HEX>>
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/linuxserver/docker-qbittorrent
+  org.opencontainers.image.title=Qbittorrent
+  org.opencontainers.image.url=https://github.com/linuxserver/docker-qbittorrent/packages
+  org.opencontainers.image.vendor=linuxserver.io
+  org.opencontainers.image.version=5.1.2-r4-ls426
+
+===== calibre
+image:        lscr.io/linuxserver/calibre
+restart:      no
+network_mode: bridge
+networks:     bridge(ip=172.17.0.3) 
+ports:        8080/tcp->:8080 8081/tcp->:8081 8181/tcp->:8181 
+exposed:      3000/tcp 3001/tcp 8080/tcp 8081/tcp 8181/tcp 
+privileged:   false
+cap_add:      <no value>
+devices:      
+cmd:          <no value>
+mounts:
+  bind /mnt/user/appdata/calibre -> /config (rw)
+  bind /mnt/user/Media/books -> /config/Calibre Library (rw)
+env:
+  TZ=America/Los_Angeles
+  HOST_OS=Unraid
+  HOST_CONTAINERNAME=calibre
+  PASSWORD=<<REDACTED — needs a secret>>
+  CUSTOM_USER=<<REDACTED — needs a secret>>
+  HOST_HOSTNAME=Tower
+  CLI_ARGS=
+  PUID=99
+  PGID=100
+  UMASK=022
+  PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  HOME=/config
+  LANGUAGE=en_US.UTF-8
+  LANG=en_US.UTF-8
+  TERM=xterm
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+  S6_VERBOSITY=1
+  S6_STAGE2_HOOK=/docker-mods
+  VIRTUAL_ENV=/lsiopy
+  DISPLAY=:1
+  PERL5LIB=/usr/local/bin
+  START_DOCKER=true
+  PULSE_RUNTIME_PATH=/defaults
+  SELKIES_INTERPOSER=/usr/lib/selkies_joystick_interposer.so
+  NVIDIA_DRIVER_CAPABILITIES=all
+  DISABLE_ZINK=false
+  DISABLE_DRI3=false
+  TITLE=Calibre
+  LSIO_FIRST_PARTY=true
+  CUSTOM_PORT=8080
+  CUSTOM_HTTPS_PORT=8181
+  QTWEBENGINE_DISABLE_SANDBOX=1
+labels:
+  build_version=Linuxserver.io version:- v8.15.0-ls371 Build-date:- 2025-11-21T13:11:49+00:00
+  maintainer=aptalca
+  net.unraid.docker.icon=https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/calibre-logo.png
+  net.unraid.docker.managed=dockerman
+  net.unraid.docker.webui=https://[IP]:[PORT:8181]
+  org.opencontainers.image.authors=linuxserver.io
+  org.opencontainers.image.created=2025-11-21T13:11:49+00:00
+  org.opencontainers.image.description=[Calibre](https://calibre-ebook.com/) is a powerful and easy to use e-book manager. Users say it's outstanding and a must-have. It'll allow you to do nearly everything and it takes things a step beyond normal e-book software. It's also completely free and open source and great for both casual users and computer experts.
+  org.opencontainers.image.documentation=https://docs.linuxserver.io/images/docker-calibre
+  org.opencontainers.image.licenses=GPL-3.0-only
+  org.opencontainers.image.ref.name=<<REDACTED-HEX>>
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/linuxserver/docker-calibre
+  org.opencontainers.image.title=Calibre
+  org.opencontainers.image.url=https://github.com/linuxserver/docker-calibre/packages
+  org.opencontainers.image.vendor=linuxserver.io
+  org.opencontainers.image.version=v8.15.0-ls371
+
+===== PortainerCE
+image:        portainer/portainer-ce:latest
+restart:      no
+network_mode: bridge
+networks:     bridge(ip=172.17.0.5) 
+ports:        8000/tcp->:8000 9000/tcp->:9000 
+exposed:      8000/tcp 9000/tcp 9443/tcp 
+privileged:   false
+cap_add:      <no value>
+devices:      
+cmd:          <no value>
+mounts:
+  bind /mnt/user/appdata/portainer -> /data (rw)
+  bind /var/run/docker.sock -> /var/run/docker.sock (rw)
+env:
+  HOST_OS=Unraid
+  HOST_HOSTNAME=Tower
+  HOST_CONTAINERNAME=PortainerCE
+  TZ=America/Los_Angeles
+  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+labels:
+  com.docker.desktop.extension.api.version=>= 0.2.2
+  com.docker.desktop.extension.icon=https://portainer-io-assets.sfo2.cdn.digitaloceanspaces.com/logos/portainer.png
+  com.docker.extension.additional-urls=[{"title":"Website","url":"https://www.portainer.io?utm_campaign=DockerCon&utm_source=DockerDesktop"},{"title":"Documentation","url":"https://docs.portainer.io"},{"title":"Support","url":"https://join.slack.com/t/portainer/shared_invite/zt-txh3ljab-52QHTyjCqbe5RibC2lcjKA"}]
+  com.docker.extension.detailed-description=<p data-renderer-start-pos="226">Portainer&rsquo;s Docker Desktop extension gives you access to all of Portainer&rsquo;s rich management functionality within your docker desktop experience.</p><h2 data-renderer-start-pos="374">With Portainer you can:</h2><ul><li>See all your running containers</li><li>Easily view all of your container logs</li><li>Console into containers</li><li>Easily deploy your code into containers using a simple form</li><li>Turn your YAML into custom templates for easy reuse</li></ul><h2 data-renderer-start-pos="660">About Portainer&nbsp;</h2><p data-renderer-start-pos="680">Portainer is the worlds&rsquo; most popular universal container management platform with more than 650,000 active monthly users. Portainer can be used to manage Docker Standalone, Kubernetes and Docker Swarm environments through a single common interface. It includes a simple GitOps automation engine and a Kube API.&nbsp;</p><p data-renderer-start-pos="1006">Portainer Business Edition is our fully supported commercial grade product for business-wide use. It includes all the functionality that businesses need to manage containers at scale. Visit <a class="sc-jKJlTe dPfAtb" href="http://portainer.io/" title="http://Portainer.io" data-renderer-mark="true">Portainer.io</a> to learn more about Portainer Business and <a class="sc-jKJlTe dPfAtb" href="http://portainer.io/take-3?utm_campaign=DockerCon&amp;utm_source=Docker%20Desktop" title="http://portainer.io/take-3?utm_campaign=DockerCon&amp;utm_source=Docker%20Desktop" data-renderer-mark="true">get 3 free nodes.</a></p>
+  com.docker.extension.publisher-url=https://www.portainer.io
+  com.docker.extension.screenshots=[{"alt": "screenshot one", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-1.png"},{"alt": "screenshot two", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-2.png"},{"alt": "screenshot three", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-3.png"},{"alt": "screenshot four", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-4.png"},{"alt": "screenshot five", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-5.png"},{"alt": "screenshot six", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-6.png"},{"alt": "screenshot seven", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-7.png"},{"alt": "screenshot eight", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-8.png"},{"alt": "screenshot nine", "url": "https://portainer-io-assets.sfo2.digitaloceanspaces.com/screenshots/docker-extension-9.png"}]
+  io.portainer.server=true
+  net.unraid.docker.icon=https://raw.githubusercontent.com/EMP83/unraid-templates/main/PortainerCE/Portainer.png
+  net.unraid.docker.managed=dockerman
+  net.unraid.docker.webui=http://[IP]:[PORT:9000]/
+  org.opencontainers.image.description=Docker container management made simple, with the world’s most popular GUI-based container management platform.
+  org.opencontainers.image.title=Portainer
+  org.opencontainers.image.vendor=Portainer.io
+
+===== lazylibrarian
+image:        lscr.io/linuxserver/lazylibrarian
+restart:      no
+network_mode: bridge
+networks:     bridge(ip=172.17.0.4) 
+ports:        5299/tcp->:5299 
+exposed:      5299/tcp 
+privileged:   false
+cap_add:      <no value>
+devices:      
+cmd:          <no value>
+mounts:
+  bind /mnt/user/Media/books -> /books (rw)
+  bind /mnt/user/appdata/lazylibrarian -> /config (rw)
+  bind /mnt/user/Media/downloads -> /downloads (rw)
+env:
+  HOST_OS=Unraid
+  HOST_HOSTNAME=Tower
+  HOST_CONTAINERNAME=lazylibrarian
+  DOCKER_MODS=linuxserver/mods:universal-calibre
+  PUID=99
+  PGID=100
+  UMASK=022
+  TZ=America/Los_Angeles
+  PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  HOME=/root
+  LANGUAGE=en_US.UTF-8
+  LANG=en_US.UTF-8
+  TERM=xterm
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+  S6_VERBOSITY=1
+  S6_STAGE2_HOOK=/docker-mods
+  VIRTUAL_ENV=/lsiopy
+  LSIO_FIRST_PARTY=true
+labels:
+  build_version=Linuxserver.io version:- ef1f6e73-ls222 Build-date:- 2025-11-26T21:56:48+00:00
+  maintainer=chbmb
+  net.unraid.docker.icon=https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/lazylibrarian-logo.png
+  net.unraid.docker.managed=dockerman
+  net.unraid.docker.webui=http://[IP]:[PORT:5299]
+  org.opencontainers.image.authors=linuxserver.io
+  org.opencontainers.image.created=2025-11-26T21:56:48+00:00
+  org.opencontainers.image.description=[Lazylibrarian](https://lazylibrarian.gitlab.io/) is a program to follow authors and grab metadata for all your digital reading needs. It uses a combination of Goodreads Librarything and optionally GoogleBooks as sources for author info and book info.  This container is based on the DobyTang fork.  
+  org.opencontainers.image.documentation=https://docs.linuxserver.io/images/docker-lazylibrarian
+  org.opencontainers.image.licenses=GPL-3.0-only
+  org.opencontainers.image.ref.name=<<REDACTED-HEX>>
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/linuxserver/docker-lazylibrarian
+  org.opencontainers.image.title=Lazylibrarian
+  org.opencontainers.image.url=https://github.com/linuxserver/docker-lazylibrarian/packages
+  org.opencontainers.image.vendor=linuxserver.io
+  org.opencontainers.image.version=ef1f6e73-ls222
+
+===== prowlarr
+image:        lscr.io/linuxserver/prowlarr
+restart:      no
+network_mode: bridge
+networks:     bridge(ip=172.17.0.6) 
+ports:        9696/tcp->:9696 
+exposed:      9696/tcp 
+privileged:   false
+cap_add:      <no value>
+devices:      
+cmd:          <no value>
+mounts:
+  bind /mnt/user/appdata/prowlarr -> /config (rw)
+env:
+  HOST_CONTAINERNAME=prowlarr
+  PUID=99
+  PGID=100
+  UMASK=022
+  TZ=America/Los_Angeles
+  HOST_OS=Unraid
+  HOST_HOSTNAME=Tower
+  PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  PS1=$(whoami)@$(hostname):$(pwd)\$ 
+  HOME=/root
+  TERM=xterm
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+  S6_VERBOSITY=1
+  S6_STAGE2_HOOK=/docker-mods
+  VIRTUAL_ENV=/lsiopy
+  LSIO_FIRST_PARTY=true
+  XDG_CONFIG_HOME=/config/xdg
+  COMPlus_EnableDiagnostics=0
+  TMPDIR=/run/prowlarr-temp
+labels:
+  build_version=Linuxserver.io version:- 2.3.0.5236-ls133 Build-date:- 2025-11-26T04:04:20+00:00
+  maintainer=Roxedus,thespad
+  net.unraid.docker.icon=https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/prowlarr-logo.png
+  net.unraid.docker.managed=dockerman
+  net.unraid.docker.webui=http://[IP]:[PORT:9696]/system/status
+  org.opencontainers.image.authors=linuxserver.io
+  org.opencontainers.image.created=2025-11-26T04:04:20+00:00
+  org.opencontainers.image.description=[Prowlarr](https://github.com/Prowlarr/Prowlarr) is a indexer manager/proxy built on the popular arr .net/reactjs base stack to integrate with your various PVR apps. Prowlarr supports both Torrent Trackers and Usenet Indexers. It integrates seamlessly with Sonarr, Radarr, Lidarr, and Readarr offering complete management of your indexers with no per app Indexer setup required (we do it all).  
+  org.opencontainers.image.documentation=https://docs.linuxserver.io/images/docker-prowlarr
+  org.opencontainers.image.licenses=GPL-3.0-only
+  org.opencontainers.image.ref.name=<<REDACTED-HEX>>
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/linuxserver/docker-prowlarr
+  org.opencontainers.image.title=Prowlarr
+  org.opencontainers.image.url=https://github.com/linuxserver/docker-prowlarr/packages
+  org.opencontainers.image.vendor=linuxserver.io
+  org.opencontainers.image.version=2.3.0.5236-ls133
+
+===== sonarr
+image:        lscr.io/linuxserver/sonarr
+restart:      no
+network_mode: bridge
+networks:     bridge(ip=172.17.0.8) 
+ports:        8989/tcp->:8989 
+exposed:      8989/tcp 
+privileged:   false
+cap_add:      <no value>
+devices:      
+cmd:          <no value>
+mounts:
+  bind /mnt/user/appdata/sonarr -> /config (rw)
+  bind /mnt/user/Media/downloads -> /downloads (rw)
+  bind /mnt/user/Media/tv -> /tv (rw)
+env:
+  TZ=America/Los_Angeles
+  HOST_OS=Unraid
+  HOST_HOSTNAME=Tower
+  HOST_CONTAINERNAME=sonarr
+  PUID=99
+  PGID=100
+  UMASK=022
+  PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  PS1=$(whoami)@$(hostname):$(pwd)\$ 
+  HOME=/root
+  TERM=xterm
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+  S6_VERBOSITY=1
+  S6_STAGE2_HOOK=/docker-mods
+  VIRTUAL_ENV=/lsiopy
+  LSIO_FIRST_PARTY=true
+  XDG_CONFIG_HOME=/config/xdg
+  SONARR_CHANNEL=v4-stable
+  SONARR_BRANCH=main
+  COMPlus_EnableDiagnostics=0
+  TMPDIR=/run/sonarr-temp
+labels:
+  build_version=Linuxserver.io version:- 4.0.16.2944-ls298 Build-date:- 2025-11-21T23:34:08+00:00
+  maintainer=thespad
+  net.unraid.docker.icon=https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/sonarr-logo.png
+  net.unraid.docker.managed=dockerman
+  net.unraid.docker.webui=http://[IP]:[PORT:8989]/system/status
+  org.opencontainers.image.authors=linuxserver.io
+  org.opencontainers.image.created=2025-11-21T23:34:08+00:00
+  org.opencontainers.image.description=[Sonarr](https://sonarr.tv/) (formerly NZBdrone) is a PVR for usenet and bittorrent users. It can monitor multiple RSS feeds for new episodes of your favorite shows and will grab, sort and rename them. It can also be configured to automatically upgrade the quality of files already downloaded when a better quality format becomes available.  
+  org.opencontainers.image.documentation=https://docs.linuxserver.io/images/docker-sonarr
+  org.opencontainers.image.licenses=GPL-3.0-only
+  org.opencontainers.image.ref.name=<<REDACTED-HEX>>
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/linuxserver/docker-sonarr
+  org.opencontainers.image.title=Sonarr
+  org.opencontainers.image.url=https://github.com/linuxserver/docker-sonarr/packages
+  org.opencontainers.image.vendor=linuxserver.io
+  org.opencontainers.image.version=4.0.16.2944-ls298
+
+===== radarr
+image:        lscr.io/linuxserver/radarr
+restart:      no
+network_mode: bridge
+networks:     bridge(ip=172.17.0.7) 
+ports:        7878/tcp->:7878 
+exposed:      7878/tcp 
+privileged:   false
+cap_add:      <no value>
+devices:      
+cmd:          <no value>
+mounts:
+  bind /mnt/user/appdata/radarr -> /config (rw)
+  bind /mnt/user/Media/downloads -> /downloads (rw)
+  bind /mnt/user/Media/movies -> /movies (rw)
+env:
+  PGID=100
+  UMASK=022
+  TZ=America/Los_Angeles
+  HOST_OS=Unraid
+  HOST_HOSTNAME=Tower
+  HOST_CONTAINERNAME=radarr
+  PUID=99
+  PATH=/lsiopy/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  PS1=$(whoami)@$(hostname):$(pwd)\$ 
+  HOME=/root
+  TERM=xterm
+  S6_CMD_WAIT_FOR_SERVICES_MAXTIME=0
+  S6_VERBOSITY=1
+  S6_STAGE2_HOOK=/docker-mods
+  VIRTUAL_ENV=/lsiopy
+  LSIO_FIRST_PARTY=true
+  XDG_CONFIG_HOME=/config/xdg
+  COMPlus_EnableDiagnostics=0
+  TMPDIR=/run/radarr-temp
+labels:
+  build_version=Linuxserver.io version:- 6.0.4.10291-ls288 Build-date:- 2025-11-23T17:00:47+00:00
+  maintainer=Roxedus,thespad
+  net.unraid.docker.icon=https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/radarr-logo.png
+  net.unraid.docker.managed=dockerman
+  net.unraid.docker.webui=http://[IP]:[PORT:7878]/system/status
+  org.opencontainers.image.authors=linuxserver.io
+  org.opencontainers.image.created=2025-11-23T17:00:47+00:00
+  org.opencontainers.image.description=[Radarr](https://github.com/Radarr/Radarr) - A fork of Sonarr to work with movies à la Couchpotato.  
+  org.opencontainers.image.documentation=https://docs.linuxserver.io/images/docker-radarr
+  org.opencontainers.image.licenses=GPL-3.0-only
+  org.opencontainers.image.ref.name=<<REDACTED-HEX>>
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/linuxserver/docker-radarr
+  org.opencontainers.image.title=Radarr
+  org.opencontainers.image.url=https://github.com/linuxserver/docker-radarr/packages
+  org.opencontainers.image.vendor=linuxserver.io
+  org.opencontainers.image.version=6.0.4.10291-ls288
+
+===== gluetun
+image:        qmcgaw/gluetun:latest
+restart:      unless-stopped
+network_mode: qbittorrent_default
+networks:     qbittorrent_default(ip=172.18.0.2) 
+ports:        30024/tcp->:30024 6881/tcp->:6881 6881/udp->:6881 
+exposed:      30024/tcp 6881/tcp 6881/udp 8000/tcp 8388/tcp 8388/udp 8888/tcp 
+privileged:   false
+cap_add:      [CAP_NET_ADMIN]
+devices:      
+cmd:          <no value>
+mounts:
+  bind /mnt/user/appdata/gluetun -> /gluetun (rw)
+env:
+  VPN_WAIT_TIME=60s
+  WIREGUARD_PRIVATE_KEY=<<REDACTED — needs a secret>>
+  SERVER_COUNTRIES=United States
+  VPN_SERVICE_PROVIDER=nordvpn
+  FIREWALL_VPN_INPUT_ALLOW=192.168.1.0
+  FIREWALL_OUTBOUND_SUBNET=0.0.0.0/0
+  VPN_TYPE=wireguard
+  VPN_WAIT=on
+  TZ=America/Vancouver
+  SERVER_CITIES=Seattle
+  SERVER_HOSTNAMES=us8240.nordvpn.com
+  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  VPN_INTERFACE=tun0
+  OPENVPN_ENDPOINT_IP=
+  OPENVPN_ENDPOINT_PORT=
+  OPENVPN_PROTOCOL=udp
+  OPENVPN_USER=<<REDACTED — needs a secret>>
+  OPENVPN_PASSWORD=<<REDACTED — needs a secret>>
+  OPENVPN_USER_SECRETFILE=<<REDACTED — needs a secret>>
+  OPENVPN_PASSWORD_SECRETFILE=<<REDACTED — needs a secret>>
+  OPENVPN_VERSION=2.6
+  OPENVPN_VERBOSITY=1
+  OPENVPN_FLAGS=
+  OPENVPN_CIPHERS=
+  OPENVPN_AUTH=<<REDACTED — needs a secret>>
+  OPENVPN_PROCESS_USER=<<REDACTED — needs a secret>>
+  OPENVPN_MSSFIX=
+  OPENVPN_CUSTOM_CONFIG=
+  WIREGUARD_ENDPOINT_IP=<<REDACTED — needs a secret>>
+  WIREGUARD_ENDPOINT_PORT=<<REDACTED — needs a secret>>
+  WIREGUARD_CONF_SECRETFILE=<<REDACTED — needs a secret>>
+  WIREGUARD_PRIVATE_KEY_SECRETFILE=<<REDACTED — needs a secret>>
+  WIREGUARD_PRESHARED_KEY=<<REDACTED — needs a secret>>
+  WIREGUARD_PRESHARED_KEY_SECRETFILE=<<REDACTED — needs a secret>>
+  WIREGUARD_PUBLIC_KEY=<<REDACTED — needs a secret>>
+  WIREGUARD_ALLOWED_IPS=<<REDACTED — needs a secret>>
+  WIREGUARD_PERSISTENT_KEEPALIVE_INTERVAL=<<REDACTED — needs a secret>>
+  WIREGUARD_ADDRESSES=<<REDACTED — needs a secret>>
+  WIREGUARD_ADDRESSES_SECRETFILE=<<REDACTED — needs a secret>>
+  WIREGUARD_MTU=<<REDACTED — needs a secret>>
+  WIREGUARD_IMPLEMENTATION=<<REDACTED — needs a secret>>
+  SERVER_REGIONS=
+  SERVER_CATEGORIES=
+  ISP=
+  OWNED_ONLY=no
+  PRIVATE_INTERNET_ACCESS_OPENVPN_ENCRYPTION_PRESET=<<REDACTED — needs a secret>>
+  VPN_PORT_FORWARDING=off
+  VPN_PORT_FORWARDING_LISTENING_PORT=0
+  VPN_PORT_FORWARDING_PROVIDER=
+  VPN_PORT_FORWARDING_STATUS_FILE=/tmp/gluetun/forwarded_port
+  VPN_PORT_FORWARDING_USERNAME=<<REDACTED — needs a secret>>
+  VPN_PORT_FORWARDING_PASSWORD=<<REDACTED — needs a secret>>
+  VPN_PORT_FORWARDING_UP_COMMAND=
+  VPN_PORT_FORWARDING_DOWN_COMMAND=
+  OPENVPN_CERT=
+  OPENVPN_KEY=<<REDACTED — needs a secret>>
+  OPENVPN_CLIENTCRT_SECRETFILE=<<REDACTED — needs a secret>>
+  OPENVPN_CLIENTKEY_SECRETFILE=<<REDACTED — needs a secret>>
+  OPENVPN_ENCRYPTED_KEY=<<REDACTED — needs a secret>>
+  OPENVPN_ENCRYPTED_KEY_SECRETFILE=<<REDACTED — needs a secret>>
+  OPENVPN_KEY_PASSPHRASE=<<REDACTED — needs a secret>>
+  OPENVPN_KEY_PASSPHRASE_SECRETFILE=<<REDACTED — needs a secret>>
+  SERVER_NUMBER=
+  SERVER_NAMES=
+  STREAM_ONLY=
+  FREE_ONLY=
+  SECURE_CORE_ONLY=
+  TOR_ONLY=
+  MULTIHOP_ONLY=
+  PREMIUM_ONLY=
+  PORT_FORWARD_ONLY=
+  FIREWALL_ENABLED_DISABLING_IT_SHOOTS_YOU_IN_YOUR_FOOT=on
+  FIREWALL_VPN_INPUT_PORTS=
+  FIREWALL_INPUT_PORTS=
+  FIREWALL_OUTBOUND_SUBNETS=
+  FIREWALL_DEBUG=off
+  LOG_LEVEL=info
+  HEALTH_SERVER_ADDRESS=127.0.0.1:9999
+  HEALTH_TARGET_ADDRESS=cloudflare.com:443
+  HEALTH_ICMP_TARGET_IP=1.1.1.1
+  HEALTH_RESTART_VPN=on
+  DNS_SERVER=on
+  DNS_UPSTREAM_RESOLVER_TYPE=DoT
+  DNS_UPSTREAM_RESOLVERS=cloudflare
+  DNS_BLOCK_IPS=
+  DNS_BLOCK_IP_PREFIXES=
+  DNS_CACHING=on
+  DNS_UPSTREAM_IPV6=off
+  BLOCK_MALICIOUS=on
+  BLOCK_SURVEILLANCE=off
+  BLOCK_ADS=off
+  DNS_UNBLOCK_HOSTNAMES=
+  DNS_REBINDING_PROTECTION_EXEMPT_HOSTNAMES=
+  DNS_UPDATE_PERIOD=24h
+  DNS_ADDRESS=127.0.0.1
+  DNS_KEEP_NAMESERVER=off
+  HTTPPROXY=
+  HTTPPROXY_LOG=off
+  HTTPPROXY_LISTENING_ADDRESS=:8888
+  HTTPPROXY_STEALTH=off
+  HTTPPROXY_USER=<<REDACTED — needs a secret>>
+  HTTPPROXY_PASSWORD=<<REDACTED — needs a secret>>
+  HTTPPROXY_USER_SECRETFILE=<<REDACTED — needs a secret>>
+  HTTPPROXY_PASSWORD_SECRETFILE=<<REDACTED — needs a secret>>
+  SHADOWSOCKS=off
+  SHADOWSOCKS_LOG=off
+  SHADOWSOCKS_LISTENING_ADDRESS=:8388
+  SHADOWSOCKS_PASSWORD=<<REDACTED — needs a secret>>
+  SHADOWSOCKS_PASSWORD_SECRETFILE=<<REDACTED — needs a secret>>
+  SHADOWSOCKS_CIPHER=chacha20-ietf-poly1305
+  HTTP_CONTROL_SERVER_LOG=on
+  HTTP_CONTROL_SERVER_ADDRESS=:8000
+  HTTP_CONTROL_SERVER_AUTH_CONFIG_FILEPATH=<<REDACTED — needs a secret>>
+  HTTP_CONTROL_SERVER_AUTH_DEFAULT_ROLE=<<REDACTED — needs a secret>>
+  UPDATER_PERIOD=0
+  UPDATER_MIN_RATIO=0.8
+  UPDATER_VPN_SERVICE_PROVIDERS=
+  UPDATER_PROTONVPN_USERNAME=<<REDACTED — needs a secret>>
+  UPDATER_PROTONVPN_PASSWORD=<<REDACTED — needs a secret>>
+  PUBLICIP_FILE=/tmp/gluetun/ip
+  PUBLICIP_ENABLED=on
+  PUBLICIP_API=ipinfo,ifconfigco,ip2location,cloudflare
+  PUBLICIP_API_TOKEN=<<REDACTED — needs a secret>>
+  STORAGE_FILEPATH=/gluetun/servers.json
+  PPROF_ENABLED=no
+  PPROF_BLOCK_PROFILE_RATE=0
+  PPROF_MUTEX_PROFILE_RATE=0
+  PPROF_HTTP_SERVER_ADDRESS=:6060
+  VERSION_INFORMATION=on
+  PUID=1000
+  PGID=1000
+labels:
+  com.docker.compose.config-hash=<<REDACTED-HEX>>
+  com.docker.compose.container-number=1
+  com.docker.compose.depends_on=
+  com.docker.compose.image=sha256:<<REDACTED-HEX>>
+  com.docker.compose.oneoff=False
+  com.docker.compose.project=qbittorrent
+  com.docker.compose.project.config_files=/data/compose/2/docker-compose.yml
+  com.docker.compose.project.working_dir=/data/compose/2
+  com.docker.compose.replace=gluetun
+  com.docker.compose.service=gluetun
+  com.docker.compose.version=
+  org.opencontainers.image.authors=quentin.mcgaw@gmail.com
+  org.opencontainers.image.created=2025-11-16T00:21:41.283Z
+  org.opencontainers.image.description=VPN client in a thin Docker container for multiple VPN providers, written in Go, and using OpenVPN or Wireguard, DNS over TLS, with a few proxy servers built-in.
+  org.opencontainers.image.documentation=https://github.com/qdm12/gluetun
+  org.opencontainers.image.licenses=MIT
+  org.opencontainers.image.revision=<<REDACTED-HEX>>
+  org.opencontainers.image.source=https://github.com/qdm12/gluetun
+  org.opencontainers.image.title=gluetun
+  org.opencontainers.image.url=https://github.com/qdm12/gluetun
+  org.opencontainers.image.version=latest
+
+
+########## 5b. WHO IS ROUTED THROUGH WHOM
+plex -> bridge
+qbittorrent -> /gluetun
+calibre -> bridge
+PortainerCE -> bridge
+lazylibrarian -> bridge
+prowlarr -> bridge
+sonarr -> bridge
+radarr -> bridge
+gluetun -> qbittorrent_default
+
+########## 8. PORTAINER STACK (qbittorrent + gluetun)
+--- stack dirs:
+/mnt/user/appdata/portainer/compose/:
+1
+2
+
+/mnt/user/appdata/portainer/compose/1:
+docker-compose.yml
+
+/mnt/user/appdata/portainer/compose/2:
+docker-compose.yml
+--- stack files:
+===== /mnt/user/appdata/portainer/compose/1/docker-compose.yml
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:latest # Set specific: plexinc/pms-docker:1.40.2.8395-c67dce28e
+    container_name: plex
+    network_mode: bridge # Change this to 'bridge' to define ports, example ports below
+    ports:
+      - 32400:32400/tcp
+      #- 8324:8324/tcp
+      #- 32469:32469/tcp
+      #- 1900:1900/udp
+      #- 32410:32410/udp
+      #- 32412:32412/udp
+      #- 32413:32413/udp
+      #- 32414:32414/udp
+    # Uncomment the devices section for tv tuners and intel gpus
+    devices:
+      #- /dev/dvb:/dev/dvb # Uncomment this device for typical USB TV Tuner cards
+      - /dev/dri:/dev/dri # Uncomment this to use intel GPUs for Hardware Transcoding
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/Vancouver # Change this to match your server's timezone
+      - PLEX_CLAIM=<<REDACTED — needs a secret>> # Uncomment this to setup Plex server, get your claim code from here - https://www.plex.tv/claim/
+      - VERSION=1.43.1.10495-10cfae054
+      - PLEX_DOWNLOAD=https://downloads.plex.tv/plex-media-server-builds
+      # Uncomment the lines below to use Nvidia GPUs for Hardware Transcoding
+      #- NVIDIA_VISIBLE_DEVICES=all
+      #- NVIDIA_DRIVER_CAPABILITIES=all
+    volumes:
+      - /etc/localtime:/etc/localtime:ro # Sync the container's time to the host's time
+      - /mnt/user/appdata/plexmediaserver:/config # Plex server application data is stored in a folder called 'plexmediaserver' in the same directory as the docker-compose.yaml file
+      # Uncomment the lines below for each library,
+      # make sure the path on the left of the colon (:) exists on the host! `/mnt/tv`
+      - /mnt/user/Media/tv:/mnt/tv
+      - /mnt/user/Media/movies:/mnt/movies
+      - /mnt/user/Media/music-rb:/mnt/music-rb
+      - /mnt/user/Media/music-reg:/mnt/music-reg
+      - /mnt/user/Media/podcasts:/mnt/podcasts
+      - /mnt/user/appdata/transcode:/mnt/transcode
+    restart: unless-stopped===== /mnt/user/appdata/portainer/compose/2/docker-compose.yml
+version: "3.8"
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "${GLUETUN_WEBUI_PORT:-30024}:30024"   # WebUI port
+      - "${TORRENT_TCP_PORT:-6881}:6881/tcp"   # Torrent TCP
+      - "${TORRENT_UDP_PORT:-6881}:6881/udp"   # Torrent UDP
+    environment:
+      VPN_SERVICE_PROVIDER: "nordvpn"
+      VPN_TYPE: "wireguard"
+      WIREGUARD_PRIVATE_KEY: "<<REDACTED — needs a secret>>"
+      SERVER_HOSTNAMES: "us8240.nordvpn.com"
+      SERVER_COUNTRIES: "United States"
+      SERVER_CITIES: "Seattle"
+      TZ: "America/Vancouver"
+      FIREWALL_VPN_INPUT_ALLOW: "192.168.1.0"
+      FIREWALL_OUTBOUND_SUBNET: "0.0.0.0/0"
+      VPN_WAIT: "on"
+      VPN_WAIT_TIME: "60s"
+    volumes:
+      - /mnt/user/appdata/gluetun:/gluetun
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      PUID: "${PUID:-1001}"
+      PGID: "${PGID:-1001}"
+      TZ: "${TZ:-UTC}"
+      WEBUI_PORT: "${GLUETUN_WEBUI_PORT:-30024}"
+      TORRENTING_PORT: "${TORRENT_TCP_PORT:-6881}"
+    network_mode: "service:gluetun"   # shares Gluetun network
+    volumes:
+      - /mnt/user/appdata/qbittorrent:/config
+      - /mnt/user/Media/downloads:/downloads
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+########## 9. IMAGE DIGESTS (not redacted — digests are not secrets)
+REPOSITORY                            TAG               DIGEST                                                                    CREATED
+lscr.io/linuxserver/plex              latest            sha256:bbe0118e39e2c071fc5fe39af3f32072207bf4146d56b6a8901bcb23082df207   5 months ago
+portainer/portainer-ce                latest            sha256:c2353b2bd0dbfaa33faa8895222732e8823a4cf5b57ea664ba631ec3e23d842b   8 months ago
+lscr.io/linuxserver/lazylibrarian     latest            sha256:05515b7c4485fc4816679a60a97c794e27c0c4ceab788c58ae003461be7a158a   8 months ago
+lscr.io/linuxserver/prowlarr          latest            sha256:475853535de3de8441b87c1457c30f2e695f4831228b12b6b7274e9da409d874   8 months ago
+lscr.io/linuxserver/radarr            latest            sha256:06ac318ecb95a34c7b229568dcb4271f02cb5007bb189a0dd67a2032864187ca   8 months ago
+lscr.io/linuxserver/sonarr            latest            sha256:2fc9c36769a3f50ab529e7ccc37687d118ab42199b01588573f03b3393cc3223   8 months ago
+lscr.io/linuxserver/calibre           latest            sha256:cde48704668d1dcf911653f975b9f16ce28327e486490543f0125ed8088d6701   8 months ago
+lscr.io/linuxserver/qbittorrent       latest            sha256:7034f73a3c6fa4ea40fd67df462939d1665d765231b572523921c98c2db5362e   8 months ago
+qmcgaw/gluetun                        latest            sha256:fdf049f80bf452aaba54ae89fb95d104bf0f48e469cc167e79c089b63e80d770   8 months ago
+plexinc/pms-docker                    latest            sha256:9c03c26b9479ba9a09935f3367459bfdc8d21545f42ed2a13258983c5be1b252   10 months ago
+ghcr.io/bubuntux/nordvpn              get_private_key   sha256:0d91aabb4511d400b01e930654950729a4e859d3c250f61664662b0ed7027c56   3 years ago
+
+########## 10. MISSING TEMPLATES
+--- everything under dockerMan:
+/boot/config/plugins/dockerMan/templates-user/my-PortainerCE.xml
+/boot/config/plugins/dockerMan/templates-user/my-radarr.xml
+/boot/config/plugins/dockerMan/templates-user/my-sonarr.xml
+/boot/config/plugins/dockerMan/templates-user/my-prowlarr.xml
+/boot/config/plugins/dockerMan/templates-user/my-lazylibrarian.xml
+/boot/config/plugins/dockerMan/templates-user/my-calibre.xml
+--- any plex template anywhere on /boot:
+
+########## 11. MEDIA LAYOUT
+books
+downloads
+movies
+music-rb
+music-reg
+podcasts
+temp
+tv
+
+########## END PART 2
