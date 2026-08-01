@@ -38,16 +38,21 @@ hand-off proves too slow; until then, assume it is not there.
 the destination names — sonarr, radarr, prowlarr, qbittorrent, gluetun, plex,
 calibre, lazylibrarian, plus a homepage that does not exist yet. No two-tier box
 where some containers are git-owned and some stay on unraid's Docker tab.
-Portainer is excluded: it is currently the deploying tool, not a workload, and
-whether it survives at all falls out of
-[02 — Choose the reconcile mechanism](issues/02-choose-reconcile-mechanism.md).
+Portainer is excluded as a workload, and [02](issues/02-choose-reconcile-mechanism.md)
+has now settled its fate: **removed**, once its two stacks are adopted. Komodo's
+own three containers take its place as the box's only non-workload tenants.
 
 **Secret severity**: the human has ruled these assets low-value — a NordVPN
 *client* key (grants VPN egress as them, no access to the box, LAN or tailnet)
 and a calibre GUI password on a LAN-only service. Both were already plaintext on
 the box before this effort touched them. **Do not re-raise rotation as a blocker
-or a finding**; 03 will re-issue the WireGuard key as a side effect of picking a
-mechanism anyway. Two carve-outs stay live because they are about *future*
+or a finding.** Note the correction from
+[03](issues/03-secrets-handling.md): this note previously claimed 03 would
+re-issue the WireGuard key as a free side effect of picking a mechanism. It does
+not — SOPS encrypts the existing value fine, so **rotation has not happened and
+is not scheduled**. The ruling stands unchanged; only the false belief that it
+came for free is removed. Two carve-outs stay live because they are about
+*future*
 exposure, not the current leak: [04](issues/04-reverse-proxy-and-domain.md) and
 [05](issues/05-remote-access.md) will put calibre's login on the internet, so
 whatever auth sits in front of it is decided there; and if the calibre password
@@ -83,10 +88,34 @@ concrete artifact would settle an argument faster than discussion.
   compose, unraid's Docker tab runs the rest. The gluetun sidecar is **already
   in place**; provider is NordVPN, which has no port forwarding. PUID/PGID
   diverge three ways. Homepage does not exist at all.
+- [02 — Choose the reconcile mechanism](issues/02-choose-reconcile-mechanism.md)
+  — **Komodo**, as three containers on the box (Core, a Mongo-compatible DB,
+  Periphery); comparison in
+  [assets/02-reconcile-mechanism.md](assets/02-reconcile-mechanism.md). Its
+  Periphery image bundles compose and git, so the "no compose on the host"
+  constraint is cleared without touching the host. Beat Portainer — a close,
+  fairly-judged runner-up — because **ResourceSync puts Komodo's own config in
+  git** and because `pre_deploy` is a real hook, which keeps SOPS alive for
+  [03](issues/03-secrets-handling.md). **Portainer is removed** once its two
+  stacks are adopted by compose project name. Reconcile is **poll** (cron
+  `BatchDeployStackIfChanged`), not webhook — no inbound port exists yet.
+- [03 — Decide how secrets live in the repo](issues/03-secrets-handling.md)
+  — **SOPS + age**, encrypted in this repo, decrypted on the box by a Komodo
+  `pre_deploy` hook writing `secrets.env` (a distinct name, so it does not
+  clobber the `.env` Komodo generates itself). 02 over-priced this: **no custom
+  Periphery image is needed** — the static `sops` binary is bind-mounted in,
+  which also dodges the chicken-and-egg of rebuilding the container that runs
+  your deploys. A **fresh** age key, not home-ops', at
+  `/mnt/user/appdata/komodo/age.key` — deliberately **not** on `/boot`, which
+  Unraid Connect ships off-site. Backed up in **KeePassXC over Syncthing**.
+  Rebuild = clone + restore one key. Decrypted plaintext is left on the array on
+  purpose; the defended boundary is directory perms, not the file. **`PLEX_CLAIM`
+  leaves the secret set** (one-shot token, plex already claimed), leaving five
+  live values.
 
 ## Not yet specified
 
-- **Migrating the remaining services** — now *seven*, not four: sonarr, radarr,
+- **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
   prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian. Deliberately
   fog: until homepage proves the layout and the reconcile loop, we don't know
   whether this is one repetitive ticket or one per service. What ticket 01 did
@@ -96,22 +125,24 @@ concrete artifact would settle an argument faster than discussion.
   the awkward one (20G appdata, `/dev/dri` passthrough, claim token). Graduates
   once [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md)
   resolves.
-- **Image update strategy.** Renovate is the habit from home-ops, but whether it
-  fits depends on how the reconcile mechanism reads tags. Ticket 01 raised the
-  stakes: every image is on `latest` and 5–8 months stale, so nothing is
-  updating today. Revisit after
-  [02 — Choose the reconcile mechanism](issues/02-choose-reconcile-mechanism.md).
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
-  20G. What backs it up, and what a rebuild-from-scratch actually takes, is
-  unclear until the layout exists.
+  20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,
+  and it holds the resource records and any Variables-based secrets. What backs
+  all this up, and what a rebuild-from-scratch actually takes, is unclear until
+  the layout exists.
 - **Secret hygiene on the box.** Ticket 01 found the NordVPN WireGuard key and
   the calibre GUI password sitting in plaintext on `/boot` and in Portainer's
-  appdata. Once [03](issues/03-secrets-handling.md) picks a mechanism, there is
-  a follow-on question about what happens to the plaintext copies left behind.
-  **Rotation was ruled not worth doing now** — see Notes.
-- **Publishing to GitHub.** Known future step, deliberately deferred until a few
-  investigation tickets have landed.
+  appdata. [03](issues/03-secrets-handling.md) has now *added* a third plaintext
+  location on purpose — the decrypted `secrets.env` per stack under
+  `/mnt/user/appdata/komodo` — and named the boundary it relies on: **directory
+  permissions on the komodo appdata tree**. That is the sharpened question: what
+  those permissions actually are on unraid (where shares default permissively),
+  and what happens to the old plaintext copies once Portainer is removed and the
+  dockerMan templates are retired. Still fog because it depends on
+  [07](issues/07-repo-layout-and-conventions.md)'s layout and on Portainer's
+  actual removal. **Rotation was ruled not worth doing now, and did not happen as
+  a side effect of 03** — see Notes.
 - **Monitoring and alerting** for the stack. Suspected, unsharp; may fall out of
   scope entirely once the stack is running.
 

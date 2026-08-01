@@ -2,12 +2,24 @@
 
 Type: task
 Status: open
-Blocked by: 03, 07
+Blocked by: 03, 07, 10, 11
 
 ## Question
 
 The proving case. Stand homepage up under the repo's control end to end, so that
 a `git push` changes what the dashboard shows.
+
+**The mechanism is Komodo** ([02](02-choose-reconcile-mechanism.md)), installed
+by [11](11-stand-up-komodo.md) and pointed at the remote from
+[10](10-publish-repo-to-remote.md) — so by the time this ticket runs, the loop
+exists and is reconciling nothing. All this ticket adds is the first thing for
+it to reconcile.
+
+**Reconcile is poll, not webhook.** Per 02, a GitHub webhook needs an inbound
+path the box does not have until [05](05-remote-access.md); the loop is a Komodo
+Procedure on a cron schedule running `BatchDeployStackIfChanged`. So "without a
+manual step" means *within the poll interval*, not *instantly* — set the
+interval deliberately and record it.
 
 **This is a greenfield deploy, not a migration.**
 [01](01-inventory-running-containers.md) found no homepage container, no
