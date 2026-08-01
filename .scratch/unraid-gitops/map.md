@@ -1,0 +1,78 @@
+# Map: Unraid GitOps
+
+## Destination
+
+A `git push` to this repo reconciles the unraid box automatically, with sonarr,
+radarr, prowlarr, qbittorrent (behind a VPN) and homepage all running from
+definitions held here, fronted by a reverse proxy on a real domain and reachable
+from outside the house.
+
+## Notes
+
+**Domain**: GitOps for Docker on Unraid — compose-style container definitions in
+git, reconciled onto the host. Not Kubernetes; none of the Flux/Talos vocabulary
+carries over.
+
+**Execution override**: this map carries execution, not just decisions. Tickets
+may build, deploy and migrate real services — the destination is a running
+stack, not a spec.
+
+**Adoption, not greenfield**: the *arr stack and friends already run on the box,
+added by hand through unraid's Docker tab, with config and history to preserve.
+Every migration ticket must adopt without data loss.
+
+**Relationship to `~/home-ops`**: none. Different location, different household
+site — no shared DNS, no shared domain, no cross-links, no coordination. It is a
+reference for *taste* only: the SOPS habit, Renovate for image tags, and the
+shape of the existing gethomepage config at
+`kubernetes/apps/self-hosted/homepage/app/config/`.
+
+**Skills to consult**: `/grilling` and `/domain-modeling` for the decision
+tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
+concrete artifact would settle an argument faster than discussion.
+
+### Settled while charting
+
+- **Repo scope**: a general unraid GitOps repo, not a homepage-only one.
+  Homepage is the proving case, but the conventions must generalise.
+- **Reconcile scope**: git owns *container definitions* — image, tag, ports,
+  volumes, env. A push recreates the container. Each service's own internal
+  settings (sonarr's indexers, quality profiles, root folders) stay in its
+  appdata database and are edited in its UI. Homepage is the exception: its
+  config is plain YAML files, so git owns it fully.
+- **Access**: reverse proxy on a real domain, qbittorrent behind a VPN, and
+  remote access from outside the house. LAN-only IP:port was ruled out.
+- **Tracker**: local markdown for now. The GitHub remote comes later, once
+  enough investigation has landed to be worth pushing.
+
+## Decisions so far
+
+<!-- one line per resolved ticket -->
+
+_None yet — the map was charted 2026-08-01._
+
+## Not yet specified
+
+- **Migrating the remaining services** (sonarr, radarr, prowlarr, qbittorrent).
+  Deliberately fog: until homepage proves the layout and the reconcile loop, we
+  don't know whether this is one repetitive ticket or one per service, nor how
+  much adoption pain each carries. Graduates once
+  [08 — Migrate homepage into the repo](issues/08-migrate-homepage.md) resolves.
+- **Image update strategy.** Renovate is the habit from home-ops, but whether it
+  fits depends on how the reconcile mechanism reads tags. Revisit after
+  [02 — Choose the reconcile mechanism](issues/02-choose-reconcile-mechanism.md).
+- **Appdata backup and box rebuild.** Once container definitions are in git, the
+  remaining single point of failure is appdata. What backs it up, and what a
+  rebuild-from-scratch actually takes, is unclear until the layout exists.
+- **Publishing to GitHub.** Known future step, deliberately deferred until a few
+  investigation tickets have landed.
+- **Monitoring and alerting** for the stack. Suspected, unsharp; may fall out of
+  scope entirely once the stack is running.
+
+## Out of scope
+
+- **Decommissioning or migrating `~/home-ops`.** The k8s cluster is a different
+  site and stays as it is. If it is ever retired, that is a fresh effort with
+  its own destination.
+- **Unraid array, share and disk configuration.** This map governs containers
+  and their config, not the storage layer underneath them.
