@@ -9,10 +9,14 @@ in [adding-a-service.md](adding-a-service.md).
 ```
 common.env                  shared config, one copy, read by every Stack
 .sops.yaml                  one creation rule: *.sops.env → the age recipient
-.gitignore                  secrets.env
-renovate.json               image bumps
-Taskfile.yaml               local commands (ticket 13)
+.gitignore                  secrets.env, age.key
+.mise.toml                  pinned local tools + SOPS_AGE_KEY_FILE
+justfile                    local commands
+.renovaterc.json5           mise pins and image bumps
 CONTEXT.md                  glossary
+
+.github/workflows/
+  lint.yaml                 just lint, on push and PR
 
 bootstrap/
   compose.yaml              komodo-core, database, periphery
@@ -232,10 +236,16 @@ services:
 ```
 
 `scripts/check-exposure.sh` asserts that every Service with a `caddy:` hostname
-label carries either `caddy.import: internal` or `x-published: true`. Wired into
-the Taskfile, and into CI once there is one. A forgotten label fails the check
-instead of quietly widening what the box answers to, and `x-published` is the
-one grep that says what faces the internet.
+label carries either `caddy.import: internal` or `x-published: true` — and
+exactly one of them, since declaring both makes the intent unreadable. It runs
+from `just lint` and from CI on every push and PR
+([ticket 13](../.scratch/unraid-gitops/issues/13-local-tooling.md)). A forgotten
+label fails the check instead of quietly widening what the box answers to, and
+`x-published` is the one grep that says what faces the internet.
+
+Labels are read in both compose forms — the `key: value` map above and the
+`- key=value` list — so reformatting cannot sidestep the check, and a compose
+file the script cannot parse fails rather than passing silently.
 
 Nothing is published today
 ([ticket 05](../.scratch/unraid-gitops/issues/05-remote-access.md)).

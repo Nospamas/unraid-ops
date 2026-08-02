@@ -104,3 +104,22 @@ Two things to settle here that 10 could not settle off-box:
   Expect `HTTP/2 200` and a tree containing `docs/`, `CONTEXT.md`,
   `common.env`. No credential prompt should appear; if one does, the repo is not
   public — stop and check.
+
+## Added by [13](13-local-tooling.md)
+
+**The age key now exists.** 03 decided it; 13 generated it. Recipient
+`age1pj9c9wur8s7h7ynfh0pqxwvkd70hzvq92hvds4t5w0xfa5p83ggqfx5k25`, committed in
+[.sops.yaml](../../../.sops.yaml); the private half is at `age.key` in the repo
+root on the workstation, gitignored.
+
+One more thing to do while the box is in hand — the second of the key's three
+copies per [03](03-secrets-handling.md):
+
+- **Place the private key at `/mnt/user/appdata/komodo/age.key`, mode 600**, and
+  bind-mount it read-only into Periphery beside the `sops` binary. Deliberately
+  **not** on `/boot`, which Unraid Connect ships off-site. The human transfers it;
+  do not paste it into a Web UI terminal if that can be avoided, and if it is
+  pasted, remember the value is then in browser scrollback.
+- **Confirm `sops --decrypt` works from inside Periphery** with that key mounted,
+  before any Stack's `pre_deploy` depends on it. `just verify-secrets` proves the
+  laptop copy; nothing yet proves the box copy.

@@ -78,3 +78,25 @@ What is left here is real but smaller:
   a bump has to trigger a Komodo `Build`, not just a redeploy.
 - **The seam with [13](13-local-tooling.md)** is unchanged: one `renovate.json`,
   two datasources, whoever lands second extends it.
+
+## Added by [13](13-local-tooling.md)
+
+13 landed first, so **[.renovaterc.json5](../../../.renovaterc.json5) already
+exists** — note the filename, which is home-ops' and not the `renovate.json` the
+tickets had been saying. It is scoped to the **mise** and **github-actions**
+managers, with `ignorePaths: ["**/*.sops.*"]`, `schedule: ["every weekend"]`, the
+dependency dashboard on, and auto-merge for minor/patch after a 3-day
+`minimumReleaseAge`. Extend it; do not rewrite it.
+
+Two facts that change this ticket's shape:
+
+- **The Renovate App is already installed on the `Nospamas` account** for
+  `home-ops`, so nothing needs minting — this repo joins an existing installation
+  via *Configure → Repository access*. 13 left that as an outstanding hand-off,
+  **still pending**, and until it is done the config here is inert. Worth
+  confirming before assuming a PR will appear.
+- **`helpers:pinGitHubActionDigests` is already extended**, and the two actions in
+  [.github/workflows/lint.yaml](../../../.github/workflows/lint.yaml) are pinned
+  by commit digest with the version in a trailing comment. That is the same
+  version-plus-digest habit 07 chose for images, so whatever this ticket decides
+  for image tags should read consistently with it.

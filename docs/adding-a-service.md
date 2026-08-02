@@ -80,10 +80,13 @@ first — do not assume it matches `<name>`.
 Most services don't. If it does:
 
 ```bash
-# create it, encrypted, from the start — never write plaintext into the repo
-sops encrypt --input-type dotenv --output-type dotenv \
-  stacks/<name>/secrets.sops.env
+just secret <name>
 ```
+
+This opens `$EDITOR` on `stacks/<name>/secrets.sops.env`, creating it if it does
+not exist, and writes it back encrypted. Plaintext never touches the repo — do
+not encrypt a file you wrote first, and note that `sops --encrypt` on a path
+outside the Stack directory finds no creation rule at all.
 
 Then append the decrypt to `pre_deploy`:
 
@@ -127,7 +130,8 @@ it by hand for the first deploy of a new Stack.
 ## 8. Check it
 
 ```bash
-task lint          # check-exposure.sh, among others
+just lint             # exposure, compose, shell, Dockerfiles
+just verify-secrets   # every *.sops.env still decrypts
 ```
 
 - `https://<name>.rbrb.in` resolves and answers from the LAN and from the

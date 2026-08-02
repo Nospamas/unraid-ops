@@ -1,0 +1,7 @@
+# One rule, one recipient. Decided by tickets 03 and 07.
+# The private key lives at /mnt/user/appdata/komodo/age.key on the box, at
+# age.key in this directory on the laptop, and in KeePassXC.
+
+creation_rules:
+  - path_regex: \.sops\.env$
+    age: age1pj9c9wur8s7h7ynfh0pqxwvkd70hzvq92hvds4t5w0xfa5p83ggqfx5k25

@@ -1,7 +1,9 @@
 # 13 — Decide the local tooling and task runner
 
 Type: grilling
-Status: open
+Status: closed
+Assignee: Nospamas
+Resolved: 2026-08-02
 Blocked by: 03
 
 ## Question
@@ -77,3 +79,166 @@ Renovate is scoped between this ticket and 12.
   is wired in. It needs a YAML reader — `yq` is already in the home-ops pin list.
 - The layout the other candidate tasks were waiting on now exists: see
   [docs/repo-layout.md](../../../docs/repo-layout.md).
+
+## Resolution
+
+**`just`, not go-task.** The ticket framed this as simplicity vs symmetry with
+`~/home-ops`, and the recommendation put to the human was go-task — on the
+argument that go-task's complexity lives in the `includes:` + `.taskfiles/`
+machinery a Talos/Flux cluster needs and this repo would never touch, so a flat
+five-recipe Taskfile costs about what a justfile costs while keeping one syntax
+across both repos. **The human took `just` anyway**, and go-task is therefore
+**not pinned at all** — there is no second runner in this repo, and no reason to
+add one. `just`'s positional parameters are what the daily command
+(`just secret <stack>`) reads like, which was the one place the two tools were
+not equivalent.
+
+Scope was widened mid-ticket by a standing instruction from the human: *get
+everything for general repo tooling setup into this issue as much as we can.*
+That is why this ticket lands housekeeping dotfiles and a CI workflow rather than
+only a runner and a tool list.
+
+### What is now in the repo
+
+| File | What it holds |
+| --- | --- |
+| [.mise.toml](../../../.mise.toml) | eight pinned tools + `SOPS_AGE_KEY_FILE` |
+| [justfile](../../../justfile) | `default`, `secret <stack>`, `lint`, `verify-secrets` |
+| [scripts/check-exposure.sh](../../../scripts/check-exposure.sh) | 07's default-deny check, written not just wired |
+| [.sops.yaml](../../../.sops.yaml) | the one creation rule, with a real recipient |
+| [.renovaterc.json5](../../../.renovaterc.json5) | mise + github-actions managers |
+| [.github/workflows/lint.yaml](../../../.github/workflows/lint.yaml) | `just lint` on push and PR |
+| [.shellcheckrc](../../../.shellcheckrc) [.editorconfig](../../../.editorconfig) [.gitattributes](../../../.gitattributes) | lifted from home-ops |
+| [README.md](../../../README.md) | `mise install`, `just`, the command table |
+
+### The tool list
+
+All `aqua:` backends at exact versions, `gh` the sole `latest` — the home-ops
+convention, and Renovate keeps them fresh:
+
+`just 1.57.0` · `age 1.3.1` · `sops 3.13.3` · `hadolint 2.15.1` · `jq 1.8.2` ·
+`shellcheck 0.11.0` · `yq 4.53.3` · `gh latest`
+
+**Not pinned, deliberately.** Docker — 29.2.1 is system-installed, mise cannot
+pin a daemon, and `compose` is its plugin. Renovate itself — local dry-runs are
+[12](12-image-update-strategy.md)'s call if it ever wants them.
+
+`mise install` was run and all eight resolve on the workstation. `mise` is
+already activated in the human's zsh (`~/.zshrc:105`), so `[env]` applies on
+`cd` and not only inside recipes.
+
+### The age keypair existed nowhere, and now exists
+
+The largest thing this ticket found. [03](03-secrets-handling.md) decided *a
+fresh age keypair for this repo* in three places (box, KeePassXC, laptop) and
+[07](07-repo-layout-and-conventions.md) decided `.sops.yaml`'s shape — but
+**neither generated the key**, so `.sops.yaml` could not be written, and every
+downstream secret-bearing ticket ([08](08-deploy-homepage.md)'s *arr API keys,
+[14](14-cloudflare-zone-and-token.md)'s Cloudflare token, `download`'s WireGuard
+key) was silently blocked on a step no ticket owned.
+
+13 took it, because `age-keygen` is a pure-laptop act on a tool this ticket was
+pinning anyway. Generating it on the box instead was considered and rejected: it
+puts the private key in Unraid Web UI scrollback, and the key has to reach the
+laptop and KeePassXC regardless.
+
+**Recipient: `age1pj9c9wur8s7h7ynfh0pqxwvkd70hzvq92hvds4t5w0xfa5p83ggqfx5k25`**,
+committed in [.sops.yaml](../../../.sops.yaml). The private key is at `age.key`
+in the repo root, mode 600, gitignored (`git check-ignore` confirms).
+
+**Round-trip verified end to end**: `just secret <stack>` on a non-existent file
+opened an editor, wrote back ciphertext with the right recipient,
+`just verify-secrets` passed, and `sops --decrypt` returned the plaintext.
+
+### `scripts/check-exposure.sh` — written here, and it has teeth
+
+07 said this ticket "owns where it is wired in". Wiring in a script that does not
+exist is not wiring, so 13 wrote it. Two things came out of building it that the
+map should not lose:
+
+- **The first version passed silently on files it could not parse.** `yq` ran
+  inside a process substitution, so its failure never reached `set -e` and the
+  script printed `exposure ok` over fixtures that should have failed. A
+  default-deny check that fails open is worse than no check. `yq` now runs into a
+  variable and a parse error is a `FAIL`.
+- **Compose labels have two forms** — the `key: value` map this repo writes, and
+  a `- key=value` list. Reading only the first meant the check could be
+  sidestepped by reformatting. Both are normalised now.
+- **Declaring both `caddy.import: internal` and `x-published: true` is a
+  failure**, not a precedence puzzle. 07 did not say; the intent is unreadable,
+  so it fails.
+
+Verified against seven fixtures — map form, list form, missing declaration, both
+declarations, not fronted, published, and unparseable — plus the empty-`stacks/`
+case, which passes. `shellcheck` is clean.
+
+### Renovate and CI
+
+`.renovaterc.json5`, not `renovate.json` — the home-ops filename, which buys
+comments and trailing commas. Scoped to the **mise** and **github-actions**
+managers only. [12](12-image-update-strategy.md) extends this file with the
+docker/Dockerfile managers rather than inheriting an image policy guessed here;
+the seam the two tickets agreed is unchanged.
+
+**The Renovate App does not need installing.** The human corrected the plan here:
+it is already installed on the `Nospamas` account for `home-ops`, so this repo
+joins an existing installation — *Configure → Repository access → add
+`unraid-ops`*. No repo file, no new credential.
+
+CI is `.github/workflows/lint.yaml`, running `just lint` on push to `main` and on
+every PR, free per [10](10-publish-repo-to-remote.md) because the repo is public.
+**It touches no secrets** — check-exposure reads YAML and `docker compose config`
+reads `common.env` — so the age key never goes near GitHub. Actions are pinned by
+commit digest with the version in a trailing comment, matching the image-pinning
+habit 07 chose, and `helpers:pinGitHubActionDigests` keeps them that way.
+
+### Two defects found in 07's docs, both amended
+
+The map says to amend the doc and say so, rather than deciding in the moment:
+
+- **[docs/repo-layout.md](../../../docs/repo-layout.md)** named `Taskfile.yaml`
+  and `renovate.json` in its tree. Corrected to `justfile` and
+  `.renovaterc.json5`, with `.mise.toml` and `.github/workflows/` added, and the
+  default-deny section updated to describe what the script actually enforces.
+- **[docs/adding-a-service.md](../../../docs/adding-a-service.md)** step 4 said
+  "never write plaintext into the repo" and then gave a command that encrypts an
+  existing plaintext file — and, tested, that command **fails anyway**: SOPS
+  matches creation rules against the *input* path, so encrypting from anywhere
+  outside the Stack directory reports `no matching creation rules found`. Step 4
+  is now `just secret <name>`, which never materialises plaintext. Step 8's
+  `task lint` became `just lint` plus `just verify-secrets`.
+
+### Declined
+
+- **A `reconcile` recipe** triggering a Komodo deploy from the laptop. It needs a
+  Komodo API key and Core URL locally; that key unlocks deploys on the box, so it
+  cannot live in a public repo and would become a *second* KeePassXC-managed
+  laptop secret — minted to avoid waiting for a poll cycle that Komodo's own web
+  UI already short-circuits with a button. Cheap to add later if the wait annoys.
+- **go-task**, on the human's call. See above.
+
+### Outstanding hand-offs
+
+Three, none blocking this ticket:
+
+1. **Add `unraid-ops` to the Renovate App's repository access** on github.com.
+   Until then `.renovaterc.json5` is inert. First PRs would be mise pin bumps
+   only, since no images are in the repo yet.
+2. **File `age.key` in KeePassXC.** It is one of three copies per 03, and right
+   now only one of the three exists.
+3. **Place the key on the box** — handed to [11](11-stand-up-komodo.md), which
+   creates the komodo appdata tree.
+
+### Facts later tickets lean on
+
+- The age recipient is real and committed, so **any ticket may now write a
+  `secrets.sops.env`** — use `just secret <stack>`, never `sops --encrypt` on a
+  path outside the Stack directory.
+- **`just lint` is the gate**, and it runs in CI. A Stack that adds a `caddy:`
+  label without `caddy.import: internal` fails the build on the remote, not only
+  on the laptop.
+- The **mise/github-actions half of `.renovaterc.json5` is written**;
+  [12](12-image-update-strategy.md) extends, and should know the App enablement
+  above is still pending.
+- **No new secrets** live in the repo. The one new *asset* is `age.key`, which is
+  03's root secret finally instantiated, not an addition to the secret set.

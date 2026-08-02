@@ -2,7 +2,7 @@
 secrets.env
 **/secrets.env
 
-# The age private key, if it is kept at the repo root (ticket 13 decides).
+# The age private key. Repo root, found by SOPS_AGE_KEY_FILE in .mise.toml.
 age.key
 
 .claude/

@@ -82,6 +82,13 @@ live artifact; this map only gists them. If a ticket finds the checklist needs a
 *decision* rather than a keystroke, that is a defect in 07 — amend the doc and
 say so on the ticket.
 
+**Local tooling now exists** ([13](issues/13-local-tooling.md)): run
+`mise install` once, then `just` to list the commands. The runner is **`just`**,
+not go-task — do not reach for `task`. `just lint` is the gate every Stack must
+pass and it also runs in CI. **The age key is real now**, so any ticket may write
+a `secrets.sops.env` — always via `just secret <stack>`, never `sops --encrypt`
+on a path outside the Stack directory, which finds no creation rule.
+
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
 concrete artifact would settle an argument faster than discussion.
@@ -248,6 +255,34 @@ concrete artifact would settle an argument faster than discussion.
   does not, the bootstrap-secret question returns) and whether the box has
   outbound HTTPS to github.com. Makes [12](issues/12-image-update-strategy.md)
   cheaper: Renovate and Actions are free on public repos. No new secrets.
+
+- [13 — Decide the local tooling and task runner](issues/13-local-tooling.md)
+  — **`just`, not go-task**; go-task is not pinned at all. The recommendation put
+  was go-task on symmetry-with-home-ops grounds and it was **declined on merit**.
+  Eight tools pinned in [.mise.toml](../../.mise.toml) via `aqua:` — `just`,
+  `age`, `sops`, `hadolint`, `jq`, `shellcheck`, `yq`, plus `gh` as the sole
+  `latest`; docker is not pinned (system daemon). Four recipes in
+  [justfile](../../justfile): `default`, `secret <stack>`, `lint`,
+  `verify-secrets`. **The biggest find: 03's age keypair had never been
+  generated**, so `.sops.yaml` could not exist and 08, 14 and `download` were
+  silently blocked on a step no ticket owned — 13 took it, and the recipient is
+  now committed in [.sops.yaml](../../.sops.yaml) with the private key gitignored
+  at the repo root. Round-trip verified. **`scripts/check-exposure.sh` was
+  written, not merely wired** — and its first version *failed open*, printing
+  `exposure ok` over files it could not parse, which is now fatal; it reads both
+  compose label forms, and declaring `internal` **and** `x-published` is a
+  failure. Verified against seven fixtures. `.renovaterc.json5` (home-ops'
+  filename, not `renovate.json`) covers mise + github-actions only; 12 extends.
+  CI is `just lint` on push and PR, **touching no secrets**. A `reconcile` recipe
+  was **declined** — it needs a Komodo API key on the laptop, a second local
+  secret, to skip a poll the web UI already short-circuits. Two 07 doc defects
+  amended, including an `adding-a-service.md` sops command that **could not have
+  worked**: SOPS matches creation rules against the *input* path. Scope was
+  widened by the human to sweep in all general repo tooling, hence the dotfiles,
+  CI and README. **Three hand-offs still open**: add `unraid-ops` to the existing
+  Renovate App install, file `age.key` in KeePassXC, and place the key on the box
+  (handed to [11](issues/11-stand-up-komodo.md)). No new secrets — `age.key` is
+  03's root secret finally instantiated, not an addition.
 
 ## Not yet specified
 
