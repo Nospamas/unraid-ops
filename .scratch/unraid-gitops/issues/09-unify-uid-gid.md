@@ -45,3 +45,11 @@ will ask where the trio *lives* in the repo; this ticket decides what the values
 
 **HITL** where it touches the box — per the map's Box access note, any chown or
 verification runs as a hand-off checklist, not by the agent.
+
+## Note from [07](07-repo-layout-and-conventions.md)
+
+07 has answered the *where*: `PUID`, `PGID`, `UMASK` and `TZ` live once in
+**`common.env`** at the repo root, reaching every Stack through
+`additional_env_files`. So this ticket writes four values into one file, not
+eight compose files — which lowers the cost of changing them later, but not the
+cost of the `chown` that is the part with teeth.

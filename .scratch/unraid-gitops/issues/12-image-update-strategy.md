@@ -55,3 +55,26 @@ Settle:
 
 Blocked by [07](07-repo-layout-and-conventions.md) because the layout decides
 *where* a tag is written, and Renovate can only bump what it can find.
+
+## Narrowed by [07](07-repo-layout-and-conventions.md)
+
+07 settled the *format* of a tag and in doing so settled most of the choice
+above. Images are written **version + digest in one string** —
+`sonarr:4.0.19.2995@sha256:e679d9…`, the verified `~/home-ops` convention. That
+is what Renovate bumps, and Komodo's `auto_update` path wants bare `latest`, so
+**the first candidate has effectively won**: git names what is running.
+
+What is left here is real but smaller:
+
+- **Confirm or overturn** that reading. If `auto_update` is still wanted for some
+  services, say so now — it means abandoning the digest pin for those, and 07's
+  layout would need a matching exception.
+- **Cadence and blast radius**, grouping, and whether plex and gluetun are
+  handled differently. Untouched by 07.
+- **What "update" means for the built Caddy image** — 07 confirmed it is the
+  **sole bare-tag exception**, because it never reaches a registry and so has no
+  digest to pin. Renovate must instead track the base `caddy` tag in the
+  Dockerfile *and* the `caddy-dns/cloudflare` Go module in the `xcaddy` line, and
+  a bump has to trigger a Komodo `Build`, not just a redeploy.
+- **The seam with [13](13-local-tooling.md)** is unchanged: one `renovate.json`,
+  two datasources, whoever lands second extends it.

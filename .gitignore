@@ -1,0 +1,6 @@
+# Decrypted secrets. The encrypted *.sops.env files are committed; these are not.
+secrets.env
+**/secrets.env
+
+# The age private key, if it is kept at the repo root (ticket 13 decides).
+age.key

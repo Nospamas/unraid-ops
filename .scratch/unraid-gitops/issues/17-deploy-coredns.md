@@ -43,3 +43,14 @@ Komodo must exist to deploy anything.
 Resolved when `dig @100.126.56.26 <anything>.rbrb.in` answers `100.126.56.26`
 from the box, and the stack — Corefile, compose, Komodo Stack TOML — reproduces
 from the repo.
+
+## Settled by [07](07-repo-layout-and-conventions.md)
+
+- The Corefile is `stacks/coredns/Corefile`, beside the compose file, and
+  bind-mounted in.
+- `stacks/coredns/komodo.toml` holds the `[[stack]]`; `project_name = "coredns"`.
+- The explicit host bind is written as a full
+  `<host-ip>:<host-port>:<container-port>` publish —
+  `"100.126.56.26:53:53/udp"` and the `/tcp` pair. 07 accommodated this rather
+  than forcing a uniform port convention on it.
+- No secrets, so `pre_deploy` is the bare `shared`-network create.

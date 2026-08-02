@@ -56,3 +56,27 @@ proxy. Whichever lands second gets to put homepage on a hostname.
 Resolved when a labelled service answers on `https://<name>.rbrb.in` with a
 valid wildcard certificate, and the whole thing — Dockerfile, Build TOML, stack,
 labels — reproduces from the repo.
+
+## Settled by [07](07-repo-layout-and-conventions.md)
+
+The file locations this ticket deferred are now fixed — nothing left to decide,
+only to do:
+
+- `stacks/caddy/Dockerfile`, beside the compose file that uses it.
+- The `[[build]]` sits in `stacks/caddy/komodo.toml`, the same file as the
+  `[[stack]]`.
+- `stacks/caddy/Caddyfile` is a **real bind-mounted file**, not labels on the
+  Caddy container, and it holds the global options plus the `(internal)` snippet
+  that every service's `caddy.import: internal` resolves to.
+- The Cloudflare token is `stacks/caddy/secrets.sops.env`, decrypted by the
+  Stack's `pre_deploy`.
+- The built image is the **only** bare tag in the repo — it never reaches a
+  registry, so there is no digest to pin.
+- Caddy joins the `shared` network like everything else; it does not own or
+  create it. Every Stack's `pre_deploy` creates it idempotently, so Caddy is
+  **not** a deploy-order dependency for the rest of the box.
+
+Also do here, since it is Caddy's file: **write `scripts/check-exposure.sh`** —
+07's enforced default-deny. It asserts every compose Service carrying a `caddy:`
+hostname label also carries either `caddy.import: internal` or an explicit
+`x-published: true`. [13](13-local-tooling.md) wires it into `task lint`.

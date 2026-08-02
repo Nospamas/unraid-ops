@@ -62,3 +62,18 @@ Renovate bot does, so enablement waits on 10 while the decision does not.
 
 The answer states the tool list, the runner, the task inventory, and how
 Renovate is scoped between this ticket and 12.
+
+## Answered in part by [07](07-repo-layout-and-conventions.md)
+
+- **The `.mise.toml` `[env]` question is closed: no.** mise runs on the laptop
+  and never on the box, so it cannot be where compose values live. 07 put the
+  shared trio in `common.env`, read by Komodo. `[env]` here stays scoped to the
+  human's own tooling (`SOPS_AGE_KEY_FILE` and friends), exactly as home-ops
+  uses it.
+- **One task is now required rather than optional:** `task lint` must run
+  `scripts/check-exposure.sh`, which asserts every fronted Service carries either
+  `caddy.import: internal` or an explicit `x-published: true`. 07 chose an
+  enforced check over an honour-system checklist, and this ticket owns where it
+  is wired in. It needs a YAML reader — `yq` is already in the home-ops pin list.
+- The layout the other candidate tasks were waiting on now exists: see
+  [docs/repo-layout.md](../../../docs/repo-layout.md).

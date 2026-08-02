@@ -72,6 +72,16 @@ there is nothing to defend. 05 removed the deadline rather than answering: auth
 is now **fog**, live only once something is actually published. Do not expect a
 ticket to be holding it.
 
+**The layout is now in the repo, not the map**
+([07](issues/07-repo-layout-and-conventions.md)): read
+[CONTEXT.md](../../CONTEXT.md) for vocabulary,
+[docs/repo-layout.md](../../docs/repo-layout.md) for the tree and its
+conventions, and [docs/adding-a-service.md](../../docs/adding-a-service.md)
+before any ticket that adds or migrates a service. Those three files are the
+live artifact; this map only gists them. If a ticket finds the checklist needs a
+*decision* rather than a keystroke, that is a defect in 07 — amend the doc and
+say so on the ticket.
+
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
 concrete artifact would settle an argument faster than discussion.
@@ -177,6 +187,29 @@ concrete artifact would settle an argument faster than discussion.
   `http://gluetun:30024` (the namespace owner resolves, not `qbittorrent`),
   which takes the box's LAN address out of git. No new secrets.
 
+- [07 — Decide the repo layout and per-service conventions](issues/07-repo-layout-and-conventions.md)
+  — the answer is three files in the repo itself:
+  [CONTEXT.md](../../CONTEXT.md) (vocabulary),
+  [docs/repo-layout.md](../../docs/repo-layout.md) and
+  [docs/adding-a-service.md](../../docs/adding-a-service.md). **The atom is a
+  Stack** — one directory under `stacks/` holding *both* its compose file and its
+  Komodo TOML, so adding a service is copying a directory. Komodo's own noun, and
+  it admits the one multi-container unit: `download` (gluetun + qbittorrent),
+  because `network_mode: service:` cannot cross compose projects. **Flat tree, no
+  infra/apps tiers**, plus a deliberate `bootstrap/` holding Komodo's own compose
+  — in git for the rebuild story, never reconciled, since Komodo cannot deploy
+  itself. Shared config is **`common.env` at the root** via
+  `additional_env_files` (**not** mise, which never runs on the box; **verify on
+  the box** that a relative path escaping the run directory resolves). **One
+  network, `shared`** — 06's two needs do collapse — created idempotently by
+  **every** Stack's `pre_deploy`, which also makes `pre_deploy` uniform. Caddy
+  globals live in a **bind-mounted `Caddyfile`**. **Default-deny is enforced by
+  `scripts/check-exposure.sh`**, not left to the checklist: a `caddy:` hostname
+  requires either `caddy.import: internal` or an explicit `x-published: true`,
+  which doubles as the grep for what faces the internet. Images pin **version +
+  digest in one string** (`:4.0.19.2995@sha256:…`), the verified home-ops
+  convention — locally built Caddy is the sole bare-tag exception. No new secrets.
+
 ## Not yet specified
 
 - **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
@@ -194,26 +227,21 @@ concrete artifact would settle an argument faster than discussion.
   is **unverified**; the four *arr need a **shared user-defined network** that is
   `external: true` across compose projects; and repointing each *arr's download
   client at `gluetun:30024` is a **hand edit in four UIs**, because that setting
-  lives in appdata and no push can perform it. Graduates once
-  [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md) resolves.
+  lives in appdata and no push can perform it. **[07](issues/07-repo-layout-and-conventions.md)
+  has removed the other half of the reason this is fog** — the layout and the
+  add-a-service checklist now exist, so a migration is repetitive work rather
+  than fresh decisions, and 07 already fixed each awkward service's shape
+  (plex's appdata path and `/dev/dri`, calibre's `Calibre Library` bind, the
+  gluetun+qbittorrent single Stack). What is still unknown is whether the
+  checklist *holds* — which is exactly what
+  [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md) tests.
+  Graduates once 08 resolves.
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,
   and it holds the resource records and any Variables-based secrets. What backs
   all this up, and what a rebuild-from-scratch actually takes, is unclear until
   the layout exists.
-- **Secret hygiene on the box.** Ticket 01 found the NordVPN WireGuard key and
-  the calibre GUI password sitting in plaintext on `/boot` and in Portainer's
-  appdata. [03](issues/03-secrets-handling.md) has now *added* a third plaintext
-  location on purpose — the decrypted `secrets.env` per stack under
-  `/mnt/user/appdata/komodo` — and named the boundary it relies on: **directory
-  permissions on the komodo appdata tree**. That is the sharpened question: what
-  those permissions actually are on unraid (where shares default permissively),
-  and what happens to the old plaintext copies once Portainer is removed and the
-  dockerMan templates are retired. Still fog because it depends on
-  [07](issues/07-repo-layout-and-conventions.md)'s layout and on Portainer's
-  actual removal. **Rotation was ruled not worth doing now, and did not happen as
-  a side effect of 03** — see Notes.
 - **Authentication in front of the services.** The map twice expected a ticket to
   settle what sits in front of calibre's login and qbittorrent's WebUI; 04 and
   then [05](issues/05-remote-access.md) both declined, because with nothing

@@ -53,3 +53,23 @@ pasted back.
 The answer records what is running, on which ports, where its appdata lives,
 the Komodo version, whether Periphery saw all the containers, and whether the
 two Portainer stacks matched by project name.
+
+## Added by [07](07-repo-layout-and-conventions.md)
+
+Two things to establish while the box is in hand, both cheap here and expensive
+to discover later:
+
+- **Verify that `additional_env_files` resolves a relative path escaping the run
+  directory** — 07's shared config depends on
+  `additional_env_files = ["../../common.env"]` from `stacks/<name>/`, and this
+  has not been tested. If it does not resolve, the fallback is a symlink per
+  Stack; report which.
+- **Record the exact Portainer compose project names** (`docker compose ls`).
+  07 requires every `[[stack]]` to set `project_name` explicitly, and for plex,
+  gluetun and qbittorrent it must match what already exists or Komodo stands up a
+  second copy beside the running one instead of adopting it.
+
+Also worth confirming while there: that the Periphery image's bundled `docker`
+CLI can run `docker network create` from a `pre_deploy` — 07 puts an idempotent
+create in **every** Stack's `pre_deploy` as the way the `shared` network comes
+into existence.

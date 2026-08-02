@@ -1,0 +1,275 @@
+# Repo layout
+
+Decided by [ticket 07](../.scratch/unraid-gitops/issues/07-repo-layout-and-conventions.md).
+Vocabulary is in [CONTEXT.md](../CONTEXT.md); the routine for adding a service is
+in [adding-a-service.md](adding-a-service.md).
+
+## The tree
+
+```
+common.env                  shared config, one copy, read by every Stack
+.sops.yaml                  one creation rule: *.sops.env → the age recipient
+.gitignore                  secrets.env
+renovate.json               image bumps
+Taskfile.yaml               local commands (ticket 13)
+CONTEXT.md                  glossary
+
+bootstrap/
+  compose.yaml              komodo-core, database, periphery
+  README.md                 what to run by hand, in what order
+
+komodo/
+  sync.toml                 the ResourceSync + the Server
+  procedures.toml           cron BatchDeployStackIfChanged
+
+stacks/
+  caddy/
+    komodo.toml             [[stack]] + [[build]]
+    compose.yaml
+    Dockerfile              xcaddy: caddy-docker-proxy + caddy-dns/cloudflare
+    Caddyfile               global options + the (internal) snippet
+    secrets.sops.env        CF_API_TOKEN
+  coredns/
+    komodo.toml
+    compose.yaml
+    Corefile
+  homepage/
+    komodo.toml
+    compose.yaml
+    config/                 git owns these outright — they are files, not a db
+      services.yaml settings.yaml widgets.yaml bookmarks.yaml
+    secrets.sops.env        the *arr API keys
+  download/                 gluetun + qbittorrent, one namespace, one Stack
+    komodo.toml
+    compose.yaml
+    secrets.sops.env        the NordVPN WireGuard key
+  sonarr/ radarr/ prowlarr/ lazylibrarian/
+    komodo.toml
+    compose.yaml
+  plex/
+  calibre/
+
+scripts/
+  check-exposure.sh         every fronted Service is internal or x-published
+```
+
+Eleven Stacks, twelve containers. `bootstrap/` is the exception that proves the
+rule: it is in git so a rebuild starts from a file rather than from memory, but
+nothing reconciles it — Komodo cannot deploy the containers it runs inside.
+
+## Conventions
+
+### One directory, one Stack
+
+Everything about a Stack lives in its directory: the compose file, its Komodo
+declaration, its Caddyfile or Corefile if it has one, its Dockerfile if it is
+built, its encrypted secrets. Adding a service is copying a directory; removing
+one is deleting a directory, and the Komodo resource goes with it.
+
+A Stack holds more than one Service only when the containers must be created and
+destroyed together. Exactly one does: `download`, because qbittorrent uses
+`network_mode: service:gluetun` and recreating gluetun alone leaves qbittorrent
+silently unrouted ([ticket 06](../.scratch/unraid-gitops/issues/06-qbittorrent-vpn-topology.md)).
+`network_mode: service:` cannot cross compose projects, so this is a hard
+constraint, not a preference.
+
+### Komodo declarations sit with what they declare
+
+`stacks/<name>/komodo.toml` holds the `[[stack]]` — and the `[[build]]` too,
+where the Stack is built rather than pulled. `komodo/` holds only what isn't
+per-Stack: the ResourceSync itself, the Server, and the reconcile Procedure.
+
+Every `[[stack]]` sets `project_name` explicitly. For the three containers
+Portainer runs today (plex, gluetun, qbittorrent) it must match the existing
+compose project name, which is how they are adopted rather than duplicated.
+
+### Shared config comes from `common.env`
+
+```toml
+# stacks/sonarr/komodo.toml
+additional_env_files = ["../../common.env"]
+```
+
+```yaml
+# stacks/sonarr/compose.yaml
+environment:
+  PUID: ${PUID}
+  TZ: ${TZ}
+volumes:
+  - ${APPDATA}/sonarr:/config
+  - ${MEDIA}:/media
+```
+
+Named `common.env`, not `.env`, because Komodo generates its own `.env` in each
+run directory from the Stack's `environment` field, and a name collision there
+is silent.
+
+The values themselves are [ticket 09](../.scratch/unraid-gitops/issues/09-unify-uid-gid.md)'s
+call. `common.env` holds `PUID`, `PGID`, `UMASK`, `TZ`, `APPDATA`
+(`/mnt/user/appdata`) and `MEDIA` (`/mnt/user/Media`).
+
+> **Unverified.** That a relative path escaping the run directory resolves in
+> `additional_env_files` has not been tested on the box. Verify it in
+> [ticket 11](../.scratch/unraid-gitops/issues/11-stand-up-komodo.md); if it does
+> not, the fallback is a symlink per Stack, not eleven copies of the values.
+
+`mise` does not enter into this. Its `[env]` block configures the human's laptop
+(`SOPS_AGE_KEY_FILE` and friends) — it never runs on the box, so it cannot be
+where compose values live.
+
+### Appdata paths
+
+`${APPDATA}/<stack>` → `/config`, with two exceptions carried over as found:
+
+- plex is `${APPDATA}/plexmediaserver`
+- calibre also binds `${MEDIA}/books` → `/config/Calibre Library` — note the
+  space in the container path
+
+Media root is `${MEDIA}`.
+
+### Secrets
+
+Per [ticket 03](../.scratch/unraid-gitops/issues/03-secrets-handling.md), and
+dotenv rather than YAML because the consumer is `--env-file`:
+
+- `secrets.sops.env` — encrypted, committed, sits in the Stack directory
+- `secrets.env` — decrypted on the box, gitignored, never committed
+- one root `.sops.yaml`, one creation rule (`path_regex: \.sops\.env$`), one age
+  recipient. There is one key, so per-Stack rules would be ceremony with nothing
+  in them.
+
+Four Stacks carry secrets: `download` (the NordVPN key), `calibre` (the GUI
+password), `caddy` (the Cloudflare token) and `homepage` (the *arr API keys).
+The *arr Stacks themselves carry none — their API keys live in their own
+appdata, and only homepage needs to be told them.
+
+### `pre_deploy` on every Stack
+
+Every Stack has a `pre_deploy`, and every one of them starts by making sure the
+shared network exists:
+
+```toml
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+"""
+```
+
+Stacks with secrets append the decrypt:
+
+```toml
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+sops -d secrets.sops.env > secrets.env
+"""
+```
+
+Repeated in eleven files on purpose. It is order-independent, it survives a box
+rebuild without anyone remembering a step, and it lives in git — which the
+alternatives (one Stack owning the network, or a hand-run `docker network
+create`) each give up one of.
+
+### The shared network
+
+One external bridge named `shared`, joined by everything:
+
+```yaml
+networks:
+  shared:
+    external: true
+```
+
+It carries Caddy's discovery traffic *and* the *arr → qbittorrent path. gluetun
+must be on it either way — it owns qbittorrent's namespace, so it answers on
+`:30024` for the *arr and it carries qbittorrent's `caddy` labels — which leaves
+a second network separating nothing.
+
+### Routing lives in labels
+
+```yaml
+labels:
+  caddy: sonarr.rbrb.in
+  caddy.import: internal
+  caddy.reverse_proxy: "{{upstreams 8989}}"
+```
+
+Global Caddy config and the `(internal)` snippet live in a real file,
+`stacks/caddy/Caddyfile`, bind-mounted into the container — Caddyfile syntax
+stays Caddyfile syntax, and a reviewer meeting `caddy.import: internal` has one
+place to go to learn what it admits.
+
+**qbittorrent is the exception.** Its labels sit on the gluetun Service, because
+a container in another container's namespace has no network identity of its own.
+Anything that assumes labels live on the container being fronted breaks here.
+
+### Default-deny, and the check that enforces it
+
+Every fronted Service is `internal` unless it explicitly declares otherwise:
+
+```yaml
+services:
+  status:
+    x-published: true       # INTERNET-FACING — deliberate
+    labels:
+      caddy: status.rbrb.in
+```
+
+`scripts/check-exposure.sh` asserts that every Service with a `caddy:` hostname
+label carries either `caddy.import: internal` or `x-published: true`. Wired into
+the Taskfile, and into CI once there is one. A forgotten label fails the check
+instead of quietly widening what the box answers to, and `x-published` is the
+one grep that says what faces the internet.
+
+Nothing is published today
+([ticket 05](../.scratch/unraid-gitops/issues/05-remote-access.md)).
+
+### Ports
+
+Ordinary Stacks publish `<host>:<container>`. CoreDNS is the odd one and the
+convention accommodates it rather than fighting it — a full explicit bind:
+
+```yaml
+ports:
+  - "100.126.56.26:53:53/udp"
+  - "100.126.56.26:53:53/tcp"
+```
+
+### Image tags
+
+Version *and* digest, in one string, matching the `~/home-ops` habit:
+
+```yaml
+image: ghcr.io/home-operations/sonarr:4.0.19.2995@sha256:e679d9abf64f7a…
+```
+
+The digest is what actually pins; the version tag is what a human reads. Both in
+the image reference and both maintained by Renovate, so the readable part cannot
+drift the way a comment beside it would.
+
+**The one exception is a locally built image.** Caddy is built on the box by a
+Komodo `Build` and never touches a registry, so it has no digest to pin — it is
+referenced by tag alone. This is the only place a bare tag is allowed, and the
+reason is that there is no registry, not that pinning was skipped.
+
+This decides most of
+[ticket 12](../.scratch/unraid-gitops/issues/12-image-update-strategy.md) in
+Renovate's favour — digests are what Renovate bumps, and Komodo's own
+auto-update path wants `latest`.
+
+### Restart policy
+
+`restart: unless-stopped`, everywhere, stated explicitly in every compose file.
+
+Unraid's autostart list is keyed by **container name**, so unraid and compose
+will race for any container unraid still autostarts. **Turn unraid's autostart
+off for a container before compose takes it over** — the ordering is part of
+adopting, not an afterthought.
+
+### Built images
+
+A Dockerfile sits beside the compose file that uses it, and its `[[build]]` sits
+in the same `komodo.toml` as the `[[stack]]`. One Stack that happens to be built
+is still one directory.
+
+Only Caddy is built, and only because `caddy-docker-proxy` and
+`caddy-dns/cloudflare` have to be compiled into one binary
+([ticket 04](../.scratch/unraid-gitops/issues/04-reverse-proxy-and-domain.md)).

@@ -54,3 +54,26 @@ Do:
 The answer records what the reconcile loop actually did on push, how long it
 took, and anything about the layout that ticket 07 got wrong — that feedback is
 what graduates the remaining service migrations out of the fog.
+
+## Settled by [07](07-repo-layout-and-conventions.md)
+
+The layout this ticket was waiting on exists — see
+[docs/repo-layout.md](../../../docs/repo-layout.md) and the checklist in
+[docs/adding-a-service.md](../../../docs/adding-a-service.md). For homepage
+specifically:
+
+- `stacks/homepage/` holds `komodo.toml`, `compose.yaml`, `config/` and
+  `secrets.sops.env` (the *arr API keys).
+- **`config/` is the one place git owns a service's own settings outright**,
+  because homepage's config is plain YAML files rather than a database. That is
+  what makes homepage the proving case: a `git push` that changes
+  `config/services.yaml` visibly changes the dashboard.
+- Homepage is fronted like anything else — `caddy: home.rbrb.in` plus
+  `caddy.import: internal`, and `scripts/check-exposure.sh` will fail the repo if
+  the second label is missing.
+
+This ticket is the **first end-to-end exercise of the add-a-service checklist**.
+If a step in it turns out to need a decision rather than a keystroke, that is a
+defect in 07's answer — record it here and amend
+[docs/adding-a-service.md](../../../docs/adding-a-service.md) rather than
+deciding it ad hoc.
