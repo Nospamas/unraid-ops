@@ -286,9 +286,13 @@ concrete artifact would settle an argument faster than discussion.
   amended, including an `adding-a-service.md` sops command that **could not have
   worked**: SOPS matches creation rules against the *input* path. Scope was
   widened by the human to sweep in all general repo tooling, hence the dotfiles,
-  CI and README. **Three hand-offs still open**: add `unraid-ops` to the existing
-  Renovate App install, file `age.key` in KeePassXC, and place the key on the box
-  (handed to [11](issues/11-stand-up-komodo.md)). No new secrets — `age.key` is
+  CI and README. **All three hand-offs are done**: Renovate is live and reading
+  the config ([dashboard #1](https://github.com/Nospamas/unraid-ops/issues/1)),
+  `age.key` is in KeePassXC, and the key is on the box at
+  `/mnt/user/appdata/komodo/age.key` — though **nothing has decrypted with the
+  box copy yet**, which [11](issues/11-stand-up-komodo.md) carries. Placing it
+  also produced the first look at appdata permissions — **777**, recorded on
+  [19](issues/19-secret-hygiene-on-the-box.md). No new secrets — `age.key` is
   03's root secret finally instantiated, not an addition.
 
 ## Not yet specified

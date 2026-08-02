@@ -90,11 +90,14 @@ dependency dashboard on, and auto-merge for minor/patch after a 3-day
 
 Two facts that change this ticket's shape:
 
-- **The Renovate App is already installed on the `Nospamas` account** for
-  `home-ops`, so nothing needs minting — this repo joins an existing installation
-  via *Configure → Repository access*. 13 left that as an outstanding hand-off,
-  **still pending**, and until it is done the config here is inert. Worth
-  confirming before assuming a PR will appear.
+- **Renovate is live on this repo** as of 2026-08-02 — it joined the existing
+  `Nospamas` account installation, and its dashboard is
+  [#1](https://github.com/Nospamas/unraid-ops/issues/1). Nothing needs minting or
+  enabling. It already parses the `version@digest` action pins correctly, which is
+  direct evidence the same format will work for image tags. Note it reads
+  **seven** mise tools, not eight: `gh = "latest"` has no version to track, so a
+  bare tag is invisible to Renovate — the same reason 07's digest pinning matters
+  here, now demonstrated rather than argued.
 - **`helpers:pinGitHubActionDigests` is already extended**, and the two actions in
   [.github/workflows/lint.yaml](../../../.github/workflows/lint.yaml) are pinned
   by commit digest with the version in a trailing comment. That is the same

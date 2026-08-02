@@ -217,17 +217,31 @@ The map says to amend the doc and say so, rather than deciding in the moment:
   UI already short-circuits with a button. Cheap to add later if the wait annoys.
 - **go-task**, on the human's call. See above.
 
-### Outstanding hand-offs
+### Hand-offs — all three done, 2026-08-02
 
-Three, none blocking this ticket:
+1. **Renovate App repository access — done.** The dashboard issue proves it:
+   [#1](https://github.com/Nospamas/unraid-ops/issues/1), opened 08:40Z by
+   `brotherreno[bot]`. It detects both managers, and the actions parse in the
+   `version@digest` form. It lists **seven** mise tools, not eight — `gh =
+   "latest"` has no version to track, which is inherent to a floating pin rather
+   than a config fault. Nothing to bump today, since everything was pinned to
+   latest hours earlier.
+2. **`age.key` filed in KeePassXC — done.**
+3. **Key placed on the box — done**, `/mnt/user/appdata/komodo/age.key`, 189
+   bytes matching the laptop copy byte-for-byte, mode `0600 root`. It took two
+   attempts: the first transfer created the file but not its contents, so the
+   check that caught it — `grep public` against the file, which needs no tools
+   on the box and proves the key is the *right* one, not merely non-empty — is
+   worth reusing on any future box rebuild.
 
-1. **Add `unraid-ops` to the Renovate App's repository access** on github.com.
-   Until then `.renovaterc.json5` is inert. First PRs would be mise pin bumps
-   only, since no images are in the repo yet.
-2. **File `age.key` in KeePassXC.** It is one of three copies per 03, and right
-   now only one of the three exists.
-3. **Place the key on the box** — handed to [11](11-stand-up-komodo.md), which
-   creates the komodo appdata tree.
+**Still unproven**: nothing has decrypted with the box copy. `just verify-secrets`
+exercises the laptop key only; the box key is untested until Periphery uses it,
+which [11](11-stand-up-komodo.md) carries.
+
+**Also observed while placing it**: `/mnt/user/appdata/komodo` and
+`/mnt/user/appdata` are both mode **777**. Recorded on
+[19](19-secret-hygiene-on-the-box.md) — it is the first look at the boundary 03
+said it relied on, and it is not there.
 
 ### Facts later tickets lean on
 
@@ -237,8 +251,8 @@ Three, none blocking this ticket:
 - **`just lint` is the gate**, and it runs in CI. A Stack that adds a `caddy:`
   label without `caddy.import: internal` fails the build on the remote, not only
   on the laptop.
-- The **mise/github-actions half of `.renovaterc.json5` is written**;
-  [12](12-image-update-strategy.md) extends, and should know the App enablement
-  above is still pending.
+- The **mise/github-actions half of `.renovaterc.json5` is written**, and
+  **Renovate is live and reading it** ([#1](https://github.com/Nospamas/unraid-ops/issues/1));
+  [12](12-image-update-strategy.md) extends rather than rewrites.
 - **No new secrets** live in the repo. The one new *asset* is `age.key`, which is
   03's root secret finally instantiated, not an addition to the secret set.
