@@ -27,8 +27,9 @@ Do:
   path inside and outside the container or stack path resolution breaks — mount
   `/mnt/user/appdata/komodo:/mnt/user/appdata/komodo`, not the usual
   `:/etc/komodo`. This is the single most likely thing to go wrong.
-- **Point Core at the remote** from [10](10-publish-repo-to-remote.md) with the
-  git account and HTTPS token.
+- **Point Core at the remote** from [10](10-publish-repo-to-remote.md) —
+  `https://github.com/Nospamas/unraid-ops`, **public, no credential**. See the
+  section 10 added below before configuring a git account.
 - **Confirm Periphery sees the host's containers** — all eight workloads plus
   Portainer should appear. This is the check that the docker socket mount and
   the passkey handshake are right.
@@ -73,3 +74,33 @@ Also worth confirming while there: that the Periphery image's bundled `docker`
 CLI can run `docker network create` from a `pre_deploy` — 07 puts an idempotent
 create in **every** Stack's `pre_deploy` as the way the `shared` network comes
 into existence.
+
+## Added by [10](10-publish-repo-to-remote.md)
+
+The remote is live: `https://github.com/Nospamas/unraid-ops`, **public**, default
+branch `main`. Anonymous HTTPS clone is verified working from the workstation
+with credentials explicitly disabled — so **there is no token to configure**, and
+10 deliberately created none.
+
+Two things to settle here that 10 could not settle off-box:
+
+- **Whether Komodo accepts a Stack with no `git_account` set.** The docs read as
+  though it is optional for public repos, but this is **unverified**. Leave
+  `git_account` empty and see whether the clone succeeds. **If it turns out to be
+  mandatory even for anonymous clones, say so loudly** — that resurrects the
+  bootstrap-secret problem 10 dissolved (a credential that unlocks the repo
+  cannot live in the repo), and it needs a deliberate answer, not a quietly
+  minted token.
+- **Confirm the box has outbound HTTPS to github.com.** Folded in here rather
+  than run as a separate hand-off, since 11 is already a box session and the
+  first ResourceSync proves it better than a standalone clone would:
+
+  ```
+  curl -sI https://github.com/Nospamas/unraid-ops | head -1
+  git clone --depth 1 https://github.com/Nospamas/unraid-ops /tmp/rt && \
+    ls /tmp/rt && rm -rf /tmp/rt
+  ```
+
+  Expect `HTTP/2 200` and a tree containing `docs/`, `CONTEXT.md`,
+  `common.env`. No credential prompt should appear; if one does, the repo is not
+  public — stop and check.
