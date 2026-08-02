@@ -17,11 +17,18 @@ secret stack:
         echo "no age.key at $SOPS_AGE_KEY_FILE -- restore it from KeePassXC"
         exit 1
     fi
-    if [[ ! -d "stacks/{{ stack }}" ]]; then
-        echo "no such Stack: stacks/{{ stack }}"
+    # bootstrap is not a Stack -- Komodo cannot deploy itself -- but it holds
+    # secrets under the same convention. Ticket 11.
+    if [[ "{{ stack }}" == bootstrap ]]; then
+        dir=bootstrap
+    else
+        dir="stacks/{{ stack }}"
+    fi
+    if [[ ! -d "$dir" ]]; then
+        echo "no such Stack: $dir"
         exit 1
     fi
-    sops "stacks/{{ stack }}/secrets.sops.env"
+    sops "$dir/secrets.sops.env"
 
 # Check exposure, compose files, shell scripts and Dockerfiles
 lint:
@@ -34,6 +41,10 @@ lint:
     for compose in stacks/*/compose.yaml; do
         docker compose --env-file common.env --file "$compose" config --quiet
     done
+    # bootstrap has its own env, and is never reconciled -- but an unvalidated
+    # compose file in git is exactly what this recipe exists to catch.
+    docker compose --env-file bootstrap/compose.env \
+        --file bootstrap/compose.yaml config --quiet
     echo "compose ok"
 
     scripts=(scripts/*.sh)
@@ -59,7 +70,7 @@ verify-secrets:
         exit 1
     fi
 
-    encrypted=(stacks/*/secrets.sops.env)
+    encrypted=(stacks/*/secrets.sops.env bootstrap/secrets.sops.env)
     if ((!${#encrypted[@]})); then
         echo "no encrypted files yet"
         exit 0

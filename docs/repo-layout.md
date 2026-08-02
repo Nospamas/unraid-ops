@@ -19,7 +19,9 @@ CONTEXT.md                  glossary
   lint.yaml                 just lint, on push and PR
 
 bootstrap/
-  compose.yaml              komodo-core, database, periphery
+  compose.yaml              komodo-core, mongo, periphery
+  compose.env               non-secret config
+  secrets.sops.env          Komodo's DB creds, JWT secret, initial admin
   README.md                 what to run by hand, in what order
 
 komodo/
@@ -60,6 +62,12 @@ scripts/
 Eleven Stacks, twelve containers. `bootstrap/` is the exception that proves the
 rule: it is in git so a rebuild starts from a file rather than from memory, but
 nothing reconciles it — Komodo cannot deploy the containers it runs inside.
+
+That exception reaches the secrets convention too. `bootstrap/secrets.sops.env`
+follows the same creation rule as every Stack's, but it is decrypted **by hand**
+during bootstrap rather than by a `pre_deploy`, because the thing that runs
+`pre_deploy` is what is being installed. `just secret bootstrap` edits it;
+[bootstrap/README.md](../bootstrap/README.md) has the order.
 
 ## Conventions
 

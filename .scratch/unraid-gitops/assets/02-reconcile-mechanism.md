@@ -3,6 +3,16 @@
 Asset for [02 — Choose the reconcile mechanism](../issues/02-choose-reconcile-mechanism.md).
 Researched 2026-08-01.
 
+> **Researched against Komodo v1.18.0. Current is v2.3.1** (released
+> 2026-07-31). The choice stands — every field this comparison rests on
+> (`pre_deploy`, `project_name`, `additional_env_files`, `files_on_host`,
+> ResourceSync, empty `git_account`) survives v2, and the database options are
+> unchanged. What is stale is the install mechanics: **passkeys are gone**
+> (Core and Periphery auto-generate a rotating keypair), **Periphery now dials
+> Core** rather than the reverse, `:latest` is deprecated in favour of `:2`, and
+> the Community Apps route is dropped in favour of one compose file. See
+> [11](../issues/11-stand-up-komodo.md)'s findings.
+
 ## The choice
 
 **Komodo**, running entirely as containers on the box: `komodo-core` +

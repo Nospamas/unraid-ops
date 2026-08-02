@@ -1,0 +1,93 @@
+# Bootstrap
+
+Komodo runs everything else on this box. Nothing runs Komodo, so these three
+containers are stood up by hand — once now, and again only if the box is
+rebuilt. This directory is in git for the second case.
+
+Decided by [ticket 02](../.scratch/unraid-gitops/issues/02-choose-reconcile-mechanism.md),
+installed by [ticket 11](../.scratch/unraid-gitops/issues/11-stand-up-komodo.md).
+
+## The thing that makes this awkward
+
+There is no `docker compose` on the Unraid host — no plugin, and the OS rebuilds
+from `/boot` on every reboot
+([ticket 01](../.scratch/unraid-gitops/issues/01-inventory-running-containers.md)).
+That is the whole reason Komodo was chosen: its Periphery image carries compose
+and git so the host does not have to.
+
+Which leaves the bootstrap needing a compose it does not have yet. The way out
+is that **the Periphery image is itself a compose implementation**, so it can
+deploy the stack it belongs to:
+
+```sh
+alias dc='docker run --rm \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -v /mnt/user/appdata/komodo:/mnt/user/appdata/komodo \
+  -w /mnt/user/appdata/komodo/bootstrap \
+  --entrypoint docker ghcr.io/moghtech/komodo-periphery:2.3.1 compose -p komodo'
+```
+
+Portainer is the fallback — it embeds compose too, and it is still on the box
+until [ticket 02](../.scratch/unraid-gitops/issues/02-choose-reconcile-mechanism.md)
+retires it. Paste `compose.yaml` into a web-editor stack and supply the env vars
+in its UI. Prefer the alias above: it keeps Komodo's secrets out of Portainer's
+database, and it still works after Portainer is gone.
+
+## Order
+
+Everything lives under `/mnt/user/appdata/komodo`, which is also
+`PERIPHERY_ROOT_DIRECTORY` — **identical inside and outside the container**, or
+compose path resolution breaks
+([komodo#180](https://github.com/moghtech/komodo/discussions/180)).
+
+1. **Place the age key** at `/mnt/user/appdata/komodo/age.key`, mode 600, from
+   KeePassXC. Not on `/boot` — Unraid Connect ships the flash drive off-site
+   ([ticket 03](../.scratch/unraid-gitops/issues/03-secrets-handling.md)).
+2. **Place the sops binary** at `/mnt/user/appdata/komodo/bin/sops`, mode 755 —
+   one static Go binary, matching the version pinned in
+   [.mise.toml](../.mise.toml):
+
+   ```sh
+   curl -fsSL -o /mnt/user/appdata/komodo/bin/sops \
+     https://github.com/getsops/sops/releases/download/v3.13.3/sops-v3.13.3.linux.amd64
+   echo "e5bec3346a873ae91d871550f3e698c1aad962aff462a080e40f25fde17fef6b  /mnt/user/appdata/komodo/bin/sops" \
+     | sha256sum -c -
+   chmod 755 /mnt/user/appdata/komodo/bin/sops
+   ```
+3. **Put this directory** at `/mnt/user/appdata/komodo/bootstrap`.
+4. **Decrypt the secrets** — the one `sops` invocation that is not a
+   `pre_deploy`, because there is no Komodo yet to run one:
+
+   ```sh
+   SOPS_AGE_KEY_FILE=/mnt/user/appdata/komodo/age.key \
+     /mnt/user/appdata/komodo/bin/sops --decrypt secrets.sops.env > secrets.env
+   chmod 600 secrets.env
+   ```
+
+5. **Up**, with both env files:
+
+   ```sh
+   dc --env-file compose.env --env-file secrets.env up -d
+   ```
+
+6. **Log in** at `http://192.168.1.195:9120` with the admin credentials from
+   `secrets.env`. Change the password in the UI if you like — the init values
+   only apply on first launch.
+
+## What is a secret here, and why it cannot follow the usual route
+
+Every other Stack decrypts its secrets in a Komodo `pre_deploy`. This one
+cannot, so `secrets.env` is written by hand and stays on disk beside the compose
+file. The values in it are **not** in the low-value class the map's secret note
+describes: `KOMODO_JWT_SECRET` signs Komodo's own sessions, and Core answers on
+the LAN, so leaking it means full control of every container on the box.
+
+Regenerating them all is a `just secret bootstrap` edit plus a redeploy; only
+`KOMODO_DATABASE_*` needs care, since Mongo already has the user.
+
+## Rebuilding the box
+
+Clone the repo, restore `age.key` from KeePassXC, re-fetch the sops binary, then
+steps 3–5. Appdata under `/mnt/user/appdata/komodo` carries the Mongo data and
+the Core/Periphery keypair, so a restore of appdata plus this file is the whole
+of it. Everything Komodo manages comes back from the repo through ResourceSync.
