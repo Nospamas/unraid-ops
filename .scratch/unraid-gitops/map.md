@@ -157,6 +157,26 @@ concrete artifact would settle an argument faster than discussion.
   per-service opt-in. Auth was **not** settled; it went back to the fog. No new
   secrets.
 
+- [06 — Decide the qbittorrent VPN topology](issues/06-qbittorrent-vpn-topology.md)
+  — **topology adopted unchanged** (gluetun sidecar); findings in
+  [assets/06-vpn-topology.md](assets/06-vpn-topology.md). **Only qbittorrent's
+  torrent-*related* traffic is tunnelled** — every service UI and all other HTTP stays
+  ordinary LAN/tailnet traffic, which the current setup already does. Treat this
+  as a constraint to preserve on any change to the stack; tracker announces are
+  the one HTTP flow that is tunnelled, correctly. **NordVPN stays and
+  port forwarding is not being bought** — qbittorrent is knowingly leech-only,
+  a settled posture, not a defect. The two firewall env vars are **not gluetun
+  variables at all** and are **dropped, not corrected**: spelling
+  `FIREWALL_OUTBOUND_SUBNETS=0.0.0.0/0` properly would let all traffic bypass
+  the tunnel, so the typo is the only reason the kill switch still holds. The
+  kill switch is otherwise sound — qbittorrent has no interface of its own, and
+  `HEALTH_RESTART_VPN` restarts the VPN *process*, not the container. **New
+  hazard**: recreating gluetun orphans qbittorrent in a dead namespace, silently
+  — which GitOps makes routine, since any push touching gluetun recreates it.
+  The *arr move to a **shared user-defined network**, addressed
+  `http://gluetun:30024` (the namespace owner resolves, not `qbittorrent`),
+  which takes the box's LAN address out of git. No new secrets.
+
 ## Not yet specified
 
 - **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
@@ -166,9 +186,16 @@ concrete artifact would settle an argument faster than discussion.
   sharpen is that they are **not uniform** — plex, gluetun and qbittorrent
   already have compose definitions in Portainer's appdata to lift, while the
   other five exist only as unraid template XML and must be translated. Plex is
-  the awkward one (20G appdata, `/dev/dri` passthrough, claim token). Graduates
-  once [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md)
-  resolves.
+  the awkward one (20G appdata, `/dev/dri` passthrough, claim token).
+  [06](issues/06-qbittorrent-vpn-topology.md) has now loaded three requirements
+  onto the qbittorrent/gluetun slice specifically, which argue further against
+  one uniform ticket: the pair must be **recreated together or qbittorrent is
+  silently left with no network**, and whether Komodo's Deploy does that unaided
+  is **unverified**; the four *arr need a **shared user-defined network** that is
+  `external: true` across compose projects; and repointing each *arr's download
+  client at `gluetun:30024` is a **hand edit in four UIs**, because that setting
+  lives in appdata and no push can perform it. Graduates once
+  [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md) resolves.
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,

@@ -34,10 +34,21 @@ carry:**
   label, but it can only reach what shares a network with it. Every fronted
   service joins `proxy` in addition to its own stack network — so the layout
   needs a place to declare that network once and a convention for joining it.
-  This also interacts with the *arr → qbittorrent reachability problem
-  [01](01-inventory-running-containers.md) found and [06](06-qbittorrent-vpn-topology.md)
-  owns: a shared network may solve both, or may not, given
-  `network_mode: service:gluetun`.
+  **[06](06-qbittorrent-vpn-topology.md) has resolved the open half of this**: a
+  shared network *does* solve the *arr → qbittorrent problem too, so the two
+  needs likely collapse into one network rather than two. Three wrinkles come
+  with it, all landing on this ticket:
+    - It must be **`external: true`** in every stack that references it, because
+      Komodo runs each stack as its own compose project. Something outside the
+      stacks has to create it once — a Komodo Procedure, or a declaration that
+      one stack owns. Decide which, and where it is written.
+    - **gluetun joins it, not qbittorrent.** A container using
+      `network_mode: service:gluetun` has no network identity of its own, so it
+      cannot join a network and does not resolve by name. The *arr address
+      `http://gluetun:30024`.
+    - By the same logic, **qbittorrent's `caddy` labels have to sit on the
+      gluetun service**. If the add-a-service checklist assumes labels live on
+      the container being fronted, this is the exception that breaks it.
 - **Routing lives in labels.** A service's hostname is a `caddy` label on its own
   compose file, not central config — so "adding a service" grows a routing step,
   and the add-a-service checklist must say what a standard label set looks like.
