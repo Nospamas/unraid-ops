@@ -34,6 +34,13 @@ to paste back — and works from what comes back. This makes otherwise-AFK ticke
 HITL wherever they touch the box. Direct access can be granted later if the
 hand-off proves too slow; until then, assume it is not there.
 
+**Surface the hand-offs**: because Box access makes HITL routine, most tickets
+end owing the human actions only they can perform. **Put them in their own
+block at the very end of the session summary — never as a closing prose
+paragraph.** One line each, starting with the verb, saying what stays broken
+until it is done. A hand-off nobody notices silently stalls the map: 13's
+Renovate config sat inert waiting on one click.
+
 **Container scope**: git owns *all eight* workload containers, not just the five
 the destination names — sonarr, radarr, prowlarr, qbittorrent, gluetun, plex,
 calibre, lazylibrarian, plus a homepage that does not exist yet. No two-tier box
