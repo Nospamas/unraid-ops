@@ -4,3 +4,5 @@ secrets.env
 
 # The age private key, if it is kept at the repo root (ticket 13 decides).
 age.key
+
+.claude/

@@ -229,6 +229,26 @@ concrete artifact would settle an argument faster than discussion.
   and `/dev/dri` access is group-dependent, so hardware transcoding is a check,
   not an assumption. No new secrets.
 
+- [10 — Publish the repo to a remote the box can reach](issues/10-publish-repo-to-remote.md)
+  — **`https://github.com/Nospamas/unraid-ops`, public, cloned anonymously.
+  There is no credential.** The ticket was written expecting private and
+  therefore expecting to house a *bootstrap secret* — the one token that cannot
+  live in the repo it unlocks; public dissolves that question entirely, so
+  `bootstrap/compose.yaml` stays clean and 03's rebuild story stays **clone +
+  restore one age key**. The case against public was put and **withdrawn on
+  evidence**: `home-ops` is itself public and already commits
+  `cloudflare-tunnel` and `external-dns-cloudflare` ciphertext — the same class
+  as 04's Cloudflare token — so public + SOPS is a settled habit here, not a
+  fresh exposure. **Do not re-raise visibility.** All of `.scratch/` ships, and
+  **history was published as-is**: a sweep of all ten commits found no key
+  material (the only high-entropy strings are image digests) and confirmed 01's
+  on-box redaction held, so nothing needed rewriting. `master` → `main` before
+  the first push. Two facts went to [11](issues/11-stand-up-komodo.md) —
+  whether Komodo accepts a Stack with **no `git_account`** (unverified; if it
+  does not, the bootstrap-secret question returns) and whether the box has
+  outbound HTTPS to github.com. Makes [12](issues/12-image-update-strategy.md)
+  cheaper: Renovate and Actions are free on public repos. No new secrets.
+
 ## Not yet specified
 
 - **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
