@@ -111,6 +111,14 @@ Before deploying, confirm the uid/gid and the `/config` bind match what is
 already on disk — a service that starts with the wrong PUID writes a second
 config tree and looks like data loss.
 
+Every Stack takes its uid from [common.env](../common.env), which is 99:100 for
+all of them. Three services used to run as something else — plex and gluetun as
+1000:1000, qbittorrent as 1001:1001 — so their appdata is only compatible once
+the chown in
+[ticket 20](../.scratch/unraid-gitops/issues/20-chown-to-99-100.md) has run.
+Adopting one of those three before 20 is done means it cannot read its own
+config.
+
 ## 7. Deploy
 
 Commit and push. The reconcile Procedure picks it up on its next run, or trigger
@@ -138,7 +146,11 @@ task lint          # check-exposure.sh, among others
   leaves qbittorrent in a dead namespace with no error. That is why they are one
   Stack.
 - **plex** needs `/dev/dri` passthrough and a pinned `VERSION`, and its appdata
-  is `${APPDATA}/plexmediaserver`.
+  is `${APPDATA}/plexmediaserver`. It also drops from uid 1000 to 99, and
+  `/dev/dri` access depends on the container user's groups — so after the first
+  deploy, play something that transcodes and confirm the dashboard still says
+  `(hw)`. If it does not, that is a group problem, not a reason to give plex its
+  old uid back.
 - **calibre** binds `${MEDIA}/books` → `/config/Calibre Library`. The space in
   that path is real.
 - **homepage** is the one service whose own config git owns outright — it is

@@ -210,6 +210,25 @@ concrete artifact would settle an argument faster than discussion.
   digest in one string** (`:4.0.19.2995@sha256:…`), the verified home-ops
   convention — locally built Caddy is the sole bare-tag exception. No new secrets.
 
+- [09 — Unify PUID/PGID/UMASK, and decide what happens to files already written](issues/09-unify-uid-gid.md)
+  — **99:100 everywhere, no exceptions**, `UMASK=002`, `TZ=America/Vancouver`,
+  written to [common.env](../../common.env). 99:100 because it is what the
+  *rest of the box* writes as (SMB, the file manager, Docker Safe New Perms),
+  not merely the container majority; plex was offered an exception to skip a 20G
+  chown and it was **declined**. **The media binds do not move.** A TRaSH-style
+  single `${MEDIA}` → `/media` mount was decided and then **reversed on
+  evidence**: the array is six XFS disks under shfs holding a 39.1 TB library,
+  so a download and its destination share a physical disk only by chance
+  (~1 in 6), and hardlinks cannot cross filesystems — the move would have cost
+  stored-path surgery in five databases (including plex's, with `Plex SQLite`)
+  and bought a coin flip. **Hardlinks and single-mount are now out of scope.**
+  Files on disk are fixed by **one big-bang chown window**, everything stopped —
+  raised as [20 — Chown the tree to 99:100](issues/20-chown-to-99-100.md), which
+  must run before plex, gluetun or qbittorrent adopt. Because no path changes,
+  **adoption order is otherwise unconstrained**. New risk: plex drops to uid 99
+  and `/dev/dri` access is group-dependent, so hardware transcoding is a check,
+  not an assumption. No new secrets.
+
 ## Not yet specified
 
 - **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
@@ -235,7 +254,13 @@ concrete artifact would settle an argument faster than discussion.
   gluetun+qbittorrent single Stack). What is still unknown is whether the
   checklist *holds* — which is exactly what
   [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md) tests.
-  Graduates once 08 resolves.
+  [09](issues/09-unify-uid-gid.md) has since removed one of the arguments
+  against a uniform ticket: **no service's stored paths change**, so no
+  migration carries DB surgery, and the import chain does *not* have to move as
+  a unit. What it adds instead is an ordering constraint —
+  [20](issues/20-chown-to-99-100.md) must run before plex, gluetun or
+  qbittorrent adopt, since until it does those three cannot read their own
+  appdata as uid 99. Graduates once 08 resolves.
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,
@@ -269,3 +294,12 @@ concrete artifact would settle an argument faster than discussion.
   its own destination.
 - **Unraid array, share and disk configuration.** This map governs containers
   and their config, not the storage layer underneath them.
+- **Hardlinked imports, and the single `/media` mount that would enable them**
+  ([09](issues/09-unify-uid-gid.md)). Out of scope on capability, not on
+  sharpness: `git push` reconciling the box does not require them, and on this
+  array they cannot reliably work — six XFS disks under shfs, a 39.1 TB library,
+  and hardlinks that cannot cross filesystems. Making them viable means
+  restructuring the share layout, which is the storage layer ruled out above.
+  A fresh effort if it is ever wanted; **not** a tidy-up someone should do in
+  passing, which is why [docs/repo-layout.md](../../docs/repo-layout.md) says so
+  at the binds themselves.

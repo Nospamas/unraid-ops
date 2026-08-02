@@ -94,19 +94,24 @@ additional_env_files = ["../../common.env"]
 # stacks/sonarr/compose.yaml
 environment:
   PUID: ${PUID}
+  PGID: ${PGID}
+  UMASK: ${UMASK}
   TZ: ${TZ}
 volumes:
   - ${APPDATA}/sonarr:/config
-  - ${MEDIA}:/media
+  - ${MEDIA}/tv:/tv
+  - ${MEDIA}/downloads:/downloads
 ```
 
 Named `common.env`, not `.env`, because Komodo generates its own `.env` in each
 run directory from the Stack's `environment` field, and a name collision there
 is silent.
 
-The values themselves are [ticket 09](../.scratch/unraid-gitops/issues/09-unify-uid-gid.md)'s
-call. `common.env` holds `PUID`, `PGID`, `UMASK`, `TZ`, `APPDATA`
-(`/mnt/user/appdata`) and `MEDIA` (`/mnt/user/Media`).
+[Ticket 09](../.scratch/unraid-gitops/issues/09-unify-uid-gid.md) settled the
+values, and [common.env](../common.env) now holds them: `PUID=99`, `PGID=100`
+(nobody:users, Unraid's own convention, no per-service exceptions), `UMASK=002`,
+`TZ=America/Vancouver`, `APPDATA=/mnt/user/appdata` and
+`MEDIA=/mnt/user/Media`.
 
 > **Unverified.** That a relative path escaping the run directory resolves in
 > `additional_env_files` has not been tested on the box. Verify it in
@@ -125,7 +130,20 @@ where compose values live.
 - calibre also binds `${MEDIA}/books` → `/config/Calibre Library` — note the
   space in the container path
 
-Media root is `${MEDIA}`.
+### Media paths
+
+Media binds are **per category, exactly as the box already has them** —
+`${MEDIA}/tv` → `/tv`, `${MEDIA}/downloads` → `/downloads`, and so on. No
+service gets `${MEDIA}` mounted whole.
+
+This is deliberate, and [ticket 09](../.scratch/unraid-gitops/issues/09-unify-uid-gid.md)
+holds the reasoning. The alternative — one `${MEDIA}` → `/media` mount
+everywhere, as the TRaSH guides describe — exists to enable hardlinked imports,
+and hardlinks cannot pay off here: the array is six XFS disks under one shfs
+overlay with a 39 TB library spread across them, so a download and its library
+destination land on the same physical disk only by chance. Going single-mount
+would have cost stored-path surgery in five services' databases and bought
+nothing. **Do not "tidy" these binds into a single mount** without reopening 09.
 
 ### Secrets
 
