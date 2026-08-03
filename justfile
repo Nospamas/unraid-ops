@@ -38,6 +38,10 @@ bootstrap *args:
 reconcile:
     bash scripts/komodo.sh reconcile
 
+# Destroy one Stack's containers and build them again -- pass --apply to commit
+redeploy stack *args:
+    bash scripts/komodo.sh redeploy {{ stack }} {{ args }}
+
 # Report ownership and modes across the shared trees
 permissions-audit:
     bash scripts/permissions.sh audit

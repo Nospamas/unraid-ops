@@ -145,12 +145,60 @@ cmd_reconcile() {
     run reconcile '{"type":"RunProcedure","params":{"procedure":"reconcile"}}'
 }
 
+# Destroy a Stack's containers and build them again. Ticket 21.
+#
+# `reconcile` cannot do this: DeployStackIfChanged deploys on a *changed*
+# config hash, and the container this exists to repair has an unchanged one.
+# A deploy that fails at docker's networking stage leaves the container Up with
+# no networks and no published ports, and neither a restart nor the next
+# reconcile notices -- so the loop reports success over a container serving
+# nothing. Recreating is the only cure.
+#
+# Named Stacks only, never a pattern: this is the unconditional deploy the
+# reconcile Procedure is deliberately not allowed to do.
+cmd_redeploy() {
+    local stack apply=0
+    stack="${1:-}"
+    case "${2:-}" in
+    --apply) apply=1 ;;
+    "") ;;
+    *) stack="" ;;
+    esac
+    if [[ -z "$stack" ]]; then
+        echo "usage: komodo.sh redeploy <stack> [--apply]" >&2
+        exit 1
+    fi
+    if [[ ! -d "$root/stacks/$stack" ]]; then
+        echo "no such Stack: stacks/$stack" >&2
+        exit 1
+    fi
+
+    echo "  would destroy and rebuild the containers of Stack '$stack'"
+    echo "  appdata binds are untouched; anything written inside the container is not"
+
+    if ((!apply)); then
+        echo
+        echo "dry run -- nothing was changed. re-run with:  just redeploy $stack --apply"
+        return
+    fi
+
+    login
+    run "destroy $stack" "$(jq -n --arg s "$stack" \
+        '{type:"DestroyStack",params:{stack:$s}}')"
+    run "deploy $stack" "$(jq -n --arg s "$stack" \
+        '{type:"DeployStack",params:{stack:$s}}')"
+}
+
 case "${1:-}" in
     bootstrap)
         shift
         cmd_bootstrap "$@"
         ;;
     reconcile) cmd_reconcile ;;
+    redeploy)
+        shift
+        cmd_redeploy "$@"
+        ;;
     *)
         cat >&2 <<'EOF'
 usage: komodo.sh <command>
@@ -160,6 +208,9 @@ usage: komodo.sh <command>
   reconcile             sync the resources, then run the reconcile Procedure,
                         rather than waiting for the poll. Ungated -- the cron
                         does this anyway.
+  redeploy <stack>      destroy one Stack's containers and build them again,
+                        for the deploy that left them broken with an unchanged
+                        config hash. Dry run without --apply.
 EOF
         exit 1
         ;;
