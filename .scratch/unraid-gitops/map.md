@@ -109,7 +109,10 @@ conventions, and [docs/adding-a-service.md](../../docs/adding-a-service.md)
 before any ticket that adds or migrates a service. Those three files are the
 live artifact; this map only gists them. If a ticket finds the checklist needs a
 *decision* rather than a keystroke, that is a defect in 07 — amend the doc and
-say so on the ticket.
+say so on the ticket. **`repo-layout.md` is due to be renamed and indexed** by
+[28](issues/28-navigable-standing-docs.md), which also adds the `CLAUDE.md` this
+repo has never had — expect the path to move, and do not add a fourth doc in the
+meantime.
 
 **Local tooling now exists** ([13](issues/13-local-tooling.md)): run
 `mise install` once, then `just` to list the commands. The runner is **`just`**,
@@ -119,10 +122,12 @@ a `secrets.sops.env` — always via `just secret <stack>`, never `sops --encrypt
 on a path outside the Stack directory, which finds no creation rule.
 [15](issues/15-move-unraid-gui-ports.md) added `host-check` and `host-ports`,
 the first recipes that reach the box over **SSH** rather than Komodo's API —
-`TOWER_SSH` overrides the `root@tower` default. **A recipe that changes the box
-should be dry-run by default and take `--apply`**; `host-ports` is the first and
-[27](issues/27-recipe-safety-convention.md) is settling it as the rule, so a
-ticket adding a recipe should write it that way rather than wait.
+`TOWER_SSH` overrides the `root@tower` default. **A recipe is gated with
+`--apply` when it changes the box in a way the reconcile loop would not**
+([27](issues/27-recipe-safety-convention.md)) — provenance, not blast radius, so
+`bootstrap` and `host-ports` are gated and **`reconcile` deliberately is not**.
+A ticket adding a recipe applies that test itself; the shape is in
+[docs/repo-layout.md](../../docs/repo-layout.md#recipes).
 
 **Komodo is live** ([11](issues/11-stand-up-komodo.md)): v2.3.1 on
 `http://192.168.1.195:9120`, Server `tower` connected, Stacks `plex` and
@@ -509,6 +514,33 @@ concrete artifact would settle an argument faster than discussion.
   reaching a quoted remote command. **Only the ports are owned** — the other 29
   settings are recorded, not applied, and how much host state git *should* own
   went to [26](issues/26-host-state-scope.md). No new secrets.
+
+- [27 — Make every mutating `just` recipe dry-run by default](issues/27-recipe-safety-convention.md)
+  — **the rule is provenance, not blast radius**: `--apply` guards a recipe that
+  changes the box *in a way the reconcile loop would not*. The ticket was written
+  asking for "mutating → gated", which catches `reconcile`; the human overruled
+  that in the first minute, and `reconcile` stays **ungated** because the
+  15-minute cron runs the identical Procedure whether anyone types it or not —
+  the decision was the merge, where [12](issues/12-image-update-strategy.md)
+  already put the guard. So `just reconcile` against a bad `main` is knowingly
+  unguarded. Gated: `bootstrap` and `host-ports`, and nothing else — `secret` is
+  explicitly carved out, since the repo is not the box. The shape is `*args`
+  through to the script, `--apply` the only flag, **an overview** of what would
+  happen rather than the exact command (`host-ports`' print-the-command habit was
+  put forward as a requirement and **declined** — it does not survive `bootstrap`,
+  where the "command" is a JSON body), exit 0 on nothing-to-do, and a `just
+  --list` comment ending `-- pass --apply to commit`. **No confirmation prompts
+  anywhere.** `bootstrap` is now dry-run by default with an **existence check
+  only** — the richer pending-changes report was offered and declined, because
+  the question at step 8 is *is there anything to bootstrap*; `--apply` is
+  behaviour-identical to the old recipe. All three branches verified against the
+  live box. Also settled a DRY question with a structural answer: **`bootstrap`
+  cannot call `reconcile`**, because the `reconcile` Procedure is created by the
+  very `RunSync` bootstrap performs. Convention in
+  [docs/repo-layout.md](../../docs/repo-layout.md#recipes) and a *Recipe* entry
+  in [CONTEXT.md](../../CONTEXT.md). Spawned
+  [28](issues/28-navigable-standing-docs.md). No new secrets; nothing on the box
+  changed.
 
 ## Not yet specified
 

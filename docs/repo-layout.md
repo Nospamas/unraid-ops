@@ -382,3 +382,53 @@ If a future service does need building, build it in **GitHub Actions** and push
 to GHCR — never on the box, where a build competes with the thing running the
 deploys. 12 records the escape hatch for Caddy specifically, should serfriz go
 stale.
+
+### Recipes
+
+Decided by [ticket 27](../.scratch/unraid-gitops/issues/27-recipe-safety-convention.md).
+Some `just` recipes cannot change anything and some can move the box out from
+under you, and `just --list` gives no clue which is which. The rule:
+
+> **`--apply` guards a recipe that changes the box in a way the reconcile loop
+> would not.**
+
+The test is **provenance, not blast radius** — did a committed file already say
+to do this? `just reconcile` is a big act and stays ungated, because the
+15-minute cron performs the identical Procedure whether anyone types it or not;
+running it only makes the box arrive sooner at the state `main` already
+describes. The decision was the merge, and [ticket 12](../.scratch/unraid-gitops/issues/12-image-update-strategy.md)
+already put the guard there with its four human-merge carve-outs. `just
+bootstrap` and `just host-ports` are the opposite: nothing else will ever run
+them, so typing them *is* the decision.
+
+| recipe | reaches | gated |
+|---|---|---|
+| `default`, `lint`, `verify-secrets`, `host-check` | local / read-only | no |
+| `secret <stack>` | a repo file, via `$EDITOR` | no — the repo is not the box |
+| `reconcile` | Komodo API | no — the cron does this anyway |
+| `bootstrap` | Komodo API | **`--apply`** |
+| `host-ports` | the box over SSH | **`--apply`** |
+
+A gated recipe:
+
+- takes `*args` in the justfile and passes them through; **the script parses the
+  flag**, not `just`
+- names the flag `--apply`, and takes no other
+- **defaults to a dry run** that reports an overview of what would happen and
+  changes nothing. Not the exact command it would send — an overview is what
+  gets read
+- exits 0 with a plain "nothing to do" when there is nothing to do
+- ends its `just --list` comment with `-- pass --apply to commit`, so the
+  gating is visible at the moment of choosing. **The absence of that phrase is
+  itself a claim**, so an ungated recipe must be genuinely ungated
+
+There is no confirmation prompt anywhere. A prompt cannot run unattended and
+trains you to hit `y` without reading; making you read the dry run and then
+retype the command is a real pause rather than a reflex.
+
+What a dry run *is* differs per recipe, and the rule does not pretend otherwise.
+`host-ports` diffs the snapshot against the box field by field, because desired
+state is a file. `bootstrap` reports only whether the ResourceSync already
+exists — the question actually being asked there is *is there anything to
+bootstrap*, since the danger is not the fresh box (where nothing exists) but a
+later run against a live Komodo.

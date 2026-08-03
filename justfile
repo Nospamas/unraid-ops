@@ -30,11 +30,11 @@ secret stack:
     fi
     sops "$dir/secrets.sops.env"
 
-# Declare this repo to a freshly bootstrapped Komodo. Step 8 of bootstrap/README
-bootstrap:
-    bash scripts/komodo.sh bootstrap
+# Declare this repo to a freshly bootstrapped Komodo -- pass --apply to commit
+bootstrap *args:
+    bash scripts/komodo.sh bootstrap {{ args }}
 
-# Reconcile the box now, rather than waiting for the 15-minute poll
+# Reconcile the box now, rather than waiting for the 15-minute poll. Ungated
 reconcile:
     bash scripts/komodo.sh reconcile
 
@@ -42,7 +42,7 @@ reconcile:
 host-check:
     bash scripts/host.sh check
 
-# Show what the snapshot would change on the box. Pass --apply to do it
+# Move the Unraid GUI onto the snapshot's ports -- pass --apply to commit
 host-ports *args:
     bash scripts/host.sh ports {{ args }}
 

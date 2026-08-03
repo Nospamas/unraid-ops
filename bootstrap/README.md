@@ -106,7 +106,8 @@ compose path resolution breaks
 8. **Declare this repo to Komodo**, from a laptop clone with `age.key` in place:
 
    ```sh
-   just bootstrap
+   just bootstrap            # reports whether the sync exists -- changes nothing
+   just bootstrap --apply    # create it, and run it
    ```
 
    Everything else Komodo runs comes from git, but the ResourceSync that reads
@@ -115,6 +116,13 @@ compose path resolution breaks
    this step a rebuilt box is a running Komodo that has never heard of this
    repo. The recipe is idempotent, and `just reconcile` afterwards deploys
    without waiting for the 15-minute poll.
+
+   **`bootstrap` is dry-run by default** — it is one of the two recipes that
+   change the box out of band, so it is gated like `host-ports`
+   ([ticket 27](../.scratch/unraid-gitops/issues/27-recipe-safety-convention.md),
+   convention in [docs/repo-layout.md](../docs/repo-layout.md#recipes)). On a
+   fresh box you want `--apply`; the dry run earns its place later, when it
+   tells you the sync is already there and this step can be skipped.
 
 ## What is a secret here, and why it cannot follow the usual route
 

@@ -44,15 +44,45 @@ sync_name() {
     yq -p toml -o json -r '.resource_sync[0].name' "$root/komodo/sync.toml"
 }
 
+# Out-of-band: nothing else ever creates the ResourceSync, so running this is
+# itself the decision. Dry-run by default, per ticket 27.
 cmd_bootstrap() {
-    local name params
+    local apply=0 name params exists=0
+    case "${1:-}" in
+    --apply) apply=1 ;;
+    "") ;;
+    *)
+        echo "usage: komodo.sh bootstrap [--apply]" >&2
+        exit 1
+        ;;
+    esac
+
     name="$(sync_name)"
     login
 
     if api read '{"type":"ListResourceSyncs","params":{}}' |
         jq -e --arg n "$name" 'any(.[]; .name == $n)' >/dev/null; then
-        echo "sync '$name' already exists"
+        exists=1
+        echo "  sync '$name' exists"
     else
+        echo "* sync '$name' is missing -- would be created from komodo/sync.toml"
+    fi
+    echo "  RunSync would then push komodo/ and stacks/ onto Komodo's resources"
+
+    if ((!apply)); then
+        echo
+        if ((exists)); then
+            echo "dry run -- nothing was changed. the sync is already there, so this"
+            echo "is step 8 of a rebuild you have already done; reconcile runs the"
+            echo "sync every 15 minutes on its own."
+        else
+            echo "dry run -- nothing was changed."
+        fi
+        echo "to go ahead:  just bootstrap --apply"
+        return
+    fi
+
+    if ((!exists)); then
         params="$(yq -p toml -o json '.resource_sync[0]' "$root/komodo/sync.toml")"
         api write "$(jq -n --argjson p "$params" \
             '{type:"CreateResourceSync",params:$p}')" >/dev/null
@@ -89,14 +119,19 @@ cmd_reconcile() {
 }
 
 case "${1:-}" in
-    bootstrap) cmd_bootstrap ;;
+    bootstrap)
+        shift
+        cmd_bootstrap "$@"
+        ;;
     reconcile) cmd_reconcile ;;
     *)
         cat >&2 <<'EOF'
 usage: komodo.sh <command>
 
-  bootstrap   create the ResourceSync Komodo cannot create for itself, and run it
-  reconcile   run the reconcile Procedure now, rather than waiting for the poll
+  bootstrap [--apply]   create the ResourceSync Komodo cannot create for itself,
+                        and run it. Dry run without --apply.
+  reconcile             run the reconcile Procedure now, rather than waiting for
+                        the poll. Ungated -- the cron does this anyway.
 EOF
         exit 1
         ;;

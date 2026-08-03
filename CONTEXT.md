@@ -75,6 +75,13 @@ three containers, the age key, the sops binary. Held in `bootstrap/`, run by
 hand, and never reconciled — Komodo cannot deploy itself.
 _Avoid_: install, setup, provisioning
 
+**Recipe**:
+One entry in the `justfile`. A recipe is **gated** when it changes the box in a
+way the reconcile loop would not — it then takes `--apply` and does nothing
+without it, and says so in its `just --list` comment. `reconcile` is ungated
+because the cron runs it anyway; only out-of-band changes are gated.
+_Avoid_: task, command, script (`scripts/` holds what a recipe calls)
+
 ### Exposure
 
 **Fronted**:
