@@ -30,9 +30,8 @@ komodo/
 
 stacks/
   caddy/
-    komodo.toml             [[stack]] + [[build]]
+    komodo.toml             [[stack]]
     compose.yaml
-    Dockerfile              xcaddy: caddy-docker-proxy + caddy-dns/cloudflare
     Caddyfile               global options + the (internal) snippet
     secrets.sops.env        CF_API_TOKEN
   coredns/
@@ -43,8 +42,12 @@ stacks/
     komodo.toml
     compose.yaml
     config/                 git owns these outright — they are files, not a db
-      services.yaml settings.yaml widgets.yaml bookmarks.yaml
-    secrets.sops.env        the *arr API keys
+      the full homepage skeleton: settings services widgets bookmarks
+      docker kubernetes proxmox custom.css custom.js
+    secrets.sops.env        the *arr API keys + the plex token
+  dockerproxy/              read-only docker API, so homepage need not be root
+    komodo.toml
+    compose.yaml
   download/                 gluetun + qbittorrent, one namespace, one Stack
     komodo.toml
     compose.yaml
@@ -59,7 +62,7 @@ scripts/
   check-exposure.sh         every fronted Service is internal or x-published
 ```
 
-Eleven Stacks, twelve containers. `bootstrap/` is the exception that proves the
+Twelve Stacks, thirteen containers. `bootstrap/` is the exception that proves the
 rule: it is in git so a rebuild starts from a file rather than from memory, but
 nothing reconciles it — Komodo cannot deploy the containers it runs inside.
 
@@ -98,6 +101,34 @@ constraint, not a preference.
 `stacks/<name>/komodo.toml` holds the `[[stack]]` — and the `[[build]]` too,
 where the Stack is built rather than pulled. `komodo/` holds only what isn't
 per-Stack: the ResourceSync itself, the Server, and the reconcile Procedure.
+
+### The reconcile loop
+
+`komodo/procedures.toml` holds one Procedure, `reconcile`, on a 15-minute cron.
+Stage one runs the ResourceSync — a sync **applies nothing on poll**, it only
+reports pending changes, so something has to execute it. Stage two runs
+`BatchDeployStackIfChanged` over an **explicit list of Stack names**.
+
+**Never widen that list to `*`.** A Stack that Komodo adopted but never deployed
+has no deployed contents to diff, and `DeployStackIfChanged` treats that as
+"deploy it" — so a wildcard recreates `plex` and the gluetun/qbittorrent pair
+unattended, which is [ticket 06](../.scratch/unraid-gitops/issues/06-qbittorrent-vpn-topology.md)'s
+silent-orphan hazard. Adding a Stack to the pattern is a step of migrating it.
+
+### Config files a Stack's own service reads
+
+`DeployStackIfChanged` diffs **tracked files**, and the only tracked file is the
+compose file. A Stack whose service reads config out of the repo must list those
+files, or a push that edits one changes nothing:
+
+```toml
+config_files = [
+  { path = "config/services.yaml", requires = "restart" },
+]
+```
+
+`restart` where the file arrives through a bind mount, `redeploy` where the
+container reads it only at creation. Homepage is the case this exists for.
 
 Every `[[stack]]` sets `project_name` explicitly. For the three containers
 Portainer runs today (plex, gluetun, qbittorrent) it must match the existing
@@ -176,6 +207,21 @@ dotenv rather than YAML because the consumer is `--env-file`:
   recipient. There is one key, so per-Stack rules would be ceremony with nothing
   in them.
 
+**`secrets.env` reaches the container through compose, not through Komodo**
+([ticket 08](../.scratch/unraid-gitops/issues/08-deploy-homepage.md)):
+
+```yaml
+env_file:
+  - path: secrets.env
+    required: false      # it does not exist on a laptop, where `just lint` runs
+```
+
+Komodo's `additional_env_files` is for values compose needs to *interpolate*;
+this is for values the process needs. And an entry there is **tracked by
+default** — Komodo reads, diffs and validates it against the repo, where
+`secrets.env` by design never is. If a Stack ever does need one interpolated,
+the entry has to say so: `{ path = "secrets.env", track = false }`.
+
 Four Stacks carry secrets: `download` (the NordVPN key), `calibre` (the GUI
 password), `caddy` (the Cloudflare token) and `homepage` (the *arr API keys).
 The *arr Stacks themselves carry none — their API keys live in their own
@@ -220,6 +266,14 @@ It carries Caddy's discovery traffic *and* the *arr → qbittorrent path. gluetu
 must be on it either way — it owns qbittorrent's namespace, so it answers on
 `:30024` for the *arr and it carries qbittorrent's `caddy` labels — which leaves
 a second network separating nothing.
+
+**One exception, added by [ticket 08](../.scratch/unraid-gitops/issues/08-deploy-homepage.md):
+`dockerproxy`.** `shared` is what Caddy must reach; the read-only docker API is
+the opposite — a thing only its one consumer should reach. So it gets a network
+of its own, created `--internal` in `pre_deploy` like `shared` is, and a Stack
+that needs the docker API joins both. The test for a second network is whether
+the traffic is service-to-service and privileged; "these two containers talk" on
+its own is not enough.
 
 ### Routing lives in labels
 

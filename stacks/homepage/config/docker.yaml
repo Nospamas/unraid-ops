@@ -1,0 +1,4 @@
+---
+tower:
+  host: dockerproxy
+  port: 2375

@@ -1,0 +1,16 @@
+---
+- resources:
+    cpu: true
+    memory: true
+    disk: /
+    cputemp: false
+- datetime:
+    text_size: x1
+    format:
+      dateStyle: short
+      timeStyle: short
+      hourCycle: h23
+- search:
+    provider: duckduckgo
+    focus: false
+    target: _blank

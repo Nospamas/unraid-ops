@@ -1,0 +1,24 @@
+---
+title: Tower
+theme: dark
+color: slate
+headerStyle: clean
+useEqualHeights: true
+disableCollapse: true
+layout:
+  Media:
+    style: row
+    columns: 4
+    icon: mdi-play-circle
+  Downloads:
+    style: row
+    columns: 2
+    icon: mdi-download
+  Books:
+    style: row
+    columns: 2
+    icon: mdi-book-open-variant
+  Infrastructure:
+    style: row
+    columns: 3
+    icon: mdi-server

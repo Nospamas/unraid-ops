@@ -1,0 +1,21 @@
+# Read-only docker API for homepage's container tiles. Homepage would have to
+# run as root to hold the socket itself, which ticket 09 forbids.
+
+services:
+  dockerproxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:v0.5.0@sha256:1f5038b54f06c3e18422902cf00ba21803d1c97805aae032e5e6673d532d3459
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      CONTAINERS: 1
+      POST: 0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      # Not `shared`: only the stacks that need the docker API join this one,
+      # and it is created --internal, so this container has no route off the box.
+      - dockerproxy
+
+networks:
+  dockerproxy:
+    external: true

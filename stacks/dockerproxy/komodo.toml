@@ -1,0 +1,14 @@
+[[stack]]
+name = "dockerproxy"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/dockerproxy"
+project_name = "dockerproxy"
+additional_env_files = ["../../common.env"]
+
+pre_deploy.command = """
+docker network inspect dockerproxy >/dev/null 2>&1 || docker network create --internal dockerproxy
+"""

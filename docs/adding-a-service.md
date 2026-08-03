@@ -97,9 +97,32 @@ sops -d secrets.sops.env > secrets.env
 """
 ```
 
-and add `additional_env_files = ["../../common.env", "secrets.env"]`.
+and read it in `compose.yaml`, **not** via `additional_env_files`:
+
+```yaml
+env_file:
+  - path: secrets.env
+    required: false
+```
+
+`additional_env_files` entries are tracked by default — Komodo would diff
+`secrets.env` against a repo it is deliberately absent from. Only add it there
+if compose must *interpolate* a secret, and then as
+`{ path = "secrets.env", track = false }`.
 
 No `.sops.yaml` edit is needed — the root rule already matches `*.sops.env`.
+
+## 4b. Config files, if git owns any
+
+If the service reads its own settings out of the repo, list them in
+`komodo.toml` — otherwise a push that edits one is invisible to the reconcile
+loop, which diffs tracked files and tracks only the compose file:
+
+```toml
+config_files = [
+  { path = "config/services.yaml", requires = "restart" },
+]
+```
 
 ## 5. **[adopt]** Turn off unraid's autostart
 
@@ -124,8 +147,10 @@ config.
 
 ## 7. Deploy
 
-Commit and push. The reconcile Procedure picks it up on its next run, or trigger
-it by hand for the first deploy of a new Stack.
+Add the Stack's name to the `BatchDeployStackIfChanged` pattern in
+[komodo/procedures.toml](../komodo/procedures.toml) — the list is explicit, and
+a Stack missing from it is never deployed by the loop. Then commit and push. The
+Procedure picks it up within 15 minutes, or run it by hand for the first deploy.
 
 ## 8. Check it
 
@@ -165,6 +190,9 @@ just verify-secrets   # every *.sops.env still decrypts
 - **calibre** binds `${MEDIA}/books` → `/config/Calibre Library`. The space in
   that path is real.
 - **homepage** is the one service whose own config git owns outright — it is
-  files, not a database.
+  files, not a database. `/app/config` must be **writable**: homepage seeds any
+  missing skeleton file at boot and serves HTTP 500 if it cannot write. The repo
+  ships the complete skeleton so nothing is ever seeded untracked into the
+  clone, and logs go to `${APPDATA}/homepage/logs` to keep them out of it.
 - **CoreDNS** binds an explicit host address, `100.126.56.26:53`, not a port on
   every interface.

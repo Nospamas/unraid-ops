@@ -1,0 +1,30 @@
+# The reconcile loop. Poll, not webhook — nothing inbound reaches the box yet
+# (ticket 02).
+
+[[procedure]]
+name = "reconcile"
+description = "Sync resources from git, then deploy the Stacks that changed"
+
+[procedure.config]
+schedule_format = "Cron"
+# Six fields — seconds are required.
+schedule = "0 */15 * * * ?"
+schedule_enabled = true
+schedule_timezone = "America/Vancouver"
+schedule_alert = false
+failure_alert = true
+
+[[procedure.config.stage]]
+name = "Sync resources"
+executions = [
+  { execution.type = "RunSync", execution.params.sync = "unraid-ops" },
+]
+
+[[procedure.config.stage]]
+name = "Deploy changed stacks"
+executions = [
+  # Never "*": an adopted-but-never-deployed Stack has no deployed contents to
+  # diff, which DeployStackIfChanged reads as "deploy it" — recreating plex and
+  # the gluetun/qbittorrent pair unattended (ticket 06). Extend as each migrates.
+  { execution.type = "BatchDeployStackIfChanged", execution.params.pattern = "dockerproxy, homepage" },
+]

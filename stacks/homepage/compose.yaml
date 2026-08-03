@@ -1,0 +1,40 @@
+# Ticket 08. Git owns homepage's own config, not just the container.
+
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:v1.13.2@sha256:a0b71c8e757298d02560186bab9fbe3fc2d375c523a62cc1019177b37e48aa28
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+      # Required since v1.0. IP:port entries go with the host port, at ticket 16.
+      HOMEPAGE_ALLOWED_HOSTS: home.rbrb.in,192.168.1.195:3000,100.126.56.26:3000
+      # Nothing else is on the shared network yet; see config/services.yaml.
+      HOMEPAGE_VAR_HOST: 192.168.1.195
+    env_file:
+      # Written by pre_deploy. Absent on a laptop, where `just lint` runs.
+      - path: secrets.env
+        required: false
+    ports:
+      # Temporary: nothing fronts this until Caddy (ticket 16).
+      - "3000:3000"
+    volumes:
+      # Must be writable — homepage seeds missing skeleton files and serves
+      # HTTP 500 if it cannot write here.
+      - ./config:/app/config
+      - ${APPDATA}/homepage/logs:/app/config/logs
+    networks:
+      - shared
+      - dockerproxy
+    labels:
+      caddy: home.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+
+networks:
+  shared:
+    external: true
+  dockerproxy:
+    external: true

@@ -1,0 +1,31 @@
+[[stack]]
+name = "homepage"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/homepage"
+project_name = "homepage"
+additional_env_files = ["../../common.env"]
+
+# DeployStackIfChanged diffs tracked files only, and tracks just the compose
+# file by default — without this a config-only push is invisible. `restart`,
+# not `redeploy`: these arrive through a bind mount.
+config_files = [
+  { path = "config/settings.yaml", requires = "restart" },
+  { path = "config/services.yaml", requires = "restart" },
+  { path = "config/widgets.yaml", requires = "restart" },
+  { path = "config/bookmarks.yaml", requires = "restart" },
+  { path = "config/docker.yaml", requires = "restart" },
+  { path = "config/kubernetes.yaml", requires = "restart" },
+  { path = "config/proxmox.yaml", requires = "restart" },
+  { path = "config/custom.css", requires = "restart" },
+  { path = "config/custom.js", requires = "restart" },
+]
+
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+docker network inspect dockerproxy >/dev/null 2>&1 || docker network create --internal dockerproxy
+sops -d secrets.sops.env > secrets.env
+"""

@@ -1,0 +1,111 @@
+---
+# href values point at IP:port until Caddy answers on *.rbrb.in (ticket 16).
+#
+# Widget urls use {{HOMEPAGE_VAR_HOST}}, the box's LAN address, because none of
+# these containers are on the shared network yet. As each one migrates, its url
+# becomes http://<container>:<port> and one variable use disappears.
+#
+# `container:` reads state through the dockerproxy Stack, not the socket.
+
+- Media:
+    - Plex:
+        icon: plex.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:32400/web
+        description: Media server
+        server: tower
+        container: plex
+        widget:
+          type: plex
+          url: http://{{HOMEPAGE_VAR_HOST}}:32400
+          key: '{{HOMEPAGE_VAR_PLEX_TOKEN}}'
+          enableNowPlaying: true
+    - Sonarr:
+        icon: sonarr.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:8989
+        description: TV
+        server: tower
+        container: sonarr
+        widget:
+          type: sonarr
+          url: http://{{HOMEPAGE_VAR_HOST}}:8989
+          key: '{{HOMEPAGE_VAR_SONARR_KEY}}'
+          enableQueue: true
+    - Radarr:
+        icon: radarr.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:7878
+        description: Movies
+        server: tower
+        container: radarr
+        widget:
+          type: radarr
+          url: http://{{HOMEPAGE_VAR_HOST}}:7878
+          key: '{{HOMEPAGE_VAR_RADARR_KEY}}'
+          enableQueue: true
+    - Prowlarr:
+        icon: prowlarr.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:9696
+        description: Indexers
+        server: tower
+        container: prowlarr
+        widget:
+          type: prowlarr
+          url: http://{{HOMEPAGE_VAR_HOST}}:9696
+          key: '{{HOMEPAGE_VAR_PROWLARR_KEY}}'
+
+- Downloads:
+    - qBittorrent:
+        icon: qbittorrent.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:30024
+        description: Leech-only, behind the VPN
+        server: tower
+        container: qbittorrent
+        widget:
+          type: qbittorrent
+          # No credentials: qbittorrent's WebUI bypasses auth for whitelisted
+          # subnets, and the shared network is one of them (ticket 08).
+          url: http://{{HOMEPAGE_VAR_HOST}}:30024
+          enableLeechProgress: true
+    - Gluetun:
+        icon: gluetun.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:30024
+        description: NordVPN tunnel — owns qbittorrent's namespace
+        server: tower
+        container: gluetun
+        # No widget: gluetun's control server is on :8000 inside the container
+        # and is not published, so nothing can reach it until the download
+        # Stack migrates onto the shared network.
+
+- Books:
+    - Calibre:
+        icon: calibre.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:8080
+        description: Library — desktop GUI on 8080, content server on 8081
+        server: tower
+        container: calibre
+        # No widget: homepage ships one for calibre-web, which is a different
+        # application from the calibre this box runs.
+    - LazyLibrarian:
+        icon: lazylibrarian.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:5299
+        description: Book acquisition
+        server: tower
+        container: lazylibrarian
+        # No widget: homepage has no lazylibrarian type.
+
+- Infrastructure:
+    - Komodo:
+        icon: komodo.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:9120
+        description: What deploys everything here
+        server: tower
+        container: komodo-core
+    - Unraid:
+        icon: unraid.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}
+        description: The box itself
+    - Portainer:
+        icon: portainer.svg
+        href: http://{{HOMEPAGE_VAR_HOST}}:9000
+        description: Being retired — second lifeline until SSH proves itself
+        server: tower
+        container: PortainerCE

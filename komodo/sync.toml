@@ -1,0 +1,17 @@
+# Declares itself, because a sync cannot create the sync that creates it — this
+# one was created once against Core's API (ticket 08).
+
+[[resource_sync]]
+name = "unraid-ops"
+description = "Stacks and procedures declared in Nospamas/unraid-ops"
+
+[resource_sync.config]
+repo = "Nospamas/unraid-ops"
+branch = "main"
+# Directories, walked for .toml — a new stacks/<name>/komodo.toml needs no edit.
+resource_path = ["komodo", "stacks"]
+
+# Both delete resources git does not declare, which includes the plex and
+# download Stacks adopted in ticket 11. `managed = true` forces delete on.
+managed = false
+delete = false
