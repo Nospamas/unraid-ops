@@ -20,12 +20,17 @@ own.
 
 What has to be decided:
 
-- **Does the forward stay?** Split-horizon now reaches plex from anywhere on the
-  tailnet ([17](17-deploy-coredns.md), [18](18-tailnet-split-dns.md)), so the
-  forward is only load-bearing for clients that cannot run tailscale — a friend's
-  Plex app, a TV at someone else's house. Whether anyone actually uses it is a
-  question for the human, not the box. Closing it is a router change on **rb's**
-  network, which is a hand-off either way.
+- ~~**Does the forward stay?**~~ **Answered: it stays.** 32400 is the intended
+  port, deliberately forwarded, and remote clients get a **direct** connection
+  rather than falling back to Plex Relay — which is the whole point, since Relay
+  caps throughput and direct does not. `ManualPortMappingMode="1"` is the same
+  decision from plex's side: a static forward instead of asking the router for
+  one over UPnP. Split-horizon ([17](17-deploy-coredns.md),
+  [18](18-tailnet-split-dns.md)) does not replace it — the tailnet does not
+  reach the people this serves.
+
+  So this ticket is **not** about closing a hole. It is about the repo
+  describing, in the file that governs plex, an exposure that is deliberate.
 - **If it stays, how does the repo record it?** `x-published: true` is the one
   grep that answers "what faces the internet" [07], and today plex says
   `caddy.import: internal`, which is true of the Caddy path and misleading about

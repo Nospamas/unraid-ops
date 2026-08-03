@@ -106,7 +106,9 @@ where it wants to go; the container now logs `Setting permissions on /transcode`
 Dropped, as [03](03-secrets-handling.md) said — the server is claimed, and the
 token had long expired. `/dev/dri` passed on its own: `renderD128` joins
 `group4r3d` and `permissions for /dev/dri/card0 are good`, exactly as under the
-old uid. Playing something that transcodes remains a spot-check, not a gate.
+old uid. **Hardware transcoding confirmed by playback after the deploy** — so
+[09](09-unify-uid-gid.md)'s standing check is answered on the B580 as well as on
+paper, and uid 99 costs nothing.
 
 ### Rollback, and what it costs
 
