@@ -1,0 +1,70 @@
+# Ticket 24. Adopted in place from Portainer's `qbittorrent` project -- both
+# Services at once, because qbittorrent runs inside gluetun's network namespace
+# and recreating gluetun alone would leave it there with no route and no error
+# (ticket 06).
+#
+# Leech-only is settled, not a defect: NordVPN forwards no port, so nothing
+# reaches qbittorrent from the outside. Do not buy port forwarding to "fix" it.
+
+services:
+  gluetun:
+    image: qmcgaw/gluetun:v3.41.3@sha256:fa19cc76b2af13d57a8d3dc3066f2ada061b1c761b8aecf989b3877c0486e027
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      VPN_SERVICE_PROVIDER: nordvpn
+      VPN_TYPE: wireguard
+      SERVER_COUNTRIES: United States
+      SERVER_CITIES: Seattle
+      SERVER_HOSTNAMES: us8240.nordvpn.com
+      # FIREWALL_OUTBOUND_SUBNETS is deliberately unset -- empty is gluetun's
+      # default and it is the kill switch. What this replaces carried
+      # FIREWALL_OUTBOUND_SUBNET=0.0.0.0/0 and FIREWALL_VPN_INPUT_ALLOW=
+      # 192.168.1.0, both misspelled and both therefore inert; spelling either
+      # correctly would route every packet around the tunnel (ticket 24).
+    env_file:
+      # WIREGUARD_PRIVATE_KEY. Written by pre_deploy.
+      - path: secrets.env
+        required: false
+    volumes:
+      - ${APPDATA}/gluetun:/gluetun
+    ports:
+      # qbittorrent's WebUI, which lives in this namespace. The four *arr and
+      # homepage address it here until ticket 30 moves them onto `shared`.
+      # 6881, the torrent port, is not published: peers arrive through the
+      # tunnel, and rb's router forwards nothing to it (ticket 24).
+      - "30024:30024"
+    networks:
+      - shared
+    labels:
+      # qbittorrent's routing lives here -- a container in another container's
+      # namespace has no network identity of its own.
+      caddy: qbittorrent.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 30024}}"
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:5.1.2-r4-ls426@sha256:7034f73a3c6fa4ea40fd67df462939d1665d765231b572523921c98c2db5362e
+    restart: unless-stopped
+    # gluetun owns the namespace, so this Service declares no network, no port
+    # and no label of its own. `service:`, not `container:`, cannot cross
+    # compose projects -- which is why these two are one Stack (ticket 07).
+    network_mode: service:gluetun
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+      WEBUI_PORT: 30024
+      TORRENTING_PORT: 6881
+    volumes:
+      - ${APPDATA}/qbittorrent:/config
+      - ${MEDIA}/downloads:/downloads
+
+networks:
+  shared:
+    external: true

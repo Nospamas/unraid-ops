@@ -58,25 +58,30 @@
 - Downloads:
     - qBittorrent:
         icon: qbittorrent.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:30024
+        href: https://qbittorrent.rbrb.in
         description: Leech-only, behind the VPN
         server: tower
-        container: qbittorrent
+        # qbittorrent, not download: the Stack inherited Portainer's project
+        # name rather than renaming it (ticket 24).
+        container: qbittorrent-qbittorrent-1
         widget:
           type: qbittorrent
           # No credentials: qbittorrent's WebUI bypasses auth for whitelisted
-          # subnets, and the shared network is one of them (ticket 08).
-          url: http://{{HOMEPAGE_VAR_HOST}}:30024
+          # subnets, and the shared network is one of them (ticket 08). The
+          # host is gluetun -- qbittorrent has no address of its own.
+          url: http://gluetun:30024
           enableLeechProgress: true
     - Gluetun:
         icon: gluetun.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:30024
+        href: https://qbittorrent.rbrb.in
         description: NordVPN tunnel — owns qbittorrent's namespace
         server: tower
-        container: gluetun
-        # No widget: gluetun's control server is on :8000 inside the container
-        # and is not published, so nothing can reach it until the download
-        # Stack migrates onto the shared network.
+        container: qbittorrent-gluetun-1
+        widget:
+          type: gluetun
+          # The control server, reachable at last now that gluetun is on
+          # `shared` (ticket 24). Unauthenticated by gluetun's own default.
+          url: http://gluetun:8000
 
 - Books:
     - Calibre:
