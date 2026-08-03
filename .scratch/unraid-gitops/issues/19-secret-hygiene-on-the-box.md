@@ -2,6 +2,7 @@
 
 Type: grilling
 Status: open
+Assignee: Nospamas
 Blocked by: 11
 
 ## Question

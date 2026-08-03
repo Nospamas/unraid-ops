@@ -15,6 +15,7 @@ the templates to copy.
 | [Tracked files](#tracked-files) | the service reads config out of the repo |
 | [Shared config](#shared-config) | writing `compose.yaml` or `komodo.toml` |
 | [Paths](#paths) | binding appdata or media |
+| [Ownership and modes](#ownership-and-modes) | a service writes media or appdata |
 | [Secrets](#secrets) | the Stack has a secret |
 | [`pre_deploy`](#pre_deploy) | writing `komodo.toml` |
 | [Networks](#networks) | two containers must talk |
@@ -155,6 +156,28 @@ it exists for hardlinked imports, which cannot pay off on six XFS disks under on
 shfs overlay — [09] ruled hardlinks out of scope on the evidence, and reversing
 that means reopening it.
 
+## Ownership and modes
+
+`PUID=99`, `PGID=100`, **`UMASK=002`** — all three, on every service that writes
+[09]. Dirs land 775 and files 664.
+
+**`UMASK=022` is a bug, not a default.** `nobody`(99), `share`(1000) and
+`rseaforthb`(1001) all have primary gid **100**, so group-write is what lets the
+humans and the containers share a tree. At 022 a container creates 755
+directories that nobody else can rename or delete into — and moving a file needs
+write on the **parent directory**, not the file. That is what put the box on
+`chmod -R 777`, and 777 is what [19] removed. Nothing here needs it back.
+
+Samba is not involved: its effective `create mask` and `directory mask` are both
+0777, so it strips nothing. Do not "fix" `smb-extra.conf`.
+
+`just permissions` re-normalises the tree; `just permissions-audit` reports it
+without changing anything. Both prune the paths that must **not** be group-
+readable — `komodo/{postgres,ferretdb,keys,backups}`, `caddy/data` — and appdata
+is adjusted **relatively** (`o-w`, `g+w`), never to an absolute mode, because an
+absolute 664 strips the execute bit from `komodo/bin/sops` and from the codecs
+plex downloads into its own appdata and then runs.
+
 ## Secrets
 
 Dotenv rather than YAML, because the consumer is `--env-file` [03]:
@@ -178,8 +201,16 @@ must say `{ path = "secrets.env", track = false }`.
 ## `pre_deploy`
 
 Every Stack has one, and every one starts by creating the `shared` network
-idempotently; Stacks with secrets then append `sops -d secrets.sops.env >
-secrets.env`.
+idempotently; Stacks with secrets then append the decrypt — **inside a subshell
+that sets `umask 077`** [19]:
+
+```
+(umask 077; sops -d secrets.sops.env > secrets.env)
+```
+
+A bare redirect creates the plaintext 0666 masked by Periphery's umask, which is
+0022 — a world-readable secret. The subshell rather than a `chmod` afterwards,
+because it closes the window instead of reopening it. `just lint` enforces this.
 
 Repeated in every file **on purpose** [07]: it is order-independent, it survives
 a box rebuild with nobody remembering a step, and it lives in git — which one

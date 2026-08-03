@@ -38,6 +38,14 @@ bootstrap *args:
 reconcile:
     bash scripts/komodo.sh reconcile
 
+# Report ownership and modes across the shared trees
+permissions-audit:
+    bash scripts/permissions.sh audit
+
+# Normalise ownership and modes to 99:100 / 775 / 664 -- pass --apply to commit
+permissions *args:
+    bash scripts/permissions.sh apply {{ args }}
+
 # Compare the box's ident.cfg against the snapshot in bootstrap/host
 host-check:
     bash scripts/host.sh check
@@ -53,6 +61,7 @@ lint:
     shopt -s nullglob
 
     bash scripts/check-exposure.sh
+    bash scripts/check-secrets-mode.sh
 
     for compose in stacks/*/compose.yaml; do
         docker compose --env-file common.env --file "$compose" config --quiet

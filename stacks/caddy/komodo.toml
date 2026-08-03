@@ -19,5 +19,5 @@ config_files = [
 
 pre_deploy.command = """
 docker network inspect shared >/dev/null 2>&1 || docker network create shared
-sops -d secrets.sops.env > secrets.env
+(umask 077; sops -d secrets.sops.env > secrets.env)
 """
