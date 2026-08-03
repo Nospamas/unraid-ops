@@ -19,7 +19,7 @@ CONTEXT.md                  glossary
   lint.yaml                 just lint, on push and PR
 
 bootstrap/
-  compose.yaml              komodo-core, mongo, periphery
+  compose.yaml              komodo-core, ferretdb, postgres, periphery
   compose.env               non-secret config
   secrets.sops.env          Komodo's DB creds, JWT secret, initial admin
   README.md                 what to run by hand, in what order

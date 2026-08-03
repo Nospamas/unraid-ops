@@ -5,12 +5,20 @@ Raw probe output: [inventory.out](inventory.out), [inventory-part2.out](inventor
 (both redacted). Probe scripts: [01-inventory.sh](01-inventory.sh),
 [01-inventory-part2.sh](01-inventory-part2.sh).
 
+> **Host row re-verified 2026-08-02** over SSH during
+> [11](../issues/11-stand-up-komodo.md)'s bootstrap. The box was upgraded
+> Unraid 7.2.0 → 7.3.2 and Docker 27.5.1 → 29.5.3 after the original capture;
+> the table below carries the new values. The raw `.out` files still show the
+> 7.2.0 capture and are left as dated evidence. **The finding that decided
+> [02](../issues/02-choose-reconcile-mechanism.md) survives the upgrade**:
+> `docker compose` is still not a command on the host.
+
 ## Host
 
 | | |
 |---|---|
-| Unraid | 7.2.0, kernel 6.12.54-Unraid |
-| Docker | 27.5.1 — **no `docker compose` plugin on the host** |
+| Unraid | 7.3.2, kernel 6.18.38-Unraid |
+| Docker | 29.5.3 — **no `docker compose` plugin on the host** |
 | Hostname | `Tower` |
 | LAN | `192.168.1.195/24` on `br0` (macvlan-capable, but nothing uses it) |
 | Tailscale | host plugin; node `tower` = `100.126.56.26` |

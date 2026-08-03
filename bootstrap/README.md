@@ -64,13 +64,30 @@ compose path resolution breaks
    chmod 600 secrets.env
    ```
 
-5. **Up**, with both env files:
+5. **Pre-create FerretDB's state directory, owned by 1000:1000.** Docker creates
+   a missing bind-mount target as `root:root`, and FerretDB runs as uid 1000 —
+   so without this it crashloops on `open /state/state.json: permission denied`.
+   A named volume would be chowned automatically; a bind mount is not, and the
+   bind mount is deliberate (see the volume comment in `compose.yaml`).
+
+   ```sh
+   mkdir -p /mnt/cache/appdata/komodo/ferretdb/state
+   chown -R 1000:1000 /mnt/cache/appdata/komodo/ferretdb
+   ```
+
+   Postgres needs no equivalent — its entrypoint chowns its own data directory.
+   Note 1000:1000 is **not** the repo's usual 99:100
+   ([ticket 09](../.scratch/unraid-gitops/issues/09-unify-uid-gid.md)); that rule
+   governs Stacks, and the bootstrap is not one. FerretDB's uid is baked into
+   the image.
+
+6. **Up**, with both env files:
 
    ```sh
    dc --env-file compose.env --env-file secrets.env up -d
    ```
 
-6. **Log in** at `http://192.168.1.195:9120` with the admin credentials from
+7. **Log in** at `http://192.168.1.195:9120` with the admin credentials from
    `secrets.env`. Change the password in the UI if you like — the init values
    only apply on first launch.
 
@@ -83,11 +100,26 @@ describes: `KOMODO_JWT_SECRET` signs Komodo's own sessions, and Core answers on
 the LAN, so leaking it means full control of every container on the box.
 
 Regenerating them all is a `just secret bootstrap` edit plus a redeploy; only
-`KOMODO_DATABASE_*` needs care, since Mongo already has the user.
+`KOMODO_DATABASE_*` needs care, since Postgres already has the role — and the
+same pair is embedded in `FERRETDB_POSTGRESQL_URL`, so both move together.
 
 ## Rebuilding the box
 
 Clone the repo, restore `age.key` from KeePassXC, re-fetch the sops binary, then
-steps 3–5. Appdata under `/mnt/user/appdata/komodo` carries the Mongo data and
-the Core/Periphery keypair, so a restore of appdata plus this file is the whole
-of it. Everything Komodo manages comes back from the repo through ResourceSync.
+steps 3–5. Appdata under `/mnt/user/appdata/komodo` carries the Core/Periphery
+keypair, and `/mnt/cache/appdata/komodo/postgres` carries the database — the
+same files, reached without shfs. A restore of appdata plus this file is the
+whole of it. Everything Komodo manages comes back from the repo through
+ResourceSync.
+
+## The database
+
+**FerretDB in front of Postgres**, not MongoDB. Komodo supports only these two,
+and Postgres is the one the human already knows how to back up — `pg_dump`
+against `komodo-postgres` rather than `mongodump`. Neither the database nor the
+adapter publishes a port; Core reaches FerretDB at `ferretdb:27017` on the
+compose network.
+
+Pin both images together: the `postgres-documentdb` tag names the FerretDB
+release it was built against (`17-0.107.0-ferretdb-2.7.0` ↔ `ferretdb:2.7.0`),
+so they must be bumped as a pair. Upstream warns that updates can be breaking.

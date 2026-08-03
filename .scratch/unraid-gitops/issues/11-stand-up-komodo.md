@@ -250,3 +250,139 @@ validates `bootstrap/compose.yaml` against `bootstrap/compose.env`.
   assumption. Block 5 gives the cheap answer; 08 gives the real one.
 - Whether the box's copy of `age.key` decrypts. 13 placed it; **nothing has
   used it yet**. Block 3 is the first real test.
+
+## Findings (2026-08-02, on-box half — blocks 1–5 run)
+
+**Komodo v2.3.1 is up and Periphery is connected.** Run over SSH rather than as
+a paste-back checklist: the human enabled SSH this session, so the map's *Box
+access* note is superseded. All four open risks above are settled, all green.
+
+### Every open risk, closed
+
+| Risk | Answer |
+|---|---|
+| MongoDB 8 needs AVX | **present** — Ryzen 7 3700X. Moot; see below. |
+| Periphery image runs compose standalone | **yes** — bundles Compose **v5.3.1** |
+| `additional_env_files` escapes the run dir | **yes** — `../../common.env` resolved |
+| Box `age.key` decrypts | **yes** — 6 keys, and again from *inside* Periphery |
+
+### The database is FerretDB-on-Postgres, not MongoDB
+
+This ticket's artifacts specified Mongo and treated FerretDB purely as the
+*fallback if AVX were missing*. AVX is present, so the bootstrap ran as written
+and Mongo came up — at which point the human said they would have preferred
+FerretDB, **because they already run Postgres and back it up with `pg_dump`**.
+
+That is a better reason than the one the artifacts were built on, and the switch
+was free: the Mongo database was 203 MB of a fresh install — the seeded admin
+and Komodo's initial system resources, no Stacks, no history. Torn down,
+discarded, redeployed on FerretDB. `KOMODO_INIT_ADMIN_*` re-seeded the admin.
+
+**The lesson for the map**: standing up a database is a decision worth surfacing
+even when a committed plan already names one. AVX was the only question the
+checklist thought to ask, and it was the wrong one.
+
+Pinned as a matched pair, because the Postgres image tag names the FerretDB
+release it was built against and upstream warns updates can break:
+
+- `ghcr.io/ferretdb/postgres-documentdb:17-0.107.0-ferretdb-2.7.0`
+- `ghcr.io/ferretdb/ferretdb:2.7.0`
+
+Two adaptations to upstream's `ferretdb.compose.yaml`:
+
+- **Postgres data lives on `/mnt/cache/appdata`, not `/mnt/user`** — the only
+  path in the file that does. appdata is `shareUseCache="only"`, so both names
+  reach the same files on the nvme, but `/mnt/user` goes through shfs (FUSE) and
+  a database should not write WAL through it.
+- **`komodo.skip: ""` on both**, as upstream does — it stops Komodo halting its
+  own database on *StopAllContainers*.
+
+`pg_dump` against `komodo-postgres` works: 1863 schema lines. Neither 27017 nor
+5432 is published.
+
+**A bind-mount trap worth remembering.** FerretDB crashlooped 8 times on
+`open /state/state.json: permission denied` — it runs as **uid 1000**, and
+Docker creates a missing bind-mount target as `root:root`. Upstream avoids this
+by using a named volume, which Docker chowns; this repo uses bind mounts on
+purpose ([07](07-repo-layout-and-conventions.md), and named volumes live in
+`docker.img`). Fixed by pre-creating the directory 1000:1000, now step 5 of
+[bootstrap/README.md](../../../bootstrap/README.md). Postgres needed no
+equivalent — its entrypoint chowns its own data dir. **Any future Stack whose
+image runs as a non-root uid will hit this same trap.**
+
+### The box was upgraded mid-ticket, and it changed nothing that matters
+
+**Unraid 7.2.0 → 7.3.2, Docker 27.5.1 → 29.5.3** (kernel 6.18.38). 01's inventory
+and 02's constraint are updated. **`docker compose` is still not a command on
+the host**, so 02's whole reason for choosing Komodo survives. Periphery's
+bundled CLI negotiated API 1.54 against the 29.5.3 daemon without complaint.
+
+### The checklist had one command that could never have worked
+
+Block 1's `docker compose ls --all` was to give 07 the exact project names — but
+there *is* no compose on the host, which is the ticket's own premise. It errors.
+Project names came from container labels instead:
+
+| Portainer stack | `com.docker.compose.project` | Files on host |
+|---|---|---|
+| 1 | **`plex-media-server`** | `/mnt/user/appdata/portainer/compose/1/docker-compose.yml` |
+| 2 | **`qbittorrent`** (holds *both* `gluetun` and `qbittorrent`) | `/mnt/user/appdata/portainer/compose/2/docker-compose.yml` |
+
+**A wrinkle for adoption**: Portainer's `working_dir` label reads
+`/data/compose/2` — a path inside *Portainer's own container*. Komodo will use
+`/mnt/user/appdata/portainer/compose/2`. Compose identifies a project by the
+label, so matching should hold, but the two disagree and that is worth watching.
+
+`qbittorrent` runs `NetworkMode=container:<gluetun>`, confirming 06's topology.
+
+### What is running
+
+**Four** containers: `komodo-postgres`, `komodo-ferretdb`, `komodo-core` (9120),
+`komodo-periphery`. Core seeded the admin user and listens on `[::]:9120`.
+Core shows `restarts=1` — `unless-stopped` correctly riding out FerretDB's
+crashloop while that was being fixed; all others are `restarts=0`.
+Periphery auto-generated its keypair into `/mnt/user/appdata/komodo/keys` and
+logged in as Server `tower` — **no passkey, as v2 promised**. The one
+`Connection refused` in its log is Periphery racing Core's startup; it retried
+5s later and succeeded.
+
+**Periphery sees all 12 containers** — the 8 workloads, PortainerCE, and
+Komodo's own 3. Docker socket mount confirmed.
+
+**`docker network create` works from inside Periphery** — 07's `pre_deploy`
+mechanism for the `shared` network is real. `shared` now exists.
+
+### Networking, checked because a lockout is a multi-day outage
+
+New bridges landed at **`komodo_default` = 172.19.0.0/16** and **`shared` =
+172.20.0.0/16**. Neither touches LAN `192.168.1.0/24` or the tailnet; host
+routes verified unchanged after both. Tailscale is a **host binary (1.98.8), not
+a container**, and the Unraid GUI is host nginx — so neither lifeline is inside
+Docker's blast radius. Nginx binds :80 on the LAN *and* tailnet IPs, but **:443
+only on 127.0.0.1** — which is a real opening for 16, since Caddy could take 443
+on the routable IPs without evicting the GUI.
+
+Docker's `default-address-pool` is unset, so allocation is the builtin
+172.17–172.31 then **192.168.0.0/16** — which *would* collide with the LAN. Four
+of ~15 slots are used, so this is remote, but pinning the pool explicitly is
+cheap insurance and belongs to 16's risk work.
+
+### Hygiene: `/mnt/user/appdata/komodo` is 0777
+
+19 found appdata at 777 and this directory inherits it. `age.key` and
+`secrets.env` are both `600 root`, so **contents are not readable** — but 777 on
+the *directory* means any user can unlink or replace `age.key`. That is an
+integrity hole, not a confidentiality one, and 03 leans on directory perms here.
+
+**Do not chmod it to 700**: the database and FerretDB drop to uids 999 and 1000,
+and 700 root would stop them traversing to their data directories. `755` is the
+correct fix — it keeps traversal and removes world-write. Left for 19 rather
+than changed mid-install.
+
+### What remains
+
+Block 6 only — the read-only adoption of the two Portainer stacks, in the UI.
+**Deliberately not done unattended**: an accidental Deploy would recreate `plex`
+and the `gluetun`+`qbittorrent` pair, and qbittorrent's `container:` network
+mode makes that fiddly to undo. This ticket stays open until adoption is
+confirmed matched.

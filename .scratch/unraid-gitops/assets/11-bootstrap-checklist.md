@@ -6,6 +6,17 @@ back; the ticket's answer is written from it.
 
 Run the blocks **in order** — block 1 can veto blocks 2 onward.
 
+> **Blocks 1–5 were run over SSH on 2026-08-02** and all passed; results are in
+> the ticket's *on-box half* findings. **Block 6 is still outstanding.** Two
+> corrections if this is ever re-run on a rebuilt box:
+>
+> - Block 1's `docker compose ls --all` **cannot work** — there is no compose on
+>   the host, which is this ticket's own premise. Read the project names from
+>   container labels instead:
+>   `docker inspect <c> --format '{{index .Config.Labels "com.docker.compose.project"}}'`
+> - Block 5's `docker exec komodo-core ... --version` is unnecessary; Core prints
+>   its version on the first line of `docker logs komodo-core`.
+
 ---
 
 ## Block 1 — Pre-flight (read-only, changes nothing)
@@ -36,8 +47,10 @@ ls -l /mnt/user/appdata/komodo/age.key
 
 **Stop and report if:**
 
-- `NO AVX` — MongoDB 8 will not start. Swap `bootstrap/compose.yaml`'s `mongo`
-  service for FerretDB-on-Postgres; Komodo supports it for exactly this reason.
+- ~~`NO AVX` — MongoDB 8 will not start. Swap `bootstrap/compose.yaml`'s `mongo`
+  service for FerretDB-on-Postgres.~~ **Moot**: the bootstrap now ships
+  FerretDB-on-Postgres unconditionally, chosen for `pg_dump` backups rather than
+  forced by AVX. The AVX check above is harmless but no longer a veto.
 - `git clone` prompts for credentials — the repo is not public, which resurrects
   the bootstrap-secret question [10](../issues/10-publish-repo-to-remote.md)
   dissolved.

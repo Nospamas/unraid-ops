@@ -53,9 +53,11 @@ Facts later tickets lean on:
   (`books downloads movies music-rb music-reg podcasts temp tv`).
 - **LAN** `192.168.1.195`, **tailscale** node `tower` = `100.126.56.26`,
   hostname `Tower`.
-- **Unraid 7.2.0, Docker 27.5.1, no `docker compose` on the host.** No Compose
+- **Unraid 7.3.2, Docker 29.5.3, no `docker compose` on the host.** No Compose
   Manager, no User Scripts plugin. Nothing on the box speaks compose except
-  Portainer, internally.
+  Portainer, internally. (Captured at 7.2.0 / 27.5.1; the box was upgraded
+  before [11](11-stand-up-komodo.md)'s bootstrap and re-verified there —
+  **the absent compose plugin is unchanged**, so nothing downstream moves.)
 - **The box is already two-tier**: Portainer runs `plex` (stack 1) and
   `gluetun`+`qbittorrent` (stack 2) from compose files under
   `/mnt/user/appdata/portainer/compose/`; the unraid Docker tab runs `sonarr`,

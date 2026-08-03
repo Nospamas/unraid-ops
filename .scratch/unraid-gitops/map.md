@@ -27,12 +27,26 @@ reference for *taste* only: the SOPS habit, Renovate for image tags, and the
 shape of the existing gethomepage config at
 `kubernetes/apps/self-hosted/homepage/app/config/`.
 
-**Box access**: the unraid box is reached through its Web UI over tailscale, and
-the human drives it. No SSH, no agent access to the host. Any ticket needing
-something from the box hands over a precise checklist — commands to run, output
-to paste back — and works from what comes back. This makes otherwise-AFK tickets
-HITL wherever they touch the box. Direct access can be granted later if the
-hand-off proves too slow; until then, assume it is not there.
+**Box access**: ~~the unraid box is reached through its Web UI over tailscale, and
+the human drives it. No SSH, no agent access to the host.~~ **Superseded
+2026-08-02**: SSH is enabled and key-based agent access works
+(`root@tower` over tailscale; public key persisted at
+`/boot/config/ssh/root.pubkeys`, since unraid rebuilds `/root` from `/boot` each
+boot). Box tickets no longer need a paste-back checklist.
+
+**This does not relax caution — it tightens it.** The box's *only* other remote
+path is the Unraid Web UI on **port 80 over tailscale**; 443 is bound to
+localhost only. There is no out-of-band console, and the human has said a
+lockout is a multi-day outage. So:
+
+- State the rollback before any change touching port 80/443, docker networking,
+  or tailscale on the box.
+- **[15](issues/15-move-unraid-gui-ports.md) and [16](issues/16-deploy-caddy.md)
+  are the live lockout risk** — Caddy wants the port the GUI's lifeline is on.
+  Neither runs without a tested way back in.
+- **Portainer is a second lifeline** (browser-reachable container control on
+  :9000) until SSH has proven itself. Its removal under *Container scope* below
+  waits on that, not just on adoption.
 
 **Surface the hand-offs**: because Box access makes HITL routine, most tickets
 end owing the human actions only they can perform. **Put them in their own
@@ -120,15 +134,16 @@ concrete artifact would settle an argument faster than discussion.
 
 - [01 — Inventory the containers already running on the box](issues/01-inventory-running-containers.md)
   — the box as found, in [assets/01-inventory.md](assets/01-inventory.md).
-  Unraid 7.2.0 / Docker 27.5.1 with **no compose on the host**; appdata
+  Unraid 7.3.2 / Docker 29.5.3 with **no compose on the host**; appdata
   `/mnt/user/appdata`, media `/mnt/user/Media`, LAN `192.168.1.195`, tailscale
   `tower`. Already two-tier: Portainer runs plex + gluetun/qbittorrent from
   compose, unraid's Docker tab runs the rest. The gluetun sidecar is **already
   in place**; provider is NordVPN, which has no port forwarding. PUID/PGID
   diverge three ways. Homepage does not exist at all.
 - [02 — Choose the reconcile mechanism](issues/02-choose-reconcile-mechanism.md)
-  — **Komodo**, as three containers on the box (Core, a Mongo-compatible DB,
-  Periphery); comparison in
+  — **Komodo**, as four containers on the box (Core, Periphery, and a
+  Mongo-compatible DB which [11](issues/11-stand-up-komodo.md) settled as
+  FerretDB-on-Postgres — two containers, not one); comparison in
   [assets/02-reconcile-mechanism.md](assets/02-reconcile-mechanism.md). Its
   Periphery image bundles compose and git, so the "no compose on the host"
   constraint is cleared without touching the host. Beat Portainer — a close,

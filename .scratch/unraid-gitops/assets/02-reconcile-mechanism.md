@@ -24,7 +24,7 @@ name, without recreating them first.
 
 ## Why — the constraint that decided it
 
-Ticket 01 established the hard one: **Unraid 7.2.0 / Docker 27.5.1 with no
+Ticket 01 established the hard one: **Unraid 7.3.2 / Docker 29.5.3 with no
 compose implementation on the host**, no Compose Manager plugin, no User
 Scripts plugin, and an OS that lives in RAM and rebuilds from `/boot` on every
 boot. Any candidate must carry its own compose, inside a container.

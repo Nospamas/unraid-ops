@@ -18,7 +18,7 @@ should move off it. What is being kept is qbittorrent and gluetun, not the thing
 currently deploying them.
 
 **Hard constraint from [01](01-inventory-running-containers.md): there is no
-compose implementation on the box.** Unraid 7.2.0 ships Docker 27.5.1 with no
+compose implementation on the box.** Unraid 7.3.2 ships Docker 29.5.3 with no
 `docker compose` plugin, and neither the Compose Manager nor the User Scripts
 plugin is installed. Every candidate must therefore either carry its own compose
 implementation inside a container, or install one somewhere that survives a
