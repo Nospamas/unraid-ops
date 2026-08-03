@@ -103,6 +103,19 @@ compose path resolution breaks
    `min_password_length: 1`. It rate-limits at 5 attempts per 15s, and issues
    session JWTs with a 1-day TTL.
 
+8. **Declare this repo to Komodo**, from a laptop clone with `age.key` in place:
+
+   ```sh
+   just bootstrap
+   ```
+
+   Everything else Komodo runs comes from git, but the ResourceSync that reads
+   git cannot itself come from git — so this one resource is created here, from
+   [komodo/sync.toml](../komodo/sync.toml), and then declares itself. Without
+   this step a rebuilt box is a running Komodo that has never heard of this
+   repo. The recipe is idempotent, and `just reconcile` afterwards deploys
+   without waiting for the 15-minute poll.
+
 ## What is a secret here, and why it cannot follow the usual route
 
 Every other Stack decrypts its secrets in a Komodo `pre_deploy`. This one
@@ -118,11 +131,11 @@ same pair is embedded in `FERRETDB_POSTGRESQL_URL`, so both move together.
 ## Rebuilding the box
 
 Clone the repo, restore `age.key` from KeePassXC, re-fetch the sops binary, then
-steps 3–5. Appdata under `/mnt/user/appdata/komodo` carries the Core/Periphery
+steps 3–8. Appdata under `/mnt/user/appdata/komodo` carries the Core/Periphery
 keypair, and `/mnt/cache/appdata/komodo/postgres` carries the database — the
 same files, reached without shfs. A restore of appdata plus this file is the
 whole of it. Everything Komodo manages comes back from the repo through
-ResourceSync.
+ResourceSync — which step 8 is what puts back.
 
 ## The database
 

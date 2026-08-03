@@ -60,6 +60,7 @@ stacks/
 
 scripts/
   check-exposure.sh         every fronted Service is internal or x-published
+  komodo.sh                 `just bootstrap` and `just reconcile` against Core's API
 ```
 
 Twelve Stacks, thirteen containers. `bootstrap/` is the exception that proves the

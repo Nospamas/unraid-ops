@@ -1,0 +1,25 @@
+# 22 — Migrate calibre
+
+Type: task
+Status: open
+
+## Question
+
+Adopt calibre into git. Already **99:100**
+([01](01-inventory-running-containers.md)), so
+[20](20-chown-to-99-100.md) does not gate it, but it is not uniform with
+[21](21-migrate-arr-stacks.md) in three ways:
+
+- **It carries a secret** — the GUI password — so it is the second Stack with a
+  `secrets.sops.env`. Follow [08](08-deploy-homepage.md)'s correction: the
+  decrypted `secrets.env` reaches the container through compose's `env_file`
+  with `required: false`, not `additional_env_files`.
+- **Three host ports**: 8080 (desktop GUI over guacamole), 8081 (content
+  server), 8181. Decide which of these Caddy will front later, and whether all
+  three still need publishing.
+- **The `${MEDIA}/books` → `/config/Calibre Library` bind**, space and all
+  ([docs/repo-layout.md](../../../docs/repo-layout.md)).
+
+The map's *Secret severity* note rules the calibre password low-value and
+**closed** — do not reopen it. The live carve-out is auth in front of its login,
+and that is fog until something is published.

@@ -64,10 +64,13 @@ has now settled its fate: **removed**, once its two stacks are adopted. Komodo's
 own **four** containers take its place as the box's only non-workload tenants —
 four, not three, since [11](issues/11-stand-up-komodo.md) put the database on
 FerretDB-on-Postgres.
-Two workloads have since been *added* by decisions rather than adopted from the
-box: **Caddy** ([04](issues/04-reverse-proxy-and-domain.md)) and **CoreDNS**
-([05](issues/05-remote-access.md)) — so the count is eight adopted, plus
-homepage, Caddy and CoreDNS built new.
+Three workloads have since been *added* by decisions rather than adopted from
+the box: **Caddy** ([04](issues/04-reverse-proxy-and-domain.md)), **CoreDNS**
+([05](issues/05-remote-access.md)) and **dockerproxy**
+([08](issues/08-deploy-homepage.md)) — so the count is eight adopted, plus
+homepage, Caddy, CoreDNS and dockerproxy built new. **Homepage and dockerproxy
+are live**; the eight adopted are
+[21](issues/21-migrate-arr-stacks.md)–[24](issues/24-migrate-download-stack.md).
 
 **Default-private, explicit publish** ([05](issues/05-remote-access.md)): every
 service is guarded to LAN + tailnet by default and **nothing is published to the
@@ -136,6 +139,18 @@ where a build competes with the thing running the deploys. Prefer a maintained
 upstream image; 12 found one for Caddy, which was the only planned build. Every
 image in the repo is `version@digest` with **no exceptions**, and Komodo's
 `auto_update` is used nowhere.
+
+**The loop is live** ([08](issues/08-deploy-homepage.md)): a Komodo Procedure
+named `reconcile`, every 15 minutes, running `RunSync` **then**
+`BatchDeployStackIfChanged` — a ResourceSync applies nothing by itself, it only
+reports. Two rules every later ticket inherits: **the deploy pattern is an
+explicit list of Stack names, never `*`** (a wildcard recreates the adopted
+plex and download Stacks unattended), and **a Stack the pattern does not name is
+never deployed**, which makes adding it a step of migrating. Drive it with
+`just reconcile` rather than the UI or raw API calls, and `just bootstrap` to
+recreate the ResourceSync on a rebuilt box — **no agent should be POSTing to
+Core's API ad hoc**; if a new operation is needed, it goes in
+[scripts/komodo.sh](../../scripts/komodo.sh) behind a recipe first.
 
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
@@ -401,52 +416,52 @@ concrete artifact would settle an argument faster than discussion.
   rules are written ahead of the files they match and 08 is their first test.
   No new secrets.
 
+- [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md)
+  — **the loop is real: a push changed the box in 8m34s, unattended**, on a
+  commit touching only `config/bookmarks.yaml`. Two Stacks landed —
+  `stacks/homepage/` and `stacks/dockerproxy/` — plus the reconcile Procedure in
+  [komodo/](../../komodo/). The loop is **two stages, not one**: a ResourceSync
+  *applies nothing on its own* (Core only reports pending changes), so `RunSync`
+  runs first and `BatchDeployStackIfChanged` second, on a 15-minute cron.
+  **That pattern is an explicit list of Stack names and must never be `*`** — an
+  adopted-but-never-deployed Stack has no deployed contents to diff, which
+  Komodo reads as *deploy it*, so a wildcard would recreate plex and the
+  gluetun/qbittorrent pair on a timer. Adding a Stack to that line is now part
+  of migrating it. 07's checklist had **three defects**, all fixed in the docs:
+  config files a service reads must be listed in `config_files` or a config push
+  is silently inert; `secrets.env` goes in compose's `env_file` (with
+  `required: false`), because `additional_env_files` **tracks** its entries
+  against a repo the file is deliberately absent from; and the deploy pattern is
+  a per-Stack step. Homepage runs as **uid 99 with no exception to 09**, but
+  `/app/config` must be **writable** — it seeds missing skeleton files and 500s
+  otherwise — so the repo ships all nine and the clone stays clean. Its appdata
+  is logs and nothing else. The docker socket was **not** given to homepage
+  (upstream requires root for that): `dockerproxy` holds it read-only on **its
+  own `--internal` network**, which corrects 07's one-network rule — `shared` is
+  for what Caddy must reach, a privileged API is for exactly one consumer.
+  **`just bootstrap` and `just reconcile` now exist**, and step 8 of
+  [bootstrap/README.md](../../bootstrap/README.md) with them: the ResourceSync
+  is the one resource a sync cannot create, and it was briefly living only in a
+  session transcript. That **reverses 13's decline of a reconcile recipe** —
+  11 found Core takes the admin password directly, so the second local secret 13
+  refused to pay for does not exist. Four new secrets (three *arr keys and
+  plex's account-scoped token), piped from the box into SOPS without ever
+  touching disk in plaintext.
+
 ## Not yet specified
 
-- **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
-  prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian. Deliberately
-  fog: until homepage proves the layout and the reconcile loop, we don't know
-  whether this is one repetitive ticket or one per service. What ticket 01 did
-  sharpen is that they are **not uniform** — plex, gluetun and qbittorrent
-  already have compose definitions in Portainer's appdata to lift, while the
-  other five exist only as unraid template XML and must be translated. Plex is
-  the awkward one (20G appdata, `/dev/dri` passthrough, claim token).
-  [06](issues/06-qbittorrent-vpn-topology.md) has now loaded three requirements
-  onto the qbittorrent/gluetun slice specifically, which argue further against
-  one uniform ticket: the pair must be **recreated together or qbittorrent is
-  silently left with no network**, and whether Komodo's Deploy does that unaided
-  is **unverified**; the four *arr need a **shared user-defined network** that is
-  `external: true` across compose projects; and repointing each *arr's download
-  client at `gluetun:30024` is a **hand edit in four UIs**, because that setting
-  lives in appdata and no push can perform it. **[07](issues/07-repo-layout-and-conventions.md)
-  has removed the other half of the reason this is fog** — the layout and the
-  add-a-service checklist now exist, so a migration is repetitive work rather
-  than fresh decisions, and 07 already fixed each awkward service's shape
-  (plex's appdata path and `/dev/dri`, calibre's `Calibre Library` bind, the
-  gluetun+qbittorrent single Stack). What is still unknown is whether the
-  checklist *holds* — which is exactly what
-  [08 — Deploy homepage from the repo](issues/08-deploy-homepage.md) tests.
-  [09](issues/09-unify-uid-gid.md) has since removed one of the arguments
-  against a uniform ticket: **no service's stored paths change**, so no
-  migration carries DB surgery, and the import chain does *not* have to move as
-  a unit. What it adds instead is an ordering constraint —
-  [20](issues/20-chown-to-99-100.md) must run before plex, gluetun or
-  qbittorrent adopt, since until it does those three cannot read their own
-  appdata as uid 99. [11](issues/11-stand-up-komodo.md) leaves three things
-  waiting here: **`/mnt/user/appdata/komodo/adopt/` must be deleted** when
-  `stacks/plex/` and `stacks/download/` replace it, or the box keeps a stale
-  compose a Deploy could apply; the adopted Stacks are named `plex` and
-  `download` already, so the migration **updates** those resources rather than
-  creating second ones; and **whether the first Deploy of an adopted Stack
-  recreates the containers or no-ops is unproven** — Komodo matched them by
-  project name but records nothing as deployed, so the answer is compose's
-  config-hash call, and for `download` a needless recreate is exactly 06's
-  silent-orphan hazard. **And no Stack may bind `/etc/localtime`** — the human
-  had to drop that bind by hand to bring plex back up after the 7.3.2 upgrade,
-  and [11](issues/11-stand-up-komodo.md) proved it is a **box-wide** failure,
-  not a plex one: runc under Docker 29.5.3 refuses to mount onto that
-  destination on any image. `TZ` in [common.env](../../common.env) already
-  covers it. Graduates once 08 resolves.
+- **Reconciling on push rather than on a timer.** The loop polls every 15
+  minutes because nothing inbound reaches the box
+  ([02](issues/02-choose-reconcile-mechanism.md)), and
+  [08](issues/08-deploy-homepage.md) built it that way knowingly — Komodo
+  supports git webhooks, and Core already generates a `KOMODO_WEBHOOK_SECRET`
+  and shows `webhook_enabled: true` on the Procedure. Fog because the trigger
+  has not fired: a webhook needs GitHub to reach Core, and **nothing is
+  published** ([05](issues/05-remote-access.md)). It becomes sharp the moment
+  [16](issues/16-deploy-caddy.md) lands and something decides whether Komodo is
+  the first service worth publishing — which is a *scope* question about
+  default-private, not just a plumbing one. Until then 15 minutes is the answer,
+  and the poll is not a defect to be fixed in passing.
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,
@@ -472,6 +487,13 @@ concrete artifact would settle an argument faster than discussion.
   the coupling is not rediscovered the hard way.
 - **Monitoring and alerting** for the stack. Suspected, unsharp; may fall out of
   scope entirely once the stack is running.
+  [08](issues/08-deploy-homepage.md) has moved this from hypothetical to
+  observed: the box now changes on a timer with nobody watching, and the only
+  thing that noticed the first unattended deploy was a person who happened to be
+  looking. Komodo's `schedule_alert` is off on `reconcile` (four runs an hour is
+  noise) and `failure_alert` is on with **no alerter configured to receive it** —
+  so a failing reconcile is currently silent. That is the sharpest single thing
+  here.
   [12](issues/12-image-update-strategy.md) has given it a **trigger** without
   making it sharp: minor+patch image bumps automerge and deploy unattended on the
   next poll, so from the first Stack onward the box can change with nobody
