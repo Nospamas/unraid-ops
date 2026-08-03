@@ -1,0 +1,32 @@
+# Ticket 21. Adopted off unraid's Docker tab; the appdata is unchanged.
+
+services:
+  lazylibrarian:
+    image: lscr.io/linuxserver/lazylibrarian:ef1f6e73-ls222@sha256:05515b7c4485fc4816679a60a97c794e27c0c4ceab788c58ae003461be7a158a
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+      # Carried over as found -- calibredb is how it imports into the library
+      # calibre serves.
+      DOCKER_MODS: linuxserver/mods:universal-calibre
+    volumes:
+      - ${APPDATA}/lazylibrarian:/config
+      - ${MEDIA}/books:/books
+      - ${MEDIA}/downloads:/downloads
+    ports:
+      # Kept as found. Nothing addresses it by host today; it goes with the
+      # other three rather than alone -- ticket 30.
+      - "5299:5299"
+    networks:
+      - shared
+    labels:
+      caddy: lazylibrarian.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 5299}}"
+
+networks:
+  shared:
+    external: true

@@ -1,0 +1,29 @@
+# Ticket 21. Adopted off unraid's Docker tab; the appdata is unchanged.
+
+services:
+  radarr:
+    image: lscr.io/linuxserver/radarr:6.0.4.10291-ls288@sha256:06ac318ecb95a34c7b229568dcb4271f02cb5007bb189a0dd67a2032864187ca
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/radarr:/config
+      - ${MEDIA}/movies:/movies
+      - ${MEDIA}/downloads:/downloads
+    ports:
+      # Prowlarr writes indexers into radarr over http://192.168.1.195:7878,
+      # which lives in prowlarr's appdata, not here -- ticket 30.
+      - "7878:7878"
+    networks:
+      - shared
+    labels:
+      caddy: radarr.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 7878}}"
+
+networks:
+  shared:
+    external: true

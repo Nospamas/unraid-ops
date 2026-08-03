@@ -54,6 +54,10 @@ host-check:
 host-ports *args:
     bash scripts/host.sh ports {{ args }}
 
+# Free a container from unraid's Docker tab so a Stack can take over -- pass --apply to commit
+adopt container *args:
+    bash scripts/adopt.sh {{ container }} {{ args }}
+
 # Check exposure, compose files, shell scripts and Dockerfiles
 lint:
     #!/usr/bin/env bash

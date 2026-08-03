@@ -52,7 +52,8 @@ stacks/<name>/      komodo.toml + compose.yaml, always
 Eleven Stacks, twelve containers: `caddy`, `coredns`, `homepage`,
 `dockerproxy`, `download` (gluetun + qbittorrent), `sonarr`, `radarr`,
 `prowlarr`, `lazylibrarian`, `plex`, `calibre`. Built so far: `dockerproxy`,
-`homepage`, `caddy` and `coredns`. The rest are [21]–[24].
+`homepage`, `caddy`, `coredns`, and the four *arr Stacks [21]. `plex`,
+`calibre` and `download` are left, in [22]–[24].
 
 `bootstrap/` is in git so a rebuild starts from a file, and **never gets a
 `komodo.toml`**: Core can redeploy itself but Periphery cannot, and upstream
@@ -75,6 +76,12 @@ recreating gluetun alone leaves qbittorrent silently unrouted [06].
 Every `[[stack]]` sets `project_name` explicitly. **[adopt]** it must match the
 project the container already belongs to, or Komodo builds a second copy
 alongside the running one instead of taking it over.
+
+**A container from unraid's Docker tab has no project to match** [21]. It
+carries `net.unraid.docker.managed=dockerman` and no `com.docker.compose.*`
+labels at all, so nothing can adopt it — `just adopt <container>` removes it,
+and the Stack rebinds the same appdata. Only Portainer's three (`plex`,
+`gluetun`, `qbittorrent`) are adoptable in place.
 
 ## The reconcile loop
 
@@ -292,7 +299,7 @@ thing running the deploys.
 
 **[adopt]** Unraid's autostart list is keyed by **container name**, so unraid and
 compose race for any container unraid still autostarts. Turn unraid's autostart
-off **before** the first deploy.
+off **before** the first deploy — `just adopt` does it alongside the removal.
 
 ## Recipes
 
@@ -309,6 +316,12 @@ to do this? [27]
 | `reconcile` | Komodo API | no — the cron does this anyway |
 | `bootstrap` | Komodo API | **`--apply`** |
 | `host-ports` | the box over SSH | **`--apply`** |
+| `adopt <container>` | the box over SSH | **`--apply`** |
+
+`adopt` has **no scheduled use after [22]**, the last container unraid's Docker
+tab owns — a rebuilt box is a fresh unraid install populated from git. It takes
+a container name rather than a Stack, so it keeps working for anything later
+installed from Community Applications; it is just not on the route.
 
 `reconcile` is a big act and stays ungated: the cron performs the identical
 Procedure whether anyone types it or not, so the decision was the merge, where

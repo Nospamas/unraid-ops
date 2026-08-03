@@ -1,11 +1,12 @@
 ---
-# href values point at IP:port until Caddy answers on *.rbrb.in (ticket 16).
+# {{HOMEPAGE_VAR_HOST}} is the box's LAN address, still used by everything the
+# repo does not own yet. A migrated service loses it twice over: href becomes
+# its https://<name>.rbrb.in hostname (ticket 16) and the widget url becomes
+# http://<service>:<port> across the shared network (ticket 21).
 #
-# Widget urls use {{HOMEPAGE_VAR_HOST}}, the box's LAN address, because none of
-# these containers are on the shared network yet. As each one migrates, its url
-# becomes http://<container>:<port> and one variable use disappears.
-#
-# `container:` reads state through the dockerproxy Stack, not the socket.
+# `container:` reads state through the dockerproxy Stack, not the socket, and
+# names the compose *container* -- Komodo runs each Stack as its own project,
+# so a migrated service is <stack>-<service>-1.
 
 - Media:
     - Plex:
@@ -21,35 +22,35 @@
           enableNowPlaying: true
     - Sonarr:
         icon: sonarr.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:8989
+        href: https://sonarr.rbrb.in
         description: TV
         server: tower
-        container: sonarr
+        container: sonarr-sonarr-1
         widget:
           type: sonarr
-          url: http://{{HOMEPAGE_VAR_HOST}}:8989
+          url: http://sonarr:8989
           key: '{{HOMEPAGE_VAR_SONARR_KEY}}'
           enableQueue: true
     - Radarr:
         icon: radarr.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:7878
+        href: https://radarr.rbrb.in
         description: Movies
         server: tower
-        container: radarr
+        container: radarr-radarr-1
         widget:
           type: radarr
-          url: http://{{HOMEPAGE_VAR_HOST}}:7878
+          url: http://radarr:7878
           key: '{{HOMEPAGE_VAR_RADARR_KEY}}'
           enableQueue: true
     - Prowlarr:
         icon: prowlarr.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:9696
+        href: https://prowlarr.rbrb.in
         description: Indexers
         server: tower
-        container: prowlarr
+        container: prowlarr-prowlarr-1
         widget:
           type: prowlarr
-          url: http://{{HOMEPAGE_VAR_HOST}}:9696
+          url: http://prowlarr:9696
           key: '{{HOMEPAGE_VAR_PROWLARR_KEY}}'
 
 - Downloads:
@@ -86,10 +87,10 @@
         # application from the calibre this box runs.
     - LazyLibrarian:
         icon: lazylibrarian.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:5299
+        href: https://lazylibrarian.rbrb.in
         description: Book acquisition
         server: tower
-        container: lazylibrarian
+        container: lazylibrarian-lazylibrarian-1
         # No widget: homepage has no lazylibrarian type.
 
 - Infrastructure:

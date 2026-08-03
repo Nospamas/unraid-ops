@@ -1,0 +1,28 @@
+# Ticket 21. Adopted off unraid's Docker tab; the appdata is unchanged.
+
+services:
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:2.3.0.5236-ls133@sha256:475853535de3de8441b87c1457c30f2e695f4831228b12b6b7274e9da409d874
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+    volumes:
+      # Indexer proxy only -- no media binds, as found.
+      - ${APPDATA}/prowlarr:/config
+    ports:
+      # The indexer URLs prowlarr writes into sonarr and radarr point back at
+      # http://192.168.1.195:9696, so this port is the search path -- ticket 30.
+      - "9696:9696"
+    networks:
+      - shared
+    labels:
+      caddy: prowlarr.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 9696}}"
+
+networks:
+  shared:
+    external: true

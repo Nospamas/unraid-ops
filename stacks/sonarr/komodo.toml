@@ -1,0 +1,16 @@
+[[stack]]
+name = "sonarr"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/sonarr"
+# No project to inherit: the container this replaces was unraid's, and carried
+# no com.docker.compose.* labels at all -- ticket 21.
+project_name = "sonarr"
+additional_env_files = ["../../common.env"]
+
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+"""

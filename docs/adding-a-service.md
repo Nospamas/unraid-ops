@@ -73,6 +73,14 @@ docker network inspect shared >/dev/null 2>&1 || docker network create shared
 matches `<name>`. A wrong `project_name` makes Komodo create a second copy
 alongside the running container instead of taking it over.
 
+```sh
+ssh root@tower 'docker inspect <container> \
+  --format "{{index .Config.Labels \"com.docker.compose.project\"}}"'
+```
+
+**`<no value>` means there is no project to inherit** — the container is
+unraid's, not compose's, and step 5b applies instead. Use `<name>`.
+
 ## 4. Secrets, if it has any
 
 ```bash
@@ -114,6 +122,26 @@ config_files = [
 In the Docker tab, autostart **off** for this container, *before* the first
 deploy. Unraid's autostart is keyed by container name, so leaving it on means
 unraid and compose both try to own the container.
+
+## 5b. **[adopt, unraid-managed only]** Remove the old container
+
+A container from unraid's Docker tab has **no compose labels**, so compose
+cannot take it over — it builds a second container beside the running one, and
+the two fight over the host port and the same `/config`. Remove it first:
+
+```sh
+just adopt <container>            # dry run
+just adopt <container> --apply
+```
+
+That drops the name from unraid's autostart list *and* removes the container.
+Nothing is lost — every byte of state is on the appdata bind, and the template
+under `/boot/config/plugins/dockerMan/templates-user/` is the rollback: **Add
+Container → pick it → Apply** puts it back on the same appdata.
+
+The recipe **refuses a container that already has a compose project** — that
+one is adopted in place by `project_name` (step 3), and removing it would
+destroy a running service for nothing.
 
 ## 6. **[adopt]** Check the appdata still fits
 
