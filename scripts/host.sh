@@ -50,10 +50,30 @@ check() {
     fi
 }
 
-ports() {
-    local f v query=""
+# Reads the box's current Management Access fields into `live_vals`.
+read_live() {
+    local k v
+    live_vals=()
+    # shellcheck disable=SC2029  # $pattern is built here on purpose
+    while IFS='=' read -r k v; do
+        v="${v%$'\r'}" # ident.cfg is CRLF
+        v="${v#\"}"
+        v="${v%\"}"
+        live_vals["$k"]="$v"
+    done < <(ssh "$tower" "grep -E '$pattern' $live")
+}
 
-    echo "applying from the snapshot:"
+ports() {
+    local apply=0 f v query="" changed=0
+    case "${1:-}" in
+    --apply) apply=1 ;;
+    "") ;;
+    *)
+        echo "usage: host.sh ports [--apply]" >&2
+        exit 1
+        ;;
+    esac
+
     for f in "${fields[@]}"; do
         v="$(value "$f")"
         # Bare alphanumerics only -- these become a query string inside a
@@ -63,7 +83,6 @@ ports() {
             exit 1
         fi
         query+="&$f=$v"
-        echo "  $f=$v"
     done
     # SSH is both the path this runs over and the path that undoes it.
     if [[ "$(value USE_SSH)" != yes ]]; then
@@ -71,8 +90,35 @@ ports() {
         exit 1
     fi
 
-    echo "on the box now:"
-    show_live
+    read_live
+    for f in "${fields[@]}"; do
+        v="$(value "$f")"
+        if [[ "${live_vals[$f]:-}" == "$v" ]]; then
+            echo "  $f=$v"
+        else
+            echo "* $f=${live_vals[$f]:-<unset>} -> $v"
+            changed=1
+        fi
+    done
+
+    if ((!changed)); then
+        echo
+        echo "the box already matches the snapshot -- nothing to do."
+        return
+    fi
+
+    echo
+    echo "would run on $tower:"
+    echo "  emcmd 'changePorts=Apply${query}'"
+
+    if ((!apply)); then
+        echo
+        echo "dry run -- nothing was changed. re-run with:  just host-ports --apply"
+        echo "note this moves the port the Unraid GUI answers on. after applying,"
+        echo "reconnect at http://192.168.1.195:$(value PORT)."
+        return
+    fi
+
     # shellcheck disable=SC2029  # $query is built here, and validated above
     ssh "$tower" "emcmd 'changePorts=Apply${query}'"
     sleep 2
@@ -86,11 +132,16 @@ ports() {
     echo "nginx's config straight from the file and needs no emhttpd."
 }
 
+declare -A live_vals
+
 case "${1:-}" in
 check) check ;;
-ports) ports ;;
+ports)
+    shift
+    ports "$@"
+    ;;
 *)
-    echo "usage: host.sh check|ports" >&2
+    echo "usage: host.sh check | ports [--apply]" >&2
     exit 1
     ;;
 esac

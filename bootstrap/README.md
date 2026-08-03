@@ -137,6 +137,39 @@ same files, reached without shfs. A restore of appdata plus this file is the
 whole of it. Everything Komodo manages comes back from the repo through
 ResourceSync — which step 8 is what puts back.
 
+## The host settings Komodo cannot reach
+
+A fresh flash config puts Unraid's own nginx back on ports **80 and 443**, which
+Caddy then cannot bind — so a rebuild has one step no ResourceSync performs
+([ticket 15](../.scratch/unraid-gitops/issues/15-move-unraid-gui-ports.md)):
+
+```sh
+just host-check            # diff the box's ident.cfg against the snapshot here
+just host-ports            # show what would change -- changes nothing
+just host-ports --apply    # Management Access -> HTTP 8008, HTTPS 8443
+```
+
+**`host-ports` is dry-run by default.** Without `--apply` it prints the fields
+that differ and the exact `emcmd` it would run, and stops. It moves the port the
+GUI answers on, so it is not a recipe to run absent-mindedly
+([ticket 27](../.scratch/unraid-gitops/issues/27-recipe-safety-convention.md) is
+making that the rule for every mutating recipe, not just this one).
+
+[host/ident.cfg](host/ident.cfg) is a **snapshot of `/boot/config/ident.cfg`, not
+a source of truth.** Only the Management Access fields are ever applied from it;
+the rest — share security, NTP, workgroup, timezone — is recorded so a rebuild
+has something to copy from by hand, and `host-check` is what stops that record
+going quietly stale. Change any of it in the GUI and re-snapshot with the
+command `host-check` prints.
+
+`host-ports` drives emhttpd through the same unix socket the GUI's Apply button
+posts to, so `ident.cfg` and emhttpd's `var.ini` move together and nginx reloads
+itself. Copying the file into place would update neither, and leave the two
+disagreeing. It sends all seven fields on that page because the handler is a
+binary whose treatment of omitted fields cannot be read — a dropped
+`USE_SSH="yes"` would close the box's only lifeline, so the script refuses if
+the snapshot does not carry it.
+
 ## The database
 
 **FerretDB in front of Postgres**, not MongoDB. Komodo supports only these two,

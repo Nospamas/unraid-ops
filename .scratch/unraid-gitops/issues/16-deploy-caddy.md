@@ -44,11 +44,17 @@ Do:
 - **Prove it end to end on one service.** Pick a harmless one and label it, then
   confirm `https://<it>.rbrb.in` resolves and serves a valid certificate from the
   LAN — and that a request from outside both CIDRs gets a 403.
+- **Delete `/boot/config/ident.cfg.bak-15`** once Caddy is up.
+  [15](15-move-unraid-gui-ports.md) left it deliberately: this ticket is the
+  window where someone might want the GUI back on 80 in a hurry.
 
 Blocked by [07](07-repo-layout-and-conventions.md) for where the files live,
 [11](11-stand-up-komodo.md) because Komodo must exist to build or deploy
 anything, [14](14-cloudflare-zone-and-token.md) for the zone and token, and
-[15](15-move-unraid-gui-ports.md) for the ports.
+[15](15-move-unraid-gui-ports.md) for the ports — **15 is closed**, so this is
+takeable. It verified that a container binds `0.0.0.0:80` and `:443` on this
+box, so the bind is not a risk this ticket carries. The GUI now answers on
+`8008`, which is also the port to reconnect on if Caddy has to be torn down.
 
 **Not blocked on [08](08-deploy-homepage.md), and does not block it.** 08 proves
 the reconcile loop and can be reached by `IP:port`; this ticket proves the

@@ -35,15 +35,18 @@ the human drives it. No SSH, no agent access to the host.~~ **Superseded
 boot). Box tickets no longer need a paste-back checklist.
 
 **This does not relax caution — it tightens it.** The box's *only* other remote
-path is the Unraid Web UI on **port 80 over tailscale**; 443 is bound to
-localhost only. There is no out-of-band console, and the human has said a
-lockout is a multi-day outage. So:
+path is the Unraid Web UI, on **port 8008 over tailscale** since
+[15](issues/15-move-unraid-gui-ports.md) — `http://100.126.56.26:8008`, and
+`8443` is loopback-only with SSL off. There is no out-of-band console, and the
+human has said a lockout is a multi-day outage. So:
 
 - State the rollback before any change touching port 80/443, docker networking,
   or tailscale on the box.
-- **[15](issues/15-move-unraid-gui-ports.md) and [16](issues/16-deploy-caddy.md)
-  are the live lockout risk** — Caddy wants the port the GUI's lifeline is on.
-  Neither runs without a tested way back in.
+- **[16](issues/16-deploy-caddy.md) is the live lockout risk**, and now the only
+  one — 15 has moved the GUI clear and verified a container can take 80 and 443,
+  so Caddy no longer contends with the lifeline. What remains is that 16 puts a
+  proxy in front of the box on the ports a browser reaches it by. It does not
+  run without a tested way back in.
 - **Portainer is a second lifeline** (browser-reachable container control on
   :9000) until SSH has proven itself. Its removal under *Container scope* below
   waits on that, not just on adoption.
@@ -114,6 +117,12 @@ not go-task — do not reach for `task`. `just lint` is the gate every Stack mus
 pass and it also runs in CI. **The age key is real now**, so any ticket may write
 a `secrets.sops.env` — always via `just secret <stack>`, never `sops --encrypt`
 on a path outside the Stack directory, which finds no creation rule.
+[15](issues/15-move-unraid-gui-ports.md) added `host-check` and `host-ports`,
+the first recipes that reach the box over **SSH** rather than Komodo's API —
+`TOWER_SSH` overrides the `root@tower` default. **A recipe that changes the box
+should be dry-run by default and take `--apply`**; `host-ports` is the first and
+[27](issues/27-recipe-safety-convention.md) is settling it as the rule, so a
+ticket adding a recipe should write it that way rather than wait.
 
 **Komodo is live** ([11](issues/11-stand-up-komodo.md)): v2.3.1 on
 `http://192.168.1.195:9120`, Server `tower` connected, Stacks `plex` and
@@ -472,6 +481,34 @@ concrete artifact would settle an argument faster than discussion.
   The token arrived **untracked** and was encrypted in place, so no plaintext
   ever entered git. `stacks/caddy/` now holds *only* the secret; 16 adds the
   rest, and `just lint` tolerates the compose-less directory.
+
+- [15 — Move the Unraid Web GUI off ports 80/443](issues/15-move-unraid-gui-ports.md)
+  — **the GUI is on `8008`/`8443`, 80 and 443 are free on every interface, and a
+  container has been shown to take both** — so 16's blocker is proven gone, not
+  inferred from an empty `ss` line. The ticket was right to demand observation
+  first: nginx held `:80` on LAN, tailnet and both loopbacks, but `:443` **only
+  on loopback** (`USE_SSL="no"`), so this was one lifeline port plus one
+  bookkeeping port. 443 still had to move — Caddy publishes `0.0.0.0:443`, and a
+  wildcard bind collides with a listening `127.0.0.1:443`. **SSH is what made
+  the map's most dangerous change ordinary**: sshd is a separate process on
+  `:22` across LAN and tailnet, untouched by anything nginx does, so the change
+  had an independent path to undo it — the first ticket to actually cash in the
+  superseded Box access note. The human drove the GUI; everything else was
+  verified over SSH. **It did not stay a one-off**:
+  [scripts/host.sh](../../scripts/host.sh) behind `just host-ports` /
+  `just host-check` now applies the Management Access page from a snapshot of
+  `ident.cfg` at [bootstrap/host/](../../bootstrap/host/), driving the same
+  emhttpd socket the Apply button posts to — copying the file would desync
+  `ident.cfg` from `var.ini`. **`host-ports` is dry-run by default**, `--apply`
+  to commit, which the human then generalised to every mutating recipe as
+  [27](issues/27-recipe-safety-convention.md). **All seven fields are sent**, because a dropped
+  `USE_SSH="yes"` closes the lifeline and emhttpd's handler is an unreadable
+  binary. Three finds: `ident.cfg` is **CRLF** (`rc.nginx` runs `fromdos` on
+  it), `.gitattributes` would have normalised the snapshot to LF and made
+  `host-check` diff forever, and the field values are validated bare before
+  reaching a quoted remote command. **Only the ports are owned** — the other 29
+  settings are recorded, not applied, and how much host state git *should* own
+  went to [26](issues/26-host-state-scope.md). No new secrets.
 
 ## Not yet specified
 

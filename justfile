@@ -38,6 +38,14 @@ bootstrap:
 reconcile:
     bash scripts/komodo.sh reconcile
 
+# Compare the box's ident.cfg against the snapshot in bootstrap/host
+host-check:
+    bash scripts/host.sh check
+
+# Show what the snapshot would change on the box. Pass --apply to do it
+host-ports *args:
+    bash scripts/host.sh ports {{ args }}
+
 # Check exposure, compose files, shell scripts and Dockerfiles
 lint:
     #!/usr/bin/env bash

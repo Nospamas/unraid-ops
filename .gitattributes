@@ -1,4 +1,7 @@
 * text=auto eol=lf
+# Unraid writes its config CRLF and reads it through `fromdos`. Normalising
+# this to LF would make `just host-check` diff against the box forever.
+bootstrap/host/ident.cfg -text
 *.env linguist-detectable linguist-language=SHELL
 *.json linguist-detectable linguist-language=JSON
 *.json5 linguist-detectable linguist-language=JSON5
