@@ -2,6 +2,7 @@
 
 Type: task (HITL)
 Status: open
+Assignee: Nospamas
 
 ## Question
 
@@ -35,6 +36,17 @@ repo.
 **HITL**: all of this is web UI work in two vendor consoles, and it produces a
 credential. The human does it; the session writes the checklist and takes back
 the zone status and the token.
+
+The checklist is [assets/14-cloudflare-checklist.md](../assets/14-cloudflare-checklist.md).
+It corrects two things this ticket got wrong, both verified before it was
+written:
+
+- **The zone is not blank.** Gandi's defaults are live — apex `A`, `www` CNAME,
+  `MX`, SPF `TXT` — and Cloudflare imports them on the scan. Ruled: delete all
+  four. The apex `A` would otherwise beat the wildcard for bare `rbrb.in`.
+- **`Zone / DNS / Edit` alone is not enough.** `libdns/cloudflare` resolves the
+  zone ID via `GET /zones?name=`, so **`Zone / Zone / Read`** is required too.
+  Cloudflare's "Edit zone DNS" template grants exactly the pair.
 
 Resolved when the zone is active, the wildcard resolves to `192.168.1.195` from
 the LAN, and the token exists and is encrypted.

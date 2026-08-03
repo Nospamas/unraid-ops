@@ -243,3 +243,16 @@ qbittorrent, and gluetun by proxy. Two have no widget in homepage at all —
 a different application from the calibre this box runs). Both are link tiles
 with container status. **gluetun** has a widget type but its control server is
 unpublished on `:8000`, so nothing can reach it until `download` migrates.
+
+### The restart does not loop — checked, because it looked like it might
+
+After the config-only restart, `deployed_hash` still read the *previous* commit
+while `latest_hash` read the new one, which looks exactly like a Stack that will
+restart itself every 15 minutes forever. It does not. Komodo updates the
+deployed **contents** after a restart-only change even though it leaves the hash
+alone, and the diff is contents-based — verified both ways: the stored contents
+match remote, and the 22:45 and 23:00 scheduled runs left the container from the
+22:30 restart untouched.
+
+So `deployed_hash` on a Stack whose last change was config-only is **cosmetically
+stale, not a pending deploy**. Do not "fix" it by forcing a redeploy.
