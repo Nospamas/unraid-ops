@@ -20,9 +20,17 @@ destination is a running stack, not a spec.
 with config and history to preserve. Every migration ticket adopts without data
 loss.
 
-**`~/home-ops` is unrelated** — different site, no shared DNS or domain, no
+**`~/home-ops` is unrelated** — different site, different domain, no
 coordination. A reference for *taste* only: the SOPS habit, Renovate, and the
 shape of its gethomepage config.
+
+**One correction**: its **pihole is this LAN's resolver**, so "no shared DNS" was
+wrong. It still needs no change — [04](04-reverse-proxy-and-domain.md) pointed
+public `*.rbrb.in` at `192.168.1.195` precisely so the public record *is* the LAN
+view. Pihole only has to forward `rbrb.in` upstream rather than block or rewrite
+it. Putting `rbrb.in` records *into* pihole is a second implementation of the LAN
+half and is **not** the plan; the tailnet half is
+[17](17-deploy-coredns.md)/[18](18-tailnet-split-dns.md).
 
 **The repo holds the standing rules, not this map**
 ([07](issues/07-repo-layout-and-conventions.md),
@@ -50,9 +58,10 @@ the human has said a lockout is a multi-day outage.
 
 - State the rollback before any change touching port 80/443, docker networking,
   or tailscale.
-- **[16](issues/16-deploy-caddy.md) is the only live lockout risk** — it puts a
-  proxy on the ports a browser reaches the box by. It does not run without a
-  tested way back in.
+- **No live lockout risk remains.** [16](issues/16-deploy-caddy.md) was the last
+  one and is closed: Caddy holds 80/443, the GUI is on 8008, and the two never
+  meet. `ident.cfg.bak-15` is gone, and restoring it now would put unraid's nginx
+  into a fight with Caddy rather than rescuing anything.
 - **Portainer is a second lifeline** (:9000) until SSH has proven itself; its
   retirement ([25](issues/25-retire-portainer.md)) waits on that, not just on
   adoption.
@@ -76,6 +85,13 @@ bind-mount target pre-created and chowned** — Docker makes missing targets
 [scripts/komodo.sh](../../scripts/komodo.sh) behind a recipe; drive the loop with
 `just reconcile`.
 
+**A Procedure cannot update itself** ([16](issues/16-deploy-caddy.md)). Komodo
+refuses to update a busy resource, and `reconcile` is the Procedure running the
+sync that would update it — so an edit to `komodo/procedures.toml` fails the
+whole run with a message that discards its own cause. `just reconcile` syncs
+bare first to cover it; **the cron cannot**, and fails every 15 minutes until
+someone runs the recipe.
+
 ### Standing rulings
 
 **Surface the hand-offs.** Most tickets end owing the human actions only they can
@@ -88,8 +104,11 @@ on one click.
 prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four built new
 (homepage, Caddy, CoreDNS, dockerproxy). No two-tier box. Portainer is retired
 once its stacks are adopted; Komodo's own four containers are the only
-non-workload tenants. **Homepage and dockerproxy are live**; the eight adopted
-are [21](issues/21-migrate-arr-stacks.md)–[24](issues/24-migrate-download-stack.md).
+non-workload tenants. **Homepage, dockerproxy and Caddy are live**; the eight
+adopted are
+[21](issues/21-migrate-arr-stacks.md)–[24](issues/24-migrate-download-stack.md).
+Caddy is the one Stack on **host networking**, and it is not a preference —
+[16](issues/16-deploy-caddy.md).
 
 **Secret severity**: the NordVPN *client* key and the calibre GUI password are
 ruled **low-value** — both were already plaintext on the box, and neither grants
@@ -175,6 +194,13 @@ markdown.
   — **the rule is provenance, not blast radius**: `--apply` guards a recipe that
   changes the box in a way the reconcile loop would not, so `reconcile` stays
   knowingly **ungated**.
+- [16 — Stand the Caddy proxy up](issues/16-deploy-caddy.md)
+  — **`https://home.rbrb.in` serves a trusted `*.rbrb.in` wildcard**, staging
+  first and issued on the first attempt. Three quiet failures found: Tailscale's
+  masquerade makes 05's guard 403 the tailnet behind published ports, so **Caddy
+  is host-networked**; a single-file bind goes ESTALE on the next git pull and
+  takes Caddy down while the reconcile reports success; and a Procedure cannot
+  update itself. Spawned [29](issues/29-alerting-on-failed-reconcile.md).
 - [28 — Make the repo's standing docs navigable, and auto-loaded](issues/28-navigable-standing-docs.md)
   — **`repo-layout.md` is now [docs/conventions.md](../../docs/conventions.md)**,
   indexed and cut 434 → 280 lines, with [CLAUDE.md](../../CLAUDE.md) finally
@@ -186,25 +212,24 @@ markdown.
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
   and Core already generates the secret, but a webhook needs GitHub to reach Core
-  and nothing is published. Sharp once [16](issues/16-deploy-caddy.md) lands and
-  something decides whether Komodo is worth publishing — a *scope* question, not
-  just plumbing. Until then 15 minutes is the answer, not a defect.
+  and nothing is published. [16](issues/16-deploy-caddy.md) has landed, so the
+  proxy that would front it now exists; what is still unsettled is the *scope*
+  question — whether Komodo is the first thing this map publishes. Until then 15
+  minutes is the answer, not a defect.
 - **Appdata backup and box rebuild.** With definitions in git, appdata is the
   remaining single point of failure — 24G, dominated by plex — and Komodo's own
   database is new off-git state holding the resource records.
 - **Authentication in front of the services.** 04 and 05 both declined it,
   correctly: nothing is published, so there is nothing to defend. 05 built the
-  *gate*, deliberately not the defence. Sharp the moment a service is actually
-  published, or the LAN stops being trusted (guest wifi, IoT). **No ticket should
-  be opened for it before then.**
+  *gate*, deliberately not the defence — and [16](issues/16-deploy-caddy.md) has
+  now proved the gate works in both directions. Sharp the moment a service is
+  actually published, or the LAN stops being trusted (guest wifi, IoT). **No
+  ticket should be opened for it before then.**
 - **Whether the LAN half of split-horizon ever needs its own resolver.** 05 leans
   on Cloudflare's public record *being* the LAN view, which works precisely
   because nothing is published. A forwarded port would break that coupling.
-- **Monitoring and alerting.** The sharpest thing here: `failure_alert` is on with
-  **no alerter configured to receive it**, so a failing reconcile is currently
-  silent, and the box already changes on a timer with nobody watching.
-  [12](issues/12-image-update-strategy.md)'s human-merge carve-outs *are* the
-  stand-in for monitoring and should be revisited once something is watching.
+*(Monitoring graduated to [29](issues/29-alerting-on-failed-reconcile.md) —
+[16](issues/16-deploy-caddy.md) hit two silent failures in one session.)*
 
 ## Out of scope
 

@@ -4,6 +4,13 @@ Type: task
 Status: open
 Blocked by: 07, 11
 
+**The LAN half already works and this ticket must not touch it.** The LAN's
+resolver is a pihole in `~/home-ops`; it only has to forward `rbrb.in` upstream
+to Cloudflare's public `*.rbrb.in` → `192.168.1.195`, which
+[16](16-deploy-caddy.md) confirmed Caddy answers. Adding `rbrb.in` records to
+pihole would be a second implementation of the same view. **CoreDNS serves the
+tailnet only** — that is the whole point of binding `100.126.56.26:53`.
+
 ## Question
 
 The workload half of [05](05-remote-access.md)'s split-horizon answer. Everything

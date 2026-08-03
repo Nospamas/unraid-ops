@@ -1,8 +1,9 @@
 # 16 — Stand the Caddy proxy up
 
 Type: task
-Status: open
+Status: closed
 Assignee: Nospamas
+Resolved: 2026-08-03
 Blocked by: 07, 11, 14, 15
 
 ## Question
@@ -82,11 +83,105 @@ only to do:
   [12](12-image-update-strategy.md).** There are no bare tags anywhere; Caddy is
   `version@digest` like everything else, and is **human-merged**, never
   automerged, because it fronts every hostname.
-- Caddy joins the `shared` network like everything else; it does not own or
-  create it. Every Stack's `pre_deploy` creates it idempotently, so Caddy is
-  **not** a deploy-order dependency for the rest of the box.
+- ~~Caddy joins the `shared` network like everything else~~ — **overturned by
+  this ticket**: Caddy is `network_mode: host` and joins nothing, for the
+  source-IP reason in the resolution. It still is **not** a deploy-order
+  dependency, and it still reaches every Service by its `shared` address.
 
 ~~Also do here: **write `scripts/check-exposure.sh`**~~ — **already done by
 [13](13-local-tooling.md)**, which wrote it and wired it into `just lint` (the
 runner is `just`, not go-task). Nothing to write; just make sure the Caddy stack
 passes it.
+
+## Resolution (2026-08-03)
+
+**`https://home.rbrb.in` serves homepage on a trusted `*.rbrb.in` wildcard, and
+the whole thing reproduces from the repo.** Let's Encrypt staging first, as
+instructed; it issued on the first attempt, which retired 14's token as proven.
+The GUI never left 8008 and `ident.cfg.bak-15` is deleted.
+
+Three findings, none of which any earlier ticket had checked. All three were
+things that fail *quietly*.
+
+### Caddy is `network_mode: host`, and that is not a preference
+
+05 told this ticket to verify source-IP preservation rather than assume it. It
+does not survive. Behind published ports a tailnet client reached Caddy as
+`172.20.0.1`, and the guard 403'd **the path the box is actually reached by**:
+
+```
+-A POSTROUTING -j ts-postrouting
+-A ts-postrouting -m mark --mark 0x40000/0xff0000 -j MASQUERADE
+```
+
+Tailscale masquerades any packet it routes onward, and docker's DNAT into a
+container counts as onward. So `100.64.0.0/10` could never have matched — not a
+misconfiguration, a structural one.
+
+05 feared this would **fail open**; it failed *closed*, so nothing was ever
+exposed. But the tempting repair — adding `172.16.0.0/12` to the guard — is the
+fiction 05 warned about, because it would admit anything arriving through docker
+NAT, including a future published path. Host networking removes docker NAT from
+the path instead, and `CADDY_INGRESS_NETWORKS=shared` is what keeps `{{upstreams}}`
+resolving once Caddy joins no network. **05's convention is unblocked and its
+snippet is unchanged.**
+
+Verified in both directions rather than assumed: tailnet client and a
+`192.168.1.x` source get 200; `127.0.0.1` and a container on `shared` get 403.
+A genuinely off-box LAN client is the one case left — see the hand-off.
+
+### Bind the directory, never the file
+
+The second deploy **took Caddy down**, and git reported success:
+
+```
+Failed to read Caddyfile ... open /etc/caddy/Caddyfile: stale file handle
+[ERROR] Removing invalid block: File to import not found: internal
+```
+
+A git pull replaces a file rather than writing it in place, and the run
+directory is on shfs, so a single-file bind goes ESTALE the first time the file
+changes. Losing the base Caddyfile loses the `(internal)` snippet, and
+caddy-docker-proxy then **discards every generated block that imports it** — so
+Caddy served nothing rather than serving it unguarded. `stacks/caddy/conf/Caddyfile`
+now, bound as a directory. Homepage's `./config` never hit this, which is why it
+went unnoticed until a second Stack had a config file.
+
+### A Procedure cannot update itself
+
+Editing `komodo/procedures.toml` to add `caddy` failed the whole reconcile.
+Komodo refuses to update a resource while it is busy, and `reconcile` **is** the
+Procedure running the sync that would update it — ten retries, then
+`procedure sync loop exited after max iterations` with the real reason
+discarded by Komodo's own error path.
+
+`RunSync` was always idempotent; the constraint is *who* runs it. `just
+reconcile` now runs the sync bare first, then the Procedure, whose own sync
+stage finds no changes — still one recipe. **The cron only runs the Procedure**,
+so a `procedures.toml` edit that lands without `just reconcile` fails every 15
+minutes, silently, until someone runs it. That is the sharpest argument yet for
+the map's monitoring fog.
+
+`scripts/komodo.sh` also now prints nested failures instead of an update id.
+
+### Smaller rulings
+
+- **Caddy is not built**, per 12: `ghcr.io/serfriz/caddy-cloudflare-dockerproxy`
+  is confirmed to be exactly 04's planned xcaddy build, `version@digest`.
+- **The `*.rbrb.in` block is load-bearing.** Caddy ≥2.10 prefers a managed
+  wildcard over per-subdomain certificates *only if the config names one*; with
+  just `home.rbrb.in` in play it would quietly have taken out a certificate per
+  hostname. It doubles as the catch-all, so an unclaimed name gets a 404.
+- **No `email` in the Caddyfile** — it would be either the human's address in a
+  public repo or a parse error whenever `secrets.env` is absent. The cost is
+  that Let's Encrypt cannot send expiry warnings, which belongs to the
+  monitoring fog rather than here.
+- **Homepage lost its `3000:3000`**, the port 08 marked temporary until Caddy,
+  and `HOMEPAGE_ALLOWED_HOSTS` collapses to `home.rbrb.in`. The label is now the
+  whole access story.
+- **The docker socket stayed a direct `:ro` bind**, as this ticket specified,
+  rather than going through `dockerproxy` — which denies `EVENTS` and `NETWORKS`
+  by default, so it would need widening to serve caddy-docker-proxy at all.
+  Worth revisiting only if something else needs the socket.
+- **`webmail.rbrb.in` is still reserved** (14) and is unaffected: it is a real
+  proxied record, so it never falls through the wildcard to Caddy.
