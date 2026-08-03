@@ -1,4 +1,7 @@
 ---
-# Tracked though empty: homepage seeds any skeleton file missing from here, and
-# an untracked file in the clone collides the day git grows one by that name.
-[]
+# Tracked even when empty: homepage seeds any skeleton file missing from here,
+# and an untracked file in the clone collides the day git grows one by that name.
+- Box:
+    - Unraid forums:
+        - abbr: UF
+          href: https://forums.unraid.net/

@@ -67,8 +67,13 @@ cmd_bootstrap() {
 cmd_reconcile() {
     local id status
     login
+    # Execute responses serialize the id raw; reads return it flattened.
     id="$(api execute '{"type":"RunProcedure","params":{"procedure":"reconcile"}}' |
-        jq -r '.id')"
+        jq -r '._id."$oid" // .id // empty')"
+    if [[ -z "$id" ]]; then
+        echo "reconcile did not return an update id" >&2
+        exit 1
+    fi
     echo "reconcile started ($id)"
 
     for _ in $(seq 60); do
