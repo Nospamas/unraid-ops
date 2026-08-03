@@ -1,0 +1,23 @@
+[[stack]]
+name = "caddy"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/caddy"
+project_name = "caddy"
+additional_env_files = ["../../common.env"]
+
+# DeployStackIfChanged tracks only the compose file by default, and the Caddyfile
+# is where the global options and the (internal) snippet live -- without this an
+# edit to it would reach the box and change nothing. `restart`, not `redeploy`:
+# it arrives through a bind mount, and Caddy reads it at startup.
+config_files = [
+  { path = "Caddyfile", requires = "restart" },
+]
+
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+sops -d secrets.sops.env > secrets.env
+"""

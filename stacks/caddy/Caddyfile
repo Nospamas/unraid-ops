@@ -1,0 +1,45 @@
+# Caddy's global config and the snippets every site shares. Ticket 16.
+#
+# Per-service routing is NOT here -- it is `caddy` labels on each Service, which
+# caddy-docker-proxy reads off the docker socket and merges into this file
+# before Caddy adapts it. This file is only what cannot be said per-service.
+{
+	# DNS-01 against Cloudflare, ticket 04 -- so nothing has to be reachable
+	# from the internet for a certificate to issue or renew. The token is the
+	# sixth secret, ticket 14, and reaches the process through secrets.env.
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+
+	# STAGING, deliberately, for the first deploy only. DNS-01 has several ways
+	# to fail quietly and Let's Encrypt's production limits are unforgiving.
+	# This line comes out once a staging wildcard has actually issued.
+	acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+
+	# No `email`: it would be either the human's address in a public repo, or a
+	# placeholder that turns into a parse error the moment secrets.env is
+	# missing. The cost is that Let's Encrypt cannot send expiry warnings --
+	# which the map already tracks as its monitoring gap, not a new one.
+}
+
+# Default-deny, ticket 05. Every fronted Service carries `caddy.import: internal`
+# unless it declares `x-published: true`; scripts/check-exposure.sh enforces that
+# exactly one of the two is present.
+#
+# `respond` sorts before `reverse_proxy` in Caddy's directive order, so the 403
+# terminates the chain for an external client before the proxy ever sees it.
+(internal) {
+	@external not remote_ip 192.168.1.0/24 100.64.0.0/10
+	respond @external 403
+}
+
+# Declaring the wildcard is what makes Caddy *issue* one. Since 2.10 Caddy
+# prefers a managed wildcard over per-subdomain certificates, but only if the
+# config names one -- with just `home.rbrb.in` in play it would quietly take out
+# an individual certificate per hostname instead.
+#
+# Doubling as the catch-all is free: Caddy sorts wildcard-host site blocks last,
+# so any labelled hostname still wins, and a name nobody claims gets a 404 here
+# rather than a default Caddy page.
+*.rbrb.in {
+	import internal
+	respond "no service by that name" 404
+}

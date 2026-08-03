@@ -1,0 +1,44 @@
+# The reverse proxy. Ticket 16 stands it up; ticket 04 chose it, ticket 05 wrote
+# the guard it enforces. Every other Stack's routing is labels on that Stack.
+
+services:
+  caddy:
+    # Not built. Ticket 12 found this image is exactly the xcaddy build ticket 04
+    # planned -- caddy-docker-proxy + caddy-dns/cloudflare -- maintained
+    # upstream. Human-merged, never automerged: it fronts every hostname.
+    image: ghcr.io/serfriz/caddy-cloudflare-dockerproxy:2.11.4@sha256:5682eeef783b7df37a88c3906d3b5cfce1183119fcaeaec547ed2be1088818e0
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ}
+      # Auto-detection of ingress networks is documented as unreliable
+      # (caddy-docker-proxy#207). Named explicitly: `{{upstreams}}` resolves
+      # container addresses on `shared` and nowhere else.
+      CADDY_INGRESS_NETWORKS: shared
+      CADDY_DOCKER_CADDYFILE_PATH: /etc/caddy/Caddyfile
+    # No PUID/PGID/UMASK: this is the official caddy image, not linuxserver's, so
+    # it neither reads them nor drops privileges. It runs as root, which is what
+    # binding 80 and 443 takes.
+    env_file:
+      # Written by pre_deploy. Absent on a laptop, where `just lint` runs.
+      - path: secrets.env
+        required: false
+    ports:
+      - "80:80"
+      - "443:443"
+      # HTTP/3. Caddy advertises it in Alt-Svc by default; without this the
+      # advertisement points at a port nothing is listening on.
+      - "443:443/udp"
+    volumes:
+      # Read-only: caddy-docker-proxy reads container labels and never writes.
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # /data holds the ACME account key and every issued certificate. Lose it
+      # and every hostname re-issues, into Let's Encrypt's rate limits.
+      - ${APPDATA}/caddy/data:/data
+      - ${APPDATA}/caddy/config:/config
+    networks:
+      - shared
+
+networks:
+  shared:
+    external: true
