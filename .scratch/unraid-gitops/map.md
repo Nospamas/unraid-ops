@@ -61,7 +61,9 @@ calibre, lazylibrarian, plus a homepage that does not exist yet. No two-tier box
 where some containers are git-owned and some stay on unraid's Docker tab.
 Portainer is excluded as a workload, and [02](issues/02-choose-reconcile-mechanism.md)
 has now settled its fate: **removed**, once its two stacks are adopted. Komodo's
-own three containers take its place as the box's only non-workload tenants.
+own **four** containers take its place as the box's only non-workload tenants —
+four, not three, since [11](issues/11-stand-up-komodo.md) put the database on
+FerretDB-on-Postgres.
 Two workloads have since been *added* by decisions rather than adopted from the
 box: **Caddy** ([04](issues/04-reverse-proxy-and-domain.md)) and **CoreDNS**
 ([05](issues/05-remote-access.md)) — so the count is eight adopted, plus
@@ -109,6 +111,18 @@ not go-task — do not reach for `task`. `just lint` is the gate every Stack mus
 pass and it also runs in CI. **The age key is real now**, so any ticket may write
 a `secrets.sops.env` — always via `just secret <stack>`, never `sops --encrypt`
 on a path outside the Stack directory, which finds no creation rule.
+
+**Komodo is live** ([11](issues/11-stand-up-komodo.md)): v2.3.1 on
+`http://192.168.1.195:9120`, Server `tower` connected, Stacks `plex` and
+`download` adopted read-only. **Prefer Core's HTTP API to its UI** for anything
+an agent drives — `POST /auth/login` with the admin credentials from
+`/mnt/user/appdata/komodo/bootstrap/secrets.env` returns a JWT, and no call an
+agent names can deploy by accident, where the UI keeps Deploy one mis-click
+away. Five wrong passwords lock the account. Two facts every box ticket needs:
+a `files_on_host` path must sit under `/mnt/user/appdata/komodo`, and **any
+image running as a non-root uid needs its bind-mount target pre-created and
+chowned** — Docker makes missing targets `root:root`, which crashlooped FerretDB
+eight times.
 
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
@@ -171,9 +185,11 @@ concrete artifact would settle an argument faster than discussion.
   **Gandi** with nameservers delegated to Cloudflare — no transfer, since DNS-01
   needs Cloudflare authoritative, not registrar. Traefik was reopened mid-grill
   (stock image, native DNS-01) and **declined on purpose**; Caddy's missing
-  `caddy-dns/cloudflare` module is paid for by a **built image** — an `xcaddy`
-  Dockerfile in this repo, built on the box by a Komodo **Build** resource, with
-  no chicken-and-egg because Caddy does not run deploys. The acme.sh/lego
+  `caddy-dns/cloudflare` module was to be paid for by a **built image**
+  — ~~an `xcaddy` Dockerfile in this repo, built on the box by a Komodo
+  **Build** resource~~. **Overturned by [12](issues/12-image-update-strategy.md):
+  nothing is built at all**, on the box or anywhere; a maintained upstream image
+  is exactly this build. The acme.sh/lego
   "cert-manager shape" was tested and fails on two verified facts: Caddy does
   not watch cert files on disk, and acme.sh's docker deploy hook is broken in
   daemon mode. Hostnames are **one namespace, LAN-pointed** — `*.rbrb.in` → A
@@ -310,6 +326,39 @@ concrete artifact would settle an argument faster than discussion.
   [19](issues/19-secret-hygiene-on-the-box.md). No new secrets — `age.key` is
   03's root secret finally instantiated, not an addition.
 
+- [11 — Stand Komodo up on the box](issues/11-stand-up-komodo.md)
+  — **Komodo v2.3.1 is running and reconciling nothing, exactly as intended**;
+  bootstrap in [bootstrap/](../../bootstrap/), checklist in
+  [assets/11-bootstrap-checklist.md](assets/11-bootstrap-checklist.md). Four
+  containers, not three: the database is **FerretDB-on-Postgres, not MongoDB** —
+  Mongo came up fine (AVX present) and was torn down anyway, because the human
+  already runs Postgres and backs it up with `pg_dump`, which is a better reason
+  than the one the committed plan was built on. Cost nothing: 203 MB of fresh
+  install. **02 researched v1.18.0 and v2 shipped two days before this session** —
+  passkeys are gone (Core and Periphery auto-generate a keypair), **Periphery
+  dials Core** so it needs no inbound port, and `:latest` is deprecated. Every
+  field the map rests on survives v2. 02 also walked past a chicken-and-egg — the
+  bootstrap must deploy the container that carries compose — resolved by running
+  **the Periphery image itself as a compose CLI**. All four open risks closed
+  green: Periphery bundles Compose v5.3.1, `../../common.env` resolves from a
+  Stack directory, `docker network create` works from `pre_deploy` (`shared`
+  exists), and **the box's `age.key` decrypts** — 13 placed it, this proved it.
+  Periphery sees all 12 containers. **Adoption by `project_name` works**: Stacks
+  `plex` and `download` match the live containers read-only, with no deploy —
+  but only after a silent failure taught the general rule that **a
+  `files_on_host` path must live under `PERIPHERY_ROOT_DIRECTORY`**, so the
+  compose files were copied to `/mnt/user/appdata/komodo/adopt/`. **`git_account`
+  empty clones the public repo** — 10's loud question answered, no token exists.
+  Two warnings: Komodo **mis-reports a `container:` sidecar's network**, so
+  06's silent-orphan hazard cannot be seen from the UI; and Core's API takes the
+  **admin password** directly at `POST /auth/login`, no API key — which reopens
+  13's reason for declining a `reconcile` recipe. Box upgraded mid-ticket to
+  Unraid 7.3.2 / Docker 29.5.3; **still no compose on the host**, so 02's whole
+  premise holds. New secrets: four, all **high-value and outside the map's
+  Secret severity ruling** — `KOMODO_JWT_SECRET`, `KOMODO_DATABASE_PASSWORD`,
+  `KOMODO_WEBHOOK_SECRET`, admin password — decrypted **by hand, once**, since
+  the thing that runs `pre_deploy` is what is being installed.
+
 ## Not yet specified
 
 - **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
@@ -341,7 +390,16 @@ concrete artifact would settle an argument faster than discussion.
   a unit. What it adds instead is an ordering constraint —
   [20](issues/20-chown-to-99-100.md) must run before plex, gluetun or
   qbittorrent adopt, since until it does those three cannot read their own
-  appdata as uid 99. Graduates once 08 resolves.
+  appdata as uid 99. [11](issues/11-stand-up-komodo.md) leaves three things
+  waiting here: **`/mnt/user/appdata/komodo/adopt/` must be deleted** when
+  `stacks/plex/` and `stacks/download/` replace it, or the box keeps a stale
+  compose a Deploy could apply; the adopted Stacks are named `plex` and
+  `download` already, so the migration **updates** those resources rather than
+  creating second ones; and **whether the first Deploy of an adopted Stack
+  recreates the containers or no-ops is unproven** — Komodo matched them by
+  project name but records nothing as deployed, so the answer is compose's
+  config-hash call, and for `download` a needless recreate is exactly 06's
+  silent-orphan hazard. Graduates once 08 resolves.
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,

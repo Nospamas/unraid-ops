@@ -21,6 +21,15 @@ assumption until someone looks.
 already on the box, predating this effort: the NordVPN WireGuard key and the
 calibre GUI password, on `/boot` and in Portainer's appdata.
 
+**A third copy of the WireGuard key now exists, made by
+[11](11-stand-up-komodo.md)**: adopting the download stack needed its compose
+file somewhere Periphery could see it, so it was copied to
+`/mnt/user/appdata/komodo/adopt/download/docker-compose.yml` (600 root, in the
+777 tree below). Scaffolding, not a decision — the migration deletes `adopt/`
+when `stacks/download/` replaces it. Worth counting here because it means this
+ticket is looking at *three* copies, and because a directory nobody owns is
+exactly how a stale plaintext copy survives a cleanup.
+
 Settle:
 
 - **What the permissions on `/mnt/user/appdata/komodo` actually are** once Komodo

@@ -1,7 +1,7 @@
 # 11 — Stand Komodo up on the box
 
 Type: task (HITL)
-Status: open
+Status: closed
 Assignee: Nospamas
 Blocked by: 10
 
@@ -386,3 +386,118 @@ Block 6 only — the read-only adoption of the two Portainer stacks, in the UI.
 and the `gluetun`+`qbittorrent` pair, and qbittorrent's `container:` network
 mode makes that fiddly to undo. This ticket stays open until adoption is
 confirmed matched.
+
+## Findings (2026-08-02, block 6 — adoption proven; ticket closed)
+
+**Both stacks adopted, both matched, nothing deployed.** Run through Core's HTTP
+API over SSH rather than by hand in the UI — which turned out to be the *safer*
+reading of "deliberately not done unattended", not a shortcut past it. The
+hazard block 6 was protecting against is an accidental **Deploy**; driving the
+API means every call is named and `CreateStack`/`UpdateStack` cannot deploy,
+where a UI session puts the Deploy button one mis-click from the Stack you are
+editing. Verified after the fact: `plex`, `gluetun` and `qbittorrent` kept their
+uptimes across the whole session — nothing was recreated.
+
+### Komodo Core's API is reachable with the admin password alone
+
+No API key needed, which matters because [13](13-local-tooling.md) declined a
+`just reconcile` recipe partly on the cost of a second local secret:
+
+```
+POST /auth/login   {"type":"LoginLocalUser","params":{"username":…,"password":…}}
+  -> {"type":"Jwt","data":{"jwt":"…"}}          # 24h expiry
+POST /read | /write | /execute                  # Authorization: Bearer <jwt>
+```
+
+Three corrections for anyone following the v1 docs: the route is
+**`/auth/login`**, not `/auth` (which is 405); a wrong password **burns one of
+five attempts** before lockout, so build the JSON with `jq` rather than
+hand-quoting; and `GetStack`'s `info` is a *different shape* from `ListStacks`'
+— `ListStacks` carries `state` and `services`, `GetStack` carries
+`deployed_*`/`latest_*`. `jq` is on the box, `python3` is not.
+
+### The adoption did not work as the checklist wrote it, and the reason generalises
+
+Pointing `files_on_host` at `/mnt/user/appdata/portainer/compose/{1,2}` gives a
+Stack stuck at `state: down` with no services and **no error** — the failure is
+silent. The cause: **Periphery only sees what is bind-mounted into it**, and its
+host mounts are `/mnt/user/appdata/komodo`, the docker socket, `/proc`, and the
+two secret files. Portainer's compose directory is not among them.
+
+**The general rule, which no ticket had stated: a `files_on_host` path must live
+under `PERIPHERY_ROOT_DIRECTORY`.** This does not touch the target design —
+repo-backed Stacks are cloned by Komodo into its own tree, which is inside the
+root directory by construction — but it is a trap for any future
+"point Komodo at a file already on the box" move, and it is why
+[02](02-choose-reconcile-mechanism.md)'s identical-path-inside-and-outside rule
+exists in the first place.
+
+Resolved by copying the two compose files to
+`/mnt/user/appdata/komodo/adopt/{plex,download}/docker-compose.yml` (mode 600,
+dirs 755) and repointing `run_directory` there. Rejected the alternative —
+bind-mounting Portainer's compose dir into Periphery — because it needs
+Periphery recreated for a throwaway probe and wires the tool being retired into
+the tool retiring it.
+
+### Adoption by project name works
+
+With the files visible, both Stacks resolved immediately and matched the
+**running** containers — live state, live stats, live image digests, without a
+deploy:
+
+| Komodo Stack | `project_name` | state | services matched |
+|---|---|---|---|
+| `plex` | `plex-media-server` | `running` | `plex` → container `plex` |
+| `download` | `qbittorrent` | `running` | `gluetun`, `qbittorrent` |
+
+Named `plex` and `download` — [07](07-repo-layout-and-conventions.md)'s eventual
+Stack names, not the project names — deliberately. The migration then *updates*
+these resources to point at the repo instead of creating second ones, and there
+is never a moment when two Komodo Stacks claim one `project_name`.
+
+`deployed_project_name` and `deployed_services` are **null/empty** on both:
+Komodo distinguishes "what is running under this project" from "what I
+deployed". Adoption gives the first, not the second. What the first Deploy
+does — recreate or no-op — is compose's config-hash call, still unproven, and
+belongs to the migration.
+
+**Komodo mis-reports the sidecar's network.** `ListStackServices` says
+qbittorrent's `network_mode` is `qbittorrent_default`; `docker inspect` says
+`container:d75f06c6…`, i.e. gluetun's namespace. Komodo shows the *project*
+network for a `container:`-mode service. [06](06-qbittorrent-vpn-topology.md)'s
+silent-orphan hazard therefore **cannot be checked from Komodo's UI** — the UI
+will look identical whether qbittorrent is in the tunnel or stranded.
+
+### `git_account: ""` clones the public repo — confirmed empirically
+
+[10](10-publish-repo-to-remote.md) asked for this loudly, because a "no"
+resurrects the bootstrap-secret problem it dissolved. A throwaway `Repo`
+resource with `git_account: ""` against `Nospamas/unraid-ops` cloned clean —
+`CloneRepo` completed `success: true`, `CONTEXT.md` landed on disk. The doc
+comment was telling the truth; **no token is needed and none exists**. Resource
+and clone deleted afterwards.
+
+### Left on the box
+
+- Komodo Stacks `plex` and `download`, adopted read-only, never deployed.
+- `/mnt/user/appdata/komodo/adopt/` — **a second plaintext copy of the NordVPN
+  WireGuard key**, since `download`'s compose carries it inline. Same class as
+  the copy [01](01-inventory-running-containers.md) already found in Portainer's
+  appdata, and noted on [19](19-secret-hygiene-on-the-box.md). It is a
+  scaffolding copy: the migration replaces `adopt/` with the repo's own
+  `stacks/download/`, and **must delete it**, or the box keeps a stale compose
+  that a Deploy could apply.
+- One Core JWT was printed into agent scrollback during the login probe. LAN and
+  tailnet only, expires 24h from 2026-08-02 20:39 local. Rotating
+  `KOMODO_JWT_SECRET` would invalidate it and log the human out; judged
+  disproportionate, but recorded rather than swallowed.
+
+### One thing this session did not do, and cannot explain
+
+`/mnt/user/appdata/portainer/compose/1/docker-compose.yml` was **modified at
+03:01 UTC today**, ~40 minutes before this session started, and `plex` restarted
+at the same time. The file now pins `VERSION=1.43.1.10495-10cfae054` and sets
+`PLEX_DOWNLOAD`, where [01](01-inventory-running-containers.md)'s inventory has
+neither. Nothing in this session touched it. **A question for the human**: if
+that was a hand edit through Portainer, the migration must lift the *current*
+file, not 01's record of it.

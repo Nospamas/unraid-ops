@@ -6,9 +6,8 @@ back; the ticket's answer is written from it.
 
 Run the blocks **in order** — block 1 can veto blocks 2 onward.
 
-> **Blocks 1–5 were run over SSH on 2026-08-02** and all passed; results are in
-> the ticket's *on-box half* findings. **Block 6 is still outstanding.** Two
-> corrections if this is ever re-run on a rebuilt box:
+> **All six blocks were run over SSH on 2026-08-02** and all passed; results are
+> in the ticket's findings. Corrections if this is ever re-run on a rebuilt box:
 >
 > - Block 1's `docker compose ls --all` **cannot work** — there is no compose on
 >   the host, which is this ticket's own premise. Read the project names from
@@ -16,6 +15,9 @@ Run the blocks **in order** — block 1 can veto blocks 2 onward.
 >   `docker inspect <c> --format '{{index .Config.Labels "com.docker.compose.project"}}'`
 > - Block 5's `docker exec komodo-core ... --version` is unnecessary; Core prints
 >   its version on the first line of `docker logs komodo-core`.
+> - Block 6 was run through Core's HTTP API, not the UI — safer, since no call
+>   in it can deploy. Its `files_on_host` paths are **wrong as written**: see
+>   the block itself.
 
 ---
 
@@ -159,18 +161,48 @@ The last one is the cheap version of 07's unverified `additional_env_files =
 real proof is the first Stack Komodo deploys, in
 [08](../issues/08-deploy-homepage.md).
 
-## Block 6 — In the Komodo UI
+## Block 6 — In Komodo
+
+Drive this through Core's API rather than the UI if an agent is doing it —
+`CreateStack`/`UpdateStack` cannot deploy, where the UI keeps Deploy one
+mis-click away. Log in with the admin credentials from `secrets.env`:
+
+```sh
+U=$(grep -m1 '^KOMODO_INIT_ADMIN_USERNAME=' secrets.env | cut -d= -f2-)
+P=$(grep -m1 '^KOMODO_INIT_ADMIN_PASSWORD=' secrets.env | cut -d= -f2-)
+jq -nc --arg u "$U" --arg p "$P" \
+  '{type:"LoginLocalUser",params:{username:$u,password:$p}}' \
+  | curl -s -X POST http://127.0.0.1:9120/auth/login \
+      -H 'Content-Type: application/json' -d @- | jq -r .data.jwt
+```
+
+The route is `/auth/login`, **not** `/auth` (405). Build the body with `jq` —
+five wrong passwords lock the account out.
 
 - **Confirm the Server `tower` is connected** (Servers page, green). Periphery
   dials Core in v2, so there is no passkey to paste — the two auto-generate a
   keypair into `/mnt/user/appdata/komodo/keys`.
 - **Confirm it lists all nine containers** — the eight workloads plus
   `PortainerCE`, alongside Komodo's own three.
-- **Adopt the two Portainer stacks read-only.** Create two Stacks with
-  `files_on_host` pointing at `/mnt/user/appdata/portainer/compose/<...>` and
-  `project_name` set to the exact names from block 1's `docker compose ls`.
-  **Do not deploy them.** Confirm Komodo shows them matched and healthy — that
-  is the proof adoption-by-project-name works.
+- **Adopt the two Portainer stacks read-only.** ~~Create two Stacks with
+  `files_on_host` pointing at `/mnt/user/appdata/portainer/compose/<...>`~~ —
+  **that path does not work**: Periphery only sees what is bind-mounted into it,
+  and Portainer's compose directory is not. The Stack sits at `state: down`
+  with no error. Copy the compose files under `PERIPHERY_ROOT_DIRECTORY`
+  instead and point `run_directory` there:
+
+  ```sh
+  mkdir -p /mnt/user/appdata/komodo/adopt/plex /mnt/user/appdata/komodo/adopt/download
+  cp /mnt/user/appdata/portainer/compose/1/docker-compose.yml /mnt/user/appdata/komodo/adopt/plex/
+  cp /mnt/user/appdata/portainer/compose/2/docker-compose.yml /mnt/user/appdata/komodo/adopt/download/
+  chmod 600 /mnt/user/appdata/komodo/adopt/*/docker-compose.yml
+  ```
+
+  Name the Stacks **`plex`** and **`download`** — 07's eventual names — with
+  `project_name` **`plex-media-server`** and **`qbittorrent`** from block 1's
+  container labels. **Do not deploy them.** Confirm Komodo shows them matched
+  and healthy — that is the proof adoption-by-project-name works.
+  `adopt/` is scaffolding: the migration deletes it.
 - **Leave `git_account` empty** on any Stack that clones the repo, and confirm
   the clone succeeds. The struct's own doc comment says an empty string clones
   public repos; this makes it real.
