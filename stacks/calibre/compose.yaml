@@ -1,0 +1,37 @@
+# Ticket 22. Adopted off unraid's Docker tab; the appdata is unchanged.
+#
+# The unraid template set only PUID/PGID/UMASK/TZ and the login pair -- every
+# other variable the running container showed (CUSTOM_PORT, START_DOCKER,
+# DISPLAY, TITLE, the selkies ones) is an image default and is not repeated
+# here.
+
+services:
+  calibre:
+    image: lscr.io/linuxserver/calibre:v8.15.0-ls371@sha256:cde48704668d1dcf911653f975b9f16ce28327e486490543f0125ed8088d6701
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+    env_file:
+      # CUSTOM_USER and PASSWORD, the GUI login. Written by pre_deploy.
+      - path: secrets.env
+        required: false
+    volumes:
+      - ${APPDATA}/calibre:/config
+      # The space in that path is real -- it is calibre's own library name.
+      - "${MEDIA}/books:/config/Calibre Library"
+    networks:
+      - shared
+    labels:
+      # No host ports at all: 8081, the content server, has nothing listening
+      # behind it, and 8181 is the same GUI over a self-signed cert that Caddy
+      # makes redundant. Nothing addresses calibre but a browser -- ticket 22.
+      caddy: calibre.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 8080}}"
+
+networks:
+  shared:
+    external: true

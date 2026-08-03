@@ -79,10 +79,10 @@
 - Books:
     - Calibre:
         icon: calibre.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:8080
-        description: Library — desktop GUI on 8080, content server on 8081
+        href: https://calibre.rbrb.in
+        description: Library — the desktop GUI, over Caddy
         server: tower
-        container: calibre
+        container: calibre-calibre-1
         # No widget: homepage ships one for calibre-web, which is a different
         # application from the calibre this box runs.
     - LazyLibrarian:
