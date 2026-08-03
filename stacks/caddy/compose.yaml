@@ -1,18 +1,14 @@
-# The reverse proxy. Ticket 16 stands it up, 04 chose it, 05 wrote the guard.
-
 services:
   caddy:
     image: ghcr.io/serfriz/caddy-cloudflare-dockerproxy:2.11.4@sha256:5682eeef783b7df37a88c3906d3b5cfce1183119fcaeaec547ed2be1088818e0
     restart: unless-stopped
-    # Host networking, not published ports, and it is load-bearing: Tailscale
-    # masquerades any tailnet packet it routes onward, and docker's DNAT into a
-    # container counts. Published ports show every tailnet client to Caddy as
-    # the bridge gateway, and 05's remote_ip guard then 403s the tailnet.
+    # Tailscale masquerades anything it routes onward, and docker's DNAT counts:
+    # on published ports every tailnet client arrives as the bridge gateway and
+    # 05's remote_ip guard 403s it.
     network_mode: host
     environment:
       TZ: ${TZ}
-      # On host networking Caddy joins no docker network, so there is nothing
-      # to auto-detect. This is what keeps `{{upstreams}}` resolving.
+      # Nothing to auto-detect without a docker network of its own.
       CADDY_INGRESS_NETWORKS: shared
       CADDY_DOCKER_CADDYFILE_PATH: /etc/caddy/Caddyfile
     env_file:
@@ -20,12 +16,7 @@ services:
         required: false
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # The directory, never the file: a git pull replaces the Caddyfile rather
-      # than writing it in place, and a single-file bind out of appdata (shfs,
-      # FUSE) goes ESTALE when the inode changes. Caddy then loses the
-      # (internal) snippet and discards every site block that imports it.
+      # The directory, never the file -- see docs/conventions.md, 'Tracked files'.
       - ./conf:/etc/caddy:ro
-      # The ACME account key and every issued certificate. Lose it and every
-      # hostname re-issues, into Let's Encrypt's rate limits.
       - ${APPDATA}/caddy/data:/data
       - ${APPDATA}/caddy/config:/config

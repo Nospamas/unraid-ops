@@ -1,25 +1,16 @@
-# Caddy's global config and the snippets every site shares. Ticket 16.
-# Per-service routing is `caddy` labels on each Service, which caddy-docker-proxy
-# reads off the docker socket and merges into this file.
 {
 	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
-
-	# No `email`: it would be either the human's address in a public repo, or a
-	# parse error the moment secrets.env is missing. The cost is that Let's
-	# Encrypt cannot send expiry warnings.
 }
 
-# Default-deny, ticket 05. `respond` sorts before `reverse_proxy` in Caddy's
-# directive order, so this terminates the chain before the proxy sees anything.
+# Ticket 05. `respond` sorts before `reverse_proxy`, so this ends the chain
+# before the proxy sees anything.
 (internal) {
 	@external not remote_ip 192.168.1.0/24 100.64.0.0/10
 	respond @external 403
 }
 
-# Declaring the wildcard is what makes Caddy issue one. Since 2.10 it prefers a
-# managed wildcard over per-subdomain certificates, but only if the config names
-# one -- otherwise this takes out a separate certificate per hostname. Caddy
-# sorts wildcard-host blocks last, so a labelled hostname still wins.
+# Naming the wildcard is what makes Caddy issue one rather than a certificate
+# per hostname. Wildcard-host blocks sort last, so labelled names still win.
 *.rbrb.in {
 	import internal
 	respond "no service by that name" 404

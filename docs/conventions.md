@@ -42,8 +42,8 @@ komodo/             sync.toml (the ResourceSync + the Server), procedures.toml
 scripts/            check-exposure.sh, komodo.sh, host.sh
 
 stacks/<name>/      komodo.toml + compose.yaml, always
-  Caddyfile         caddy only — global options + the (internal) snippet
-  Corefile          coredns only
+  conf/Caddyfile    caddy only — global options + the (internal) snippet
+  conf/Corefile     coredns only
   config/           homepage only — git owns these outright, they are files
   secrets.sops.env  caddy, homepage, download, calibre
 ```
@@ -92,6 +92,14 @@ unattended [06] [08]. Adding a Stack to the pattern is a step of migrating it.
 Drive it with `just reconcile`, not the UI and not ad-hoc API calls. A new
 operation goes in [scripts/komodo.sh](../scripts/komodo.sh) behind a recipe.
 
+**A change to this file cannot be applied by `reconcile`** [16]. Komodo refuses
+to update a Procedure while it is running, and `reconcile` *is* the Procedure
+that runs the sync that would update it — it retries ten times and fails with
+`procedure sync loop exited after max iterations`, the real reason discarded.
+Use **`just sync`**, which runs the ResourceSync on its own. The scheduled
+reconcile hits the same wall, so an unapplied `procedures.toml` fails every 15
+minutes until someone runs it.
+
 ## Tracked files
 
 `DeployStackIfChanged` diffs **tracked files**, and by default the only tracked
@@ -106,6 +114,13 @@ config_files = [
 
 `restart` where the file arrives through a bind mount, `redeploy` where the
 container reads it only at creation.
+
+**Bind the directory, never the file** [16]. A git pull replaces a file instead
+of writing it in place, and the run directory is on shfs — so a single-file bind
+goes `stale file handle` the first time the file changes, and stays broken.
+That is why the Caddyfile is `conf/Caddyfile` and not `Caddyfile`. It fails
+quietly: Caddy dropped every site block that imported the snippet it could no
+longer read, and the reconcile still reported success.
 
 ## Shared config
 
@@ -173,10 +188,16 @@ in every Stack, because Komodo runs each Stack as its own compose project. It
 carries Caddy's discovery traffic *and* the *arr → qbittorrent path; gluetun must
 be on it either way, since it owns qbittorrent's namespace.
 
-**One exception: `dockerproxy`** [08], on its own `--internal` network, created
-in `pre_deploy` the same way. The test for a second network is whether the
-traffic is service-to-service **and** privileged — "these two containers talk" is
-not enough.
+**Two exceptions.** `dockerproxy` [08] is on its own `--internal` network,
+created in `pre_deploy` the same way; the test for a second network is whether
+the traffic is service-to-service **and** privileged — "these two containers
+talk" is not enough.
+
+`caddy` is `network_mode: host` and joins nothing [16]. Tailscale masquerades
+any packet it routes onward and docker's DNAT counts, so behind published ports
+every tailnet client arrives as the bridge gateway and the guard below 403s the
+tailnet. Caddy still reaches every Service by its `shared` address, which is
+what `CADDY_INGRESS_NETWORKS` names now that there is nothing to auto-detect.
 
 ## Routing
 
@@ -197,6 +218,10 @@ a compose file the script cannot parse **fails** rather than passing silently.
 
 `x-published` is the one grep that says what faces the internet. Nothing is
 published today [05].
+
+The guard is verified, not assumed [16]: LAN and tailnet clients get 200, and
+127.0.0.1 and a container on `shared` both get 403. It depends on Caddy seeing
+the real client address, so it is only sound while Caddy is host-networked.
 
 ## Ports
 
@@ -246,7 +271,7 @@ to do this? [27]
 |---|---|---|
 | `default`, `lint`, `verify-secrets`, `host-check` | local / read-only | no |
 | `secret <stack>` | a repo file, via `$EDITOR` | no — the repo is not the box |
-| `reconcile` | Komodo API | no — the cron does this anyway |
+| `sync`, `reconcile` | Komodo API | no — the cron does this anyway |
 | `bootstrap` | Komodo API | **`--apply`** |
 | `host-ports` | the box over SSH | **`--apply`** |
 

@@ -130,8 +130,11 @@ has run.**
 
 Add the Stack's name to the `BatchDeployStackIfChanged` pattern in
 [komodo/procedures.toml](../komodo/procedures.toml) — the list is explicit, and a
-Stack missing from it is never deployed. Then commit and push. The Procedure
-picks it up within 15 minutes, or `just reconcile` for the first deploy.
+Stack missing from it is never deployed. Then commit and push.
+
+Editing that file needs **`just sync`**, not `just reconcile` — a Procedure
+cannot update itself while running. Then `just reconcile` for the first deploy,
+or wait 15 minutes.
 
 ## 8. Check it
 
@@ -147,6 +150,9 @@ just verify-secrets   # every *.sops.env still decrypts
 
 ## Traps
 
+- **Never bind a single file out of the run directory** — bind its directory. A
+  git pull replaces the file, and the bind goes `stale file handle`. It took
+  Caddy down on its second deploy while the reconcile reported success.
 - **Never bind `/etc/localtime`.** runc under Docker 29.5.3 refuses to mount onto
   it — the path is a symlink inside most images — and the container will not
   start: `not a directory: Are you trying to mount a directory onto a file?`. It
