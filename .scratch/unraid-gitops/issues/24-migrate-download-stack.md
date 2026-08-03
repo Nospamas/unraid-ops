@@ -55,3 +55,23 @@ defect — do not buy port forwarding to "fix" it.
   both across verbatim.**
 - Compose backed up at
   `/mnt/user/appdata/portainer/compose/2/docker-compose.yml.bak-19`.
+
+## Settled early by [23](23-migrate-plex.md)
+
+23 was the first Stack to take over a Portainer project, so the questions this
+ticket inherited are now answered rather than assumed:
+
+- **Adoption in place recreates.** Compose destroys the container and rebuilds
+  it in the same project against the same appdata — it does not no-op. For this
+  Stack that is the *safe* direction, since gluetun and qbittorrent are one
+  compose project and are recreated together, which is exactly what
+  [06](06-qbittorrent-vpn-topology.md)'s hazard requires.
+- **The project to inherit is `qbittorrent`, not `download`** — both containers
+  carry `com.docker.compose.project=qbittorrent`, with services `gluetun` and
+  `qbittorrent`. So `project_name = "qbittorrent"` while the Stack is `download`.
+- **Both containers get renamed** to `qbittorrent-gluetun-1` and
+  `qbittorrent-qbittorrent-1`, which breaks anything addressing them by
+  container name — homepage's two `container:` entries do, and must move in the
+  same push.
+- **The `gluetun` network alias survives** the rename, so the *arr's
+  `http://gluetun:30024` keeps resolving once they are all on `shared`.

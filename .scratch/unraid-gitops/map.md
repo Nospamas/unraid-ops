@@ -140,18 +140,16 @@ on one click.
 prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four built new
 (homepage, Caddy, CoreDNS, dockerproxy). No two-tier box. Portainer is retired
 once its stacks are adopted; Komodo's own four containers are the only
-non-workload tenants. **Everything is live but plex and the download pair**
-([23](issues/23-migrate-plex.md), [24](issues/24-migrate-download-stack.md)),
-**neither blocked** — and they are the two hard ones, the only remaining
-migrations Portainer owns rather than unraid.
+non-workload tenants. **Only the download pair is left**
+([24](issues/24-migrate-download-stack.md)), and it is unblocked.
 **Adoption splits by manager, not by service**
 ([21](issues/21-migrate-arr-stacks.md)): unraid's dockerMan containers carry no
 compose labels and were *removed* by `just adopt`, all five of them. Portainer's
-plex, gluetun and qbittorrent are the other case — adopted in place by
-`project_name`, and **whether that recreates or no-ops is still unanswered**,
-because nothing has tested it yet. 23 and 24 find out, and 06's hazard is what
-makes it matter. Caddy is the one Stack on **host networking**, and it is not a preference —
-[16](issues/16-deploy-caddy.md).
+are the other case — adopted in place by `project_name`, and
+[23](issues/23-migrate-plex.md) settled what that does: it **recreates**, under
+a new container name, keeping the network alias. Which is the safe direction for
+24, since 06's hazard is recreating gluetun *alone*. Caddy is the one Stack on
+**host networking**, and it is not a preference — [16](issues/16-deploy-caddy.md).
 
 **Secret severity**: the NordVPN *client* key and the calibre GUI password are
 ruled **low-value** — both were already plaintext on the box, and neither grants
@@ -177,6 +175,14 @@ the config hash, so a correct hash over a broken container is silence, and a
 restart does not repair it. `just redeploy <stack>` destroys and rebuilds one
 named Stack, which is the only cure. **Check the workload, never the update
 log.** [29](issues/29-alerting-on-failed-reconcile.md) is where this goes.
+
+**"Nothing is published" is no longer true, and the grep that says so is blind.**
+[23](issues/23-migrate-plex.md) verified plex answering on
+`75.155.182.130:32400` from outside both networks, through a router forward that
+predates this repo. `x-published` and `check-exposure.sh` reason about the
+**Caddy** path only, so a host port plus a router is invisible to both.
+[31](issues/31-plex-own-internet-exposure.md) rules on it; until then, say "the
+repo publishes nothing", which is the claim that is actually true.
 
 **Add one Stack to the deploy pattern at a time** when adopting. All four at
 once is what caused the above: the three not yet freed deployed into ports
@@ -320,6 +326,17 @@ markdown.
   template had set only the five standard vars and the login pair; the other
   eighteen were cargo. **Unraid's Docker tab now holds only `PortainerCE`.**
 
+- [23 — Migrate plex](issues/23-migrate-plex.md)
+  — **plex is a Stack, on `shared`, five libraries intact, and adoption in place
+  recreates rather than no-ops** — under a new container name, keeping the
+  network alias. `VERSION` was the find: pinned to a Plex Pass build for B580
+  support, it re-downloaded and installed 84MB over the image at **every start**,
+  so the digest pinned nothing. `VERSION: docker` and the public release fix it.
+  `/mnt/transcode` had been mounted at a path plex never asked for. Spawned
+  [31](issues/31-plex-own-internet-exposure.md), which is the one that matters:
+  plex answers from the public internet, and the repo's exposure grep cannot see
+  it.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -332,11 +349,14 @@ markdown.
   remaining single point of failure — 24G, dominated by plex — and Komodo's own
   database is new off-git state holding the resource records.
 - **Authentication in front of the services.** 04 and 05 both declined it,
-  correctly: nothing is published, so there is nothing to defend. 05 built the
-  *gate*, deliberately not the defence — and [16](issues/16-deploy-caddy.md) has
-  now proved the gate works in both directions. Sharp the moment a service is
+  correctly: the repo publishes nothing, so there is nothing to defend. 05 built
+  the *gate*, deliberately not the defence — and [16](issues/16-deploy-caddy.md)
+  has now proved the gate works in both directions. Sharp the moment a service is
   actually published, or the LAN stops being trusted (guest wifi, IoT). **No
-  ticket should be opened for it before then.**
+  ticket should be opened for it before then.** Plex is not the exception it
+  looks like: it is reachable from the internet, but by its own port forward and
+  behind its own account auth, which is
+  [31](issues/31-plex-own-internet-exposure.md)'s question, not this one's.
 - **Whether the LAN half of split-horizon ever needs its own resolver.** 05 leans
   on Cloudflare's public record *being* the view on rb's network, which works
   precisely because nothing is published. A forwarded port would break that
