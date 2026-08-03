@@ -120,7 +120,7 @@ compose path resolution breaks
    **`bootstrap` is dry-run by default** — it is one of the two recipes that
    change the box out of band, so it is gated like `host-ports`
    ([ticket 27](../.scratch/unraid-gitops/issues/27-recipe-safety-convention.md),
-   convention in [docs/repo-layout.md](../docs/repo-layout.md#recipes)). On a
+   convention in [docs/conventions.md](../docs/conventions.md#recipes)). On a
    fresh box you want `--apply`; the dry run earns its place later, when it
    tells you the sync is already there and this step can be skipped.
 

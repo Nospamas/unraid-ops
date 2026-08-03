@@ -2,13 +2,11 @@
 
 GitOps for Docker on an Unraid box: container definitions live in this repo, and
 Komodo reconciles them onto the host. This file is the glossary — the words this
-repo uses and the ones it deliberately doesn't. The shape of the tree is in
-[docs/repo-layout.md](docs/repo-layout.md); the routine is in
+repo uses and the ones it deliberately doesn't. The rules are in
+[docs/conventions.md](docs/conventions.md); the routine is in
 [docs/adding-a-service.md](docs/adding-a-service.md).
 
-## Language
-
-### The unit of work
+## The unit of work
 
 **Stack**:
 One directory under `stacks/`, holding a compose file and the Komodo TOML that
@@ -25,12 +23,11 @@ running thing)
 
 **Adopting**:
 Bringing a container that already runs on the box under this repo's control
-without losing its appdata, history or settings. The opposite of creating a
-service from scratch — an adopted Stack must produce a container that the
-existing appdata still fits.
+without losing its appdata, history or settings. An adopted Stack must produce a
+container that the existing appdata still fits.
 _Avoid_: migrating, importing, onboarding
 
-### Configuration
+## Configuration
 
 **Shared config**:
 The values every Stack needs — PUID/PGID/UMASK/TZ, the appdata root, the media
@@ -41,14 +38,14 @@ _Avoid_: globals, defaults, base config
 **Secret**:
 A value that must not sit in git in the clear. Encrypted per Stack as
 `secrets.sops.env`, decrypted on the box to `secrets.env` by that Stack's
-`pre_deploy`. Only three Stacks have one.
+`pre_deploy`.
 _Avoid_: credential, env var (a secret is a kind of env var, not a synonym)
 
 **Appdata**:
 The per-service state directory on the box, under `/mnt/user/appdata`. Git never
 owns it — it is the boundary between what this repo reconciles and what a
-service's own UI edits. Homepage is the sole exception, and its config is in
-`stacks/homepage/config/` precisely because it is files rather than a database.
+service's own UI edits. Homepage is the sole exception, because its config is
+files rather than a database.
 _Avoid_: config volume, data dir, state
 
 **Service settings**:
@@ -57,7 +54,7 @@ indexers, quality profiles, root folders. Explicitly not reconciled. A change
 here is not a `git push`.
 _Avoid_: config (which in this repo means the git-owned definition)
 
-### Reconciliation
+## Reconciliation
 
 **Reconcile**:
 Komodo cloning this repo onto the box and bringing the running containers into
@@ -67,22 +64,22 @@ apply
 
 **ResourceSync**:
 Komodo's own git-owned configuration — the TOML that declares which Stacks,
-Builds, Servers and Procedures exist. Komodo's term; kept as-is.
+Servers and Procedures exist. Komodo's term; kept as-is.
 
 **Bootstrap**:
 What has to exist on the box before a reconcile can happen at all: Komodo's own
-three containers, the age key, the sops binary. Held in `bootstrap/`, run by
-hand, and never reconciled — Komodo cannot deploy itself.
+four containers, the age key, the sops binary. Held in `bootstrap/`, run by hand,
+and never reconciled — Komodo cannot deploy itself.
 _Avoid_: install, setup, provisioning
 
 **Recipe**:
 One entry in the `justfile`. A recipe is **gated** when it changes the box in a
 way the reconcile loop would not — it then takes `--apply` and does nothing
 without it, and says so in its `just --list` comment. `reconcile` is ungated
-because the cron runs it anyway; only out-of-band changes are gated.
+because the cron runs it anyway.
 _Avoid_: task, command, script (`scripts/` holds what a recipe calls)
 
-### Exposure
+## Exposure
 
 **Fronted**:
 Reachable through Caddy at a `*.rbrb.in` hostname. A Stack becomes fronted by

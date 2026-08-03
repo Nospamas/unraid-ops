@@ -75,7 +75,7 @@ done
 
 if ((failed)); then
     echo
-    echo "Default-deny violated. See docs/repo-layout.md, 'Default-deny, and the check that enforces it'."
+    echo "Default-deny violated. See docs/conventions.md, 'Default-deny'."
     exit 1
 fi
 

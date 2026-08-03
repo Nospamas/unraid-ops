@@ -126,7 +126,7 @@ are **out of scope for this map** — not fog, because the frontier does not lea
 there: `git push` reconciling the box does not require them. If the share layout
 is ever restructured to make hardlinks viable, that is a fresh effort.
 
-Recorded in [docs/repo-layout.md](../../../docs/repo-layout.md) under *Media
+Recorded in [docs/conventions.md](../../../docs/conventions.md) under *Media
 paths*, with an explicit "do not tidy these into a single mount" so the next
 reader does not rediscover the idea and think it was never considered.
 

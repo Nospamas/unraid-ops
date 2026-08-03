@@ -13,18 +13,15 @@ just                  # list the commands
 setup. Restore `age.key` to the repo root from KeePassXC on a fresh checkout — it
 is gitignored, and nothing that touches secrets works without it.
 
-| Command | What it does |
-| --- | --- |
-| `just lint` | exposure, compose files, shell scripts, Dockerfiles |
-| `just secret <stack>` | edit a Stack's encrypted secrets |
-| `just verify-secrets` | confirm every `*.sops.env` still decrypts |
-
-`just lint` also runs in CI on every push and pull request.
+`just --list` is the full set. A recipe whose comment ends `-- pass --apply to
+commit` changes the box and does nothing without that flag. `just lint` also runs
+in CI on every push and pull request.
 
 ## Where things are
 
+- [CLAUDE.md](CLAUDE.md) — the rules that are expensive to break by accident
 - [CONTEXT.md](CONTEXT.md) — the words this repo uses
-- [docs/repo-layout.md](docs/repo-layout.md) — the tree and its conventions
+- [docs/conventions.md](docs/conventions.md) — the standing rules, indexed
 - [docs/adding-a-service.md](docs/adding-a-service.md) — the routine
 
 Wayfinder map: `.scratch/unraid-gitops/map.md`

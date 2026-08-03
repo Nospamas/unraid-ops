@@ -166,7 +166,7 @@ The obvious fix was to make bootstrap a Komodo Stack. It was investigated and
 So the half that can automate is chained to the half that cannot, and
 self-management buys only a window where Core is ahead of Periphery. **`bootstrap/`
 therefore never gets a `komodo.toml`** — recorded in
-[docs/repo-layout.md](../../../docs/repo-layout.md) and
+[docs/conventions.md](../../../docs/conventions.md) and
 [bootstrap/README.md](../../../bootstrap/README.md) as a deliberate choice, not
 an oversight for someone to tidy up later.
 
@@ -226,7 +226,7 @@ surfaces as a human-merged PR, and the Dockerfile is four auditable lines.
 ### Files touched
 
 - [.renovaterc.json5](../../../.renovaterc.json5) — five new `packageRules`.
-- [docs/repo-layout.md](../../../docs/repo-layout.md) — bare-tag exception
+- [docs/conventions.md](../../../docs/conventions.md) — bare-tag exception
   deleted, *Built images* rewritten to "nothing is built", bootstrap's
   no-`komodo.toml` rule stated.
 - [bootstrap/README.md](../../../bootstrap/README.md) — new *Updating these four

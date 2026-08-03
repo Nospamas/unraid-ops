@@ -103,7 +103,7 @@ already been answered.
 
 `.scratch/unraid-gitops/` travels with the repo — the map, all twenty tickets,
 and the assets, `assets/01-inventory.md` among them. The reasoning record is
-load-bearing, not scratch: [docs/repo-layout.md](../../../docs/repo-layout.md)
+load-bearing, not scratch: [docs/conventions.md](../../../docs/conventions.md)
 and [CONTEXT.md](../../../CONTEXT.md) cite ticket numbers as their rationale, so
 stripping `.scratch` would leave those docs pointing at nothing. Scrubbing the
 inventory's addresses was considered and rejected — 04 and 05 quote both values

@@ -6,7 +6,7 @@ Assignee: Nospamas
 Resolved: 2026-08-01
 Blocked by: 02, 03
 Assets: [CONTEXT.md](../../../CONTEXT.md),
-[docs/repo-layout.md](../../../docs/repo-layout.md),
+[docs/conventions.md](../../../docs/conventions.md),
 [docs/adding-a-service.md](../../../docs/adding-a-service.md)
 
 ## Question
@@ -124,7 +124,7 @@ The answer is the layout, the vocabulary, and the add-a-service checklist.
 
 The answer is three files in the repo proper, not in this ticket:
 [CONTEXT.md](../../../CONTEXT.md) (the vocabulary),
-[docs/repo-layout.md](../../../docs/repo-layout.md) (the layout and its
+[docs/conventions.md](../../../docs/conventions.md) (the layout and its
 conventions) and [docs/adding-a-service.md](../../../docs/adding-a-service.md)
 (the checklist). What follows is the gist and the reasoning.
 

@@ -78,7 +78,7 @@ Renovate is scoped between this ticket and 12.
   enforced check over an honour-system checklist, and this ticket owns where it
   is wired in. It needs a YAML reader — `yq` is already in the home-ops pin list.
 - The layout the other candidate tasks were waiting on now exists: see
-  [docs/repo-layout.md](../../../docs/repo-layout.md).
+  [docs/conventions.md](../../../docs/conventions.md).
 
 ## Resolution
 
@@ -196,7 +196,7 @@ habit 07 chose, and `helpers:pinGitHubActionDigests` keeps them that way.
 
 The map says to amend the doc and say so, rather than deciding in the moment:
 
-- **[docs/repo-layout.md](../../../docs/repo-layout.md)** named `Taskfile.yaml`
+- **[docs/conventions.md](../../../docs/conventions.md)** named `Taskfile.yaml`
   and `renovate.json` in its tree. Corrected to `justfile` and
   `.renovaterc.json5`, with `.mise.toml` and `.github/workflows/` added, and the
   default-deny section updated to describe what the script actually enforces.

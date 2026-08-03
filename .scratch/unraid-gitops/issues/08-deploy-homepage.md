@@ -59,7 +59,7 @@ what graduates the remaining service migrations out of the fog.
 ## Settled by [07](07-repo-layout-and-conventions.md)
 
 The layout this ticket was waiting on exists — see
-[docs/repo-layout.md](../../../docs/repo-layout.md) and the checklist in
+[docs/conventions.md](../../../docs/conventions.md) and the checklist in
 [docs/adding-a-service.md](../../../docs/adding-a-service.md). For homepage
 specifically:
 
@@ -130,7 +130,7 @@ checklist could not have answered:
   `just lint` green on a laptop where the file cannot exist.
 - **The deploy pattern is a per-Stack step**, per above.
 
-Amended in [docs/repo-layout.md](../../../docs/repo-layout.md) and
+Amended in [docs/conventions.md](../../../docs/conventions.md) and
 [docs/adding-a-service.md](../../../docs/adding-a-service.md) rather than
 decided here.
 

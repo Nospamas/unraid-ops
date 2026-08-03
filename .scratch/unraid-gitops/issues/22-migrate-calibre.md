@@ -18,7 +18,7 @@ Adopt calibre into git. Already **99:100**
   server), 8181. Decide which of these Caddy will front later, and whether all
   three still need publishing.
 - **The `${MEDIA}/books` → `/config/Calibre Library` bind**, space and all
-  ([docs/repo-layout.md](../../../docs/repo-layout.md)).
+  ([docs/conventions.md](../../../docs/conventions.md)).
 
 The map's *Secret severity* note rules the calibre password low-value and
 **closed** — do not reopen it. The live carve-out is auth in front of its login,

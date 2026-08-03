@@ -237,7 +237,7 @@ validates `bootstrap/compose.yaml` against `bootstrap/compose.env`.
 - [bootstrap/README.md](../../../bootstrap/README.md) — the run order, the sops
   binary's version and sha256 as [03](03-secrets-handling.md) required, and the
   rebuild path.
-- [docs/repo-layout.md](../../../docs/repo-layout.md) — the tree now lists the
+- [docs/conventions.md](../../../docs/conventions.md) — the tree now lists the
   bootstrap env files, and states the by-hand-decrypt exception.
 
 ### Open risks the checklist has to settle

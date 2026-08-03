@@ -46,7 +46,7 @@ What has to be decided:
   so, say so explicitly rather than leaving it ambiguous.
 - **Where the convention is written down** so later tickets inherit it. The
   natural home is [07](07-repo-layout-and-conventions.md)'s live artifact —
-  [docs/repo-layout.md](../../../docs/repo-layout.md) or
+  [docs/conventions.md](../../../docs/conventions.md) or
   [docs/adding-a-service.md](../../../docs/adding-a-service.md) — not this map.
 - **Whether `just --list` should show the danger.** The one-line comments are
   what a person reads before running something; a convention in the comment text
@@ -94,7 +94,7 @@ reconcile` against a bad `main` will happily wreck the box, and the answer to
 that is to not merge it.
 
 Landed as a `### Recipes` section in
-[docs/repo-layout.md](../../../docs/repo-layout.md) — 07's live artifact, as
+[docs/conventions.md](../../../docs/conventions.md) — 07's live artifact, as
 this ticket asked — plus a *Recipe* entry in
 [CONTEXT.md](../../../CONTEXT.md)'s glossary, which is where the word is fixed.
 
@@ -164,7 +164,7 @@ both commands already share `login`/`api` in one file.
 ### What went to a new ticket
 
 Asked where the convention should live, the human pushed past the question:
-`docs/repo-layout.md` is ~440 lines with 17 `###` sections, unindexed, and
+`docs/conventions.md` is ~440 lines with 17 `###` sections, unindexed, and
 "layout" no longer describes it. That, plus a `CLAUDE.md` — because **nothing in
 this repo is auto-loaded**, and the instruction to read the three docs currently
 lives only in the map's Notes, which are `.scratch/` and vanish when the map
