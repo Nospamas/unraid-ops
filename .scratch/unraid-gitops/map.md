@@ -448,6 +448,31 @@ concrete artifact would settle an argument faster than discussion.
   plex's account-scoped token), piped from the box into SOPS without ever
   touching disk in plaintext.
 
+- [14 — Set up the rbrb.in zone on Cloudflare and mint the DNS token](issues/14-cloudflare-zone-and-token.md)
+  — **the zone is live and the sixth secret exists**: `rbrb.in` active on
+  Cloudflare (`corey`/`pearl.ns.cloudflare.com`, registrar still Gandi),
+  `*.rbrb.in` → A `192.168.1.195` **grey cloud**, and a zone-scoped token
+  encrypted at
+  [stacks/caddy/secrets.sops.env](../../stacks/caddy/secrets.sops.env) as
+  `CLOUDFLARE_API_TOKEN`. Verified against **Cloudflare's API, not its UI**:
+  token `active`, `GET /zones` returns exactly one zone (the
+  scoping is real), and the `?name=` lookup succeeds. **The ticket's own
+  instructions were wrong twice.** It named one permission and one is not
+  enough — `libdns/cloudflare` resolves the zone ID via `GET /zones?name=`
+  before writing `_acme-challenge`, so **`Zone / Zone / Read` is required
+  alongside `Zone / DNS / Edit`**; followed literally,
+  [16](issues/16-deploy-caddy.md) would have failed at *lookup*, an error that
+  reads like a Caddy fault. And the zone was **not blank** — Gandi's
+  fresh-domain defaults imported on the scan, two of them orange-clouded. The
+  apex `A` and `www` CNAME were deleted; the **Gandi mail set was deliberately
+  kept** (MX, SPF, five SRV, `webmail`), so mail on `rbrb.in` still works. Two
+  facts for 16: **`webmail.rbrb.in` is a reserved hostname** — a real *proxied*
+  record, so it does not fall through the wildcard and Caddy can never own it —
+  and **the apex has no `A` at all**, since a wildcard never covers the apex.
+  The token arrived **untracked** and was encrypted in place, so no plaintext
+  ever entered git. `stacks/caddy/` now holds *only* the secret; 16 adds the
+  rest, and `just lint` tolerates the compose-less directory.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** The loop polls every 15
