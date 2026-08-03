@@ -1,7 +1,9 @@
 # 18 — Point Tailscale Split DNS at CoreDNS
 
 Type: task (HITL)
-Status: open
+Status: closed
+Assignee: Nospamas
+Resolved: 2026-08-03
 Blocked by: 17
 
 ## Question
@@ -72,3 +74,62 @@ Blocked by [17](17-deploy-coredns.md) — now closed.
 
 Resolved when a tailnet client **outside the house** resolves `*.rbrb.in` to
 `100.126.56.26`.
+
+## Resolution
+
+**Split-horizon is delivered.** [05](05-remote-access.md)'s answer is complete
+and [17](17-deploy-coredns.md)'s Stack is no longer talking to nobody: tailnet
+clients resolve `*.rbrb.in` to `100.126.56.26` and reach Caddy, while every
+other name keeps taking each client's own resolver.
+
+### The console setting, as applied
+
+One entry, in the admin console under **DNS → Nameservers**: `100.126.56.26`,
+restricted to domain `rbrb.in`. Global nameservers empty, **Override DNS
+servers** off, MagicDNS untouched. Reverting is deleting that one row; nothing
+on the box is involved either way.
+
+**The ticket's instruction was stale on where this lives.** There is no section
+called "Split DNS" in the current console. A split route *is* a nameserver with
+**Restrict to domain** ticked — and adding one without ticking it makes CoreDNS
+**global**, which, since CoreDNS REFUSEs everything outside `rbrb.in`, takes all
+DNS off every `--accept-dns` device at once. The dangerous mis-click and the
+intended action are the same dialog.
+
+Propagation to an already-connected client took **60–180s**, not instant. Long
+enough to look like a failed save.
+
+### Verified
+
+| | `ubuntu-dev` (linux, home net) | `uranus` (windows, home net) |
+|---|---|---|
+| `--accept-dns` | on | on |
+| split route present | ✓ | ✓ |
+| `*.rbrb.in` | `100.126.56.26` | `100.126.56.26` |
+| pihole canary `ads.google.com` | `0.0.0.0` | `0.0.0.0` / `::` |
+| public + local `xgy.im` names | unchanged | system resolvers unchanged |
+| `https://home.rbrb.in` | **HTTP 200** from `100.126.56.26` | — |
+
+`tower` stays `CorpDNS: false`, confirmed over SSH — it must, or the box
+resolves `rbrb.in` to its own tailnet address instead of taking the LAN path.
+**Roaming confirmed by the human off both networks**, which is the bar 17 set.
+
+### The pihole risk is dead, structurally
+
+This ticket's stop-and-reopen-17 condition was Windows Split DNS going
+all-or-nothing. It does not, and `Get-DnsClientNrptPolicy` on `uranus` shows why
+rather than merely suggesting it: Tailscale installs **per-namespace NRPT
+rules** — a discrete `.rbrb.in` entry beside `.ts.net`, `.gute-morpho.ts.net`
+and the `100.x` reverse zones — and **no `.` catch-all**. Names outside those
+namespaces never reach the Tailscale resolver. Windows routes per-domain by the
+same construction as systemd-resolved.
+
+**Verify on Windows with `Resolve-DnsName`, never `nslookup`.** nslookup
+bypasses the NRPT and queries the configured server directly, so it returns the
+public `192.168.1.195` and reads as a failure while everything is working.
+
+### Left unverified
+
+`earth` was online but never individually checked for `--accept-dns`. If it is
+off, that device resolves `rbrb.in` to `192.168.1.195` and cannot reach it from
+the home network. One command to check, one to fix; not worth a ticket.

@@ -46,16 +46,17 @@ a subnet router, and the `(internal)` guard's `192.168.1.0/24` entry would 403 a
 home device if one ever arrived by a non-tailscale path.
 
 **The tailnet is four nodes** — `tower`, `ubuntu-dev`, `earth`, `uranus`. No
-phone. MagicDNS is already on tailnet-wide; the per-device switch that matters is
-`--accept-dns`, **off on tower** and unaudited on the two Windows nodes
+phone. MagicDNS is on tailnet-wide; the per-device switch that matters is
+`--accept-dns`, **off on tower and it must stay off**, on for `ubuntu-dev` and
+`uranus`, never audited on `earth`
 ([18](issues/18-tailnet-split-dns.md)).
 
 So [04](issues/04-reverse-proxy-and-domain.md)'s public
 `*.rbrb.in` → `192.168.1.195` is the correct answer **only on rb's network** —
 where, conveniently, there is no custom resolver to configure and none is needed.
-Everywhere else that record is unroutable, which is what
-[17](issues/17-deploy-coredns.md) — now closed — and
-[18](issues/18-tailnet-split-dns.md) fix.
+Everywhere else that record is unroutable, which
+[17](issues/17-deploy-coredns.md) and [18](issues/18-tailnet-split-dns.md) — both
+now closed — fix. **Split-horizon is delivered end to end.**
 
 **Pihole is a real option, reopened, and ruled against on the record.** It could
 answer `rbrb.in` → `100.126.56.26` for the whole home network in one edit, and
@@ -251,6 +252,13 @@ markdown.
   Split DNS is restricted to a domain, so each client keeps its own resolver for
   everything else. No `:53` collision existed. Corrected [18](issues/18-tailnet-split-dns.md),
   whose MagicDNS prerequisite was already done.
+- [18 — Point Tailscale Split DNS at CoreDNS](issues/18-tailnet-split-dns.md)
+  — **one restricted-nameserver row delivers split-horizon**, and 05's answer is
+  complete. The pihole risk is dead *structurally*: Windows routes per-domain via
+  **NRPT rules with no `.` catch-all**, so it cannot go all-or-nothing. Two traps
+  recorded — the console has no "Split DNS" section, and the mis-click that makes
+  CoreDNS global (killing all DNS everywhere) is the same dialog; and on Windows
+  `nslookup` bypasses the NRPT and reports a false failure.
 
 ## Not yet specified
 
