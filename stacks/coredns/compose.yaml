@@ -1,0 +1,26 @@
+# Ticket 17. The workload half of 05's split horizon.
+
+services:
+  coredns:
+    image: coredns/coredns:1.14.6@sha256:900f9c109f7a33545d3c811516e8376df9019147b750f5ce3e254468769176ea
+    restart: unless-stopped
+    # The image's default config path is ./Corefile, and its entrypoint takes
+    # no arguments.
+    command: -conf /etc/coredns/Corefile
+    environment:
+      TZ: ${TZ}
+    ports:
+      # The tailnet address explicitly, never 0.0.0.0 -- this resolver must not
+      # answer on rb's LAN. Docker cannot bind it before tailscale0 is up, so a
+      # reconcile racing a reboot fails until restart: unless-stopped catches up.
+      - "100.126.56.26:53:53/udp"
+      - "100.126.56.26:53:53/tcp"
+    volumes:
+      # Directory, never the file -- docs/conventions.md, 'Tracked files'.
+      - ./conf:/etc/coredns:ro
+    networks:
+      - shared
+
+networks:
+  shared:
+    external: true

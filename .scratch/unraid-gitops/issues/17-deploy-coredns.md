@@ -2,6 +2,7 @@
 
 Type: task
 Status: open
+Assignee: Nospamas
 Blocked by: 07, 11
 
 **Read the map's "Two networks" note first.** `192.168.1.0/24` is rb's network,

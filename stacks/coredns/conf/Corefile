@@ -1,0 +1,26 @@
+# Ticket 17. The tailnet view of 05's split horizon: every rbrb.in name answers
+# tower's tailnet address, so a client off rb's network reaches Caddy over
+# WireGuard rather than at 192.168.1.195, which it cannot route to.
+
+rbrb.in {
+    template IN A {
+        answer "{{ .Name }} 60 IN A 100.126.56.26"
+    }
+    # NODATA, not NXDOMAIN. Falling through would deny the name itself and take
+    # the A record with it on any client that asks for both.
+    template IN AAAA {
+        rcode NOERROR
+    }
+    errors
+    log
+}
+
+. {
+    # Tailscale Split DNS is restricted to rbrb.in, so no other name is ever
+    # sent here -- each client keeps its own resolver for everything else.
+    # Refusing keeps that true and makes a misconfiguration loud.
+    template IN ANY {
+        rcode REFUSED
+    }
+    errors
+}
