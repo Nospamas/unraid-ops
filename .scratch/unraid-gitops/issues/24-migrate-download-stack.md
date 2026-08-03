@@ -38,3 +38,20 @@ warnings onto.
 
 State the rollback before deploying. Leech-only is a settled posture, not a
 defect — do not buy port forwarding to "fix" it.
+
+## Settled early by [19](19-secret-hygiene-on-the-box.md) / [20](20-chown-to-99-100.md)
+
+- **The chown is done**; gluetun and qbittorrent both run 99:100, qbittorrent
+  with `UMASK=002`. Recreated together and verified: qbittorrent's
+  `HostConfig.NetworkMode` is `container:<live gluetun id>`, gluetun healthy, and
+  the exit IP (`94.140.8.185`) differs from the host's (`75.155.182.130`) — the
+  tunnel holds. Not blocked any more.
+- **The firewall typo is subtler than this ticket records, and the warning
+  stands.** Gluetun's env holds *both* spellings: `FIREWALL_OUTBOUND_SUBNET=
+  0.0.0.0/0` (misspelled, inert) **and gluetun's own `FIREWALL_OUTBOUND_SUBNETS=`
+  — correct spelling, empty**, which is what is actually in force. Correcting the
+  typo would set `0.0.0.0/0` and route everything around the tunnel.
+  `FIREWALL_VPN_INPUT_ALLOW=192.168.1.0` is likewise malformed and inert. **Carry
+  both across verbatim.**
+- Compose backed up at
+  `/mnt/user/appdata/portainer/compose/2/docker-compose.yml.bak-19`.

@@ -26,3 +26,14 @@ Removing it also removes the plaintext NordVPN key in
 
 Decide what happens to `/mnt/user/appdata/portainer` — deleted, or kept as a
 cold archive until the migrations have proven themselves.
+
+## Added by [19](19-secret-hygiene-on-the-box.md)
+
+**The database holds the WireGuard key too.** `portainer.db` *and*
+`backups/portainer.db.bak` both match, not just `compose/2/docker-compose.yml`.
+So "kept as a cold archive" **preserves the plaintext key** — that is now a real
+input to this ticket's disposition question, not a tidiness one. Also note
+`.bak-19` copies of both compose files now sit alongside them.
+
+Portainer's own copies are the **best-protected** on the box (600 in a 700 dir),
+so this is about deliberate disposal, not an active leak.

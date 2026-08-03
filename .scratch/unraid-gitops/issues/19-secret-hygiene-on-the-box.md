@@ -1,7 +1,7 @@
 # 19 — Settle secret hygiene on the box: appdata permissions and the old plaintext copies
 
 Type: grilling
-Status: open
+Status: closed
 Assignee: Nospamas
 Blocked by: 11
 
@@ -89,3 +89,86 @@ bits above are one input, not the answer.
 Whether 777 is Unraid's default for a hand-made appdata subdirectory or something
 about how this one was created is also unestablished, and worth knowing before
 deciding the fix is `chmod`.
+
+## Resolution
+
+**The boundary 03 assumed was not there, and the reason was one bit.**
+
+Periphery's umask is **0022**, so `sops -d secrets.sops.env > secrets.env` — a
+plain redirect — created every decrypted secret **0644, world-readable**. Both
+live ones were: homepage's and caddy's, the latter holding the Cloudflare DNS
+token. Proven inside the container rather than inferred: a bare redirect there
+yields 644, the same redirect under `(umask 077; ...)` yields 600.
+
+The fix is the subshell, not a `chmod` afterwards — it closes the window instead
+of reopening it a moment later. [scripts/check-secrets-mode.sh](../../../scripts/check-secrets-mode.sh)
+is in `just lint` so a new Stack cannot reintroduce the bare form.
+
+**Who could actually read it: nobody, yet.** `appdata.cfg` has
+`shareExport="-"` *and* `shareExportNFS="-"` — the share is exported over
+neither protocol — and no container binds the tree except `komodo-periphery`,
+which writes it. Every workload binds only its own Stack subdirectory. The
+exposure was latent, one unrelated click away: enabling SMB on appdata, or one
+container bound at `/mnt/user/appdata` instead of its own subdirectory.
+
+### The 777 was a stopgap, and this ticket found what it was standing in for
+
+Not a secrets question at first sight, but the same tree. The box had been
+`chmod -R 777`'d because **rb could not move media**: every *arr runs
+`UMASK=022`, creating 755 directories owned `nobody:users`, and rename/delete
+needs write on the **parent directory**, not the file. `nobody`(99),
+`share`(1000) and `rseaforthb`(1001) all have primary gid **100** already —
+`id` confirms it, no group edit was needed — so `UMASK=002` and group-write is
+the whole cure. That is [09](09-unify-uid-gid.md)'s decision, unexecuted.
+
+**Samba is not implicated.** Its effective `create mask` and `directory mask`
+are both **0777**; it strips nothing. Do not "fix" `smb-extra.conf`.
+
+### What was actually on the box
+
+- **`/boot` holds no WireGuard key.** [01](01-inventory-running-containers.md)
+  said it did; nothing in `/boot/config` matches. 03's "Unraid Connect ships
+  `/boot` off-site" worry never applied to it.
+- **The calibre GUI password *is* on `/boot`**, cleartext in
+  `dockerMan/templates-user/my-calibre.xml` (600, dir 700). `Mask="true"` only
+  hides it in the UI. **The off-site concern attaches to the other asset** —
+  inverted from what 01 and 03 assumed. Still low-value per the map; recorded,
+  not actioned.
+- **Portainer's copies are the best-protected on the box** — 600 in a 700 dir.
+  But `portainer.db` **and `backups/portainer.db.bak` hold the key too**, and
+  nobody had counted the database. [25](25-retire-portainer.md)'s "keep it as a
+  cold archive" option would preserve it.
+- **`/mnt/user/appdata/scratch`** — 777, world-writable, with executable scripts
+  in it: [01](01-inventory-running-containers.md)'s leftovers, exactly the
+  unowned directory this ticket predicted. Its contents are already in
+  [assets/](../assets/). **Deleted.**
+- The `adopt/` copy is 600 root and dies with [24](24-migrate-download-stack.md).
+
+### Delivered
+
+`just permissions` / `just permissions-audit`
+([scripts/permissions.sh](../../../scripts/permissions.sh)), dry-run by default
+per [27](27-recipe-safety-convention.md), with a gzipped manifest of every mode
+and owner as the rollback. After:
+
+| | before | after |
+|---|---|---|
+| media dirs world-writable | 10,761 | **0** |
+| media files world-writable | 76,903 | **0** |
+| appdata paths world-writable | 2,663 | **0** |
+| media dirs without `g+w` | 73 | **0** |
+| `plexmediaserver` paths off-uid | 155,334 | **0** |
+
+**The dry run caught a bug in the recipe before it ran.** An absolute `chmod
+664` across appdata would have stripped the execute bit from
+`komodo/bin/sops` — the decrypt itself — and from the codecs plex downloads
+into its own appdata and then runs. Appdata is adjusted **relatively**
+(`o-w`, `g+w`); only media takes absolute modes. `komodo/{postgres,ferretdb,
+keys,backups}` and `caddy/data` are pruned entirely.
+
+### Ruling
+
+**The boundary is not directory permissions.** It is that the share is exported
+nowhere and only Periphery binds the tree; modes are defence in depth behind
+that. Both now hold. The map's secret-severity ruling is unchanged — this was
+about where copies sit, and rotation remains neither blocked nor scheduled.

@@ -142,8 +142,9 @@ prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four built ne
 once its stacks are adopted; Komodo's own four containers are the only
 non-workload tenants. **Homepage, dockerproxy and Caddy are live**; the eight
 adopted are
-[21](issues/21-migrate-arr-stacks.md)–[24](issues/24-migrate-download-stack.md).
-Caddy is the one Stack on **host networking**, and it is not a preference —
+[21](issues/21-migrate-arr-stacks.md)–[24](issues/24-migrate-download-stack.md)
+— **none of them blocked any more**, since [20](issues/20-chown-to-99-100.md) is
+closed. Caddy is the one Stack on **host networking**, and it is not a preference —
 [16](issues/16-deploy-caddy.md).
 
 **Secret severity**: the NordVPN *client* key and the calibre GUI password are
@@ -152,6 +153,15 @@ access to the box, LAN or tailnet. **Do not re-raise rotation as a blocker or a
 finding**; rotation has not happened and is not scheduled. The one live carve-out
 is *future* exposure, not the current leak: auth in front of calibre. That is
 **fog**, not a ticket — see below.
+
+**Permissions are settled and enforced** ([19](issues/19-secret-hygiene-on-the-box.md),
+[20](issues/20-chown-to-99-100.md)): 99:100, **`UMASK=002`**, 775/664, and no 777
+anywhere. `UMASK=022` is a bug, not a default — it is what forced the `chmod -R
+777` this map inherited. All three of `nobody`(99), `share`(1000) and
+`rseaforthb`(1001) have primary gid **100**, so group-write is the mechanism.
+**Samba is not involved** — its masks are 0777 and strip nothing. `just
+permissions` re-normalises; the rule is in
+[docs/conventions.md](../../docs/conventions.md).
 
 **Skills to consult**: `/grilling` and `/domain-modeling` for decision tickets,
 `/research` for AFK reading, `/prototype` where a rough artifact settles an
@@ -252,6 +262,19 @@ markdown.
   Split DNS is restricted to a domain, so each client keeps its own resolver for
   everything else. No `:53` collision existed. Corrected [18](issues/18-tailnet-split-dns.md),
   whose MagicDNS prerequisite was already done.
+- [19 — Settle secret hygiene on the box](issues/19-secret-hygiene-on-the-box.md)
+  — **Periphery's umask is 0022, so every decrypted `secrets.env` was 0644**;
+  `(umask 077; sops -d …)` fixes it and `just lint` enforces it. The boundary is
+  not directory perms — appdata is exported over **neither SMB nor NFS** and only
+  Periphery binds the tree. **`/boot` holds no WireGuard key** (01 was wrong);
+  the *calibre password* is the asset on `/boot`, inverted from what 01 and 03
+  assumed. Portainer's **database** holds the key too, which 25 must count.
+- [20 — Chown the tree to 99:100 and normalise permissions](issues/20-chown-to-99-100.md)
+  — **rolled into 19 and executed: the `chmod -R 777` is gone**, and it was a
+  stopgap for `UMASK=022`, which creates 755 dirs rb cannot move media out of.
+  All three divergent services are 99:100 with their Portainer stacks redeployed
+  in the same window. **`/dev/dri` was never a risk** — `renderD128` is 777, so
+  23's transcode check is settled. **No compose binary exists on the box.**
 - [18 — Point Tailscale Split DNS at CoreDNS](issues/18-tailnet-split-dns.md)
   — **one restricted-nameserver row delivers split-horizon**, and 05's answer is
   complete. The pihole risk is dead *structurally*: Windows routes per-domain via

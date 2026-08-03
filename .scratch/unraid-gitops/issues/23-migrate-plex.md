@@ -31,3 +31,18 @@ adopted read-only against project `plex-media-server`. This ticket **updates**
 that resource to point at the repo; it must not create a second one.
 
 Deleting `/mnt/user/appdata/komodo/adopt/plex/` is part of finishing.
+
+## Settled early by [19](19-secret-hygiene-on-the-box.md) / [20](20-chown-to-99-100.md)
+
+- **The chown is done and plex already runs 99:100 with `UMASK=002`**, its
+  Portainer stack edited and redeployed. This ticket is no longer blocked and no
+  longer has to perform the uid move — it is a lift into git.
+- **The `/dev/dri` check is answered: it was never a risk.** `renderD128` is
+  `crwxrwxrwx`, so the container user's groups are irrelevant. Plex's log under
+  the new uid says `adding /dev/dri/renderD128 to group group1sck` and
+  `permissions for /dev/dri/card0 are good`. Confirming a transcode still says
+  `(hw)` is worth doing once, but it is a spot-check, not a gate.
+- **There is no compose binary on the box** — drive the daemon remotely with
+  `DOCKER_HOST=ssh://root@tower` if a stack must be run outside Komodo.
+- The current compose is backed up at
+  `/mnt/user/appdata/portainer/compose/1/docker-compose.yml.bak-19`.
