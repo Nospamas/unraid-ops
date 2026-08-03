@@ -37,3 +37,16 @@ input to this ticket's disposition question, not a tidiness one. Also note
 
 Portainer's own copies are the **best-protected** on the box (600 in a 700 dir),
 so this is about deliberate disposal, not an active leak.
+
+## Added by [24](24-migrate-download-stack.md)
+
+**Both blockers are closed, and the plaintext key has a fourth home.** The
+download Stack is git-owned, so Portainer holds no stack anyone deploys — but
+`grep -rl` now also finds the WireGuard key in
+`/mnt/user/appdata/komodo/postgres/data/`, left by the Stack
+[11](11-stand-up-komodo.md) adopted with the compose file inline. Removing
+Portainer therefore removes three of four copies, not all of them, and this
+ticket should say so rather than claim the leak is closed.
+
+Portainer's compose is also the **rollback** for 24 until roughly 2026-08-10.
+Retiring it before then trades a live rollback for tidiness.

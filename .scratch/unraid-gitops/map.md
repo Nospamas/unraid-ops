@@ -136,20 +136,20 @@ never as a closing prose paragraph.** One line each, starting with the verb,
 saying what stays broken until it is done. 13's Renovate config sat inert waiting
 on one click.
 
-**Container scope**: git owns all eight adopted workloads (sonarr, radarr,
-prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four built new
-(homepage, Caddy, CoreDNS, dockerproxy). No two-tier box. Portainer is retired
-once its stacks are adopted; Komodo's own four containers are the only
-non-workload tenants. **Only the download pair is left**
-([24](issues/24-migrate-download-stack.md)), and it is unblocked.
+**Container scope is closed.** Git owns all eight adopted workloads (sonarr,
+radarr, prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four
+built new (homepage, Caddy, CoreDNS, dockerproxy). No two-tier box. **Nothing is
+left to migrate** — the only containers git does not own are Portainer, which
+[25](issues/25-retire-portainer.md) removes, and Komodo's own four.
 **Adoption splits by manager, not by service**
 ([21](issues/21-migrate-arr-stacks.md)): unraid's dockerMan containers carry no
 compose labels and were *removed* by `just adopt`, all five of them. Portainer's
 are the other case — adopted in place by `project_name`, and
 [23](issues/23-migrate-plex.md) settled what that does: it **recreates**, under
 a new container name, keeping the network alias. Which is the safe direction for
-24, since 06's hazard is recreating gluetun *alone*. Caddy is the one Stack on
-**host networking**, and it is not a preference — [16](issues/16-deploy-caddy.md).
+24, since 06's hazard is recreating gluetun *alone* — and 24 has now run it that
+way and held. Caddy is the one Stack on **host networking**, and it is not a
+preference — [16](issues/16-deploy-caddy.md).
 
 **Secret severity**: the NordVPN *client* key and the calibre GUI password are
 ruled **low-value** — both were already plaintext on the box, and neither grants
@@ -182,7 +182,9 @@ log.** [29](issues/29-alerting-on-failed-reconcile.md) is where this goes.
 predates this repo. `x-published` and `check-exposure.sh` reason about the
 **Caddy** path only, so a host port plus a router is invisible to both.
 [31](issues/31-plex-own-internet-exposure.md) rules on it; until then, say "the
-repo publishes nothing", which is the claim that is actually true.
+repo publishes nothing", which is the claim that is actually true. The forward is
+**plex's alone**: [24](issues/24-migrate-download-stack.md) probed 6881 and 30024
+from outside and both time out, so 32400 is the one hole in rb's router.
 
 **Add one Stack to the deploy pattern at a time** when adopting. All four at
 once is what caused the above: the three not yet freed deployed into ports
@@ -337,6 +339,17 @@ markdown.
   plex answers from the public internet, and the repo's exposure grep cannot see
   it.
 
+- [24 — Migrate the download Stack (gluetun + qbittorrent)](issues/24-migrate-download-stack.md)
+  — **the pair is one Stack on `shared`, and the tunnel held across the
+  recreate**: qbittorrent's own egress is the VPN's, its namespace points at the
+  live gluetun, and 23 torrents are untouched. `latest` pinned nothing on either
+  image, but only qbittorrent had a lift available — gluetun's was an untagged
+  master build, so it landed on **v3.41.3** deliberately. Four env vars gluetun
+  never read were **dropped rather than carried**, reversing this ticket's own
+  instruction, and the rule went to
+  [adding-a-service.md](../../docs/adding-a-service.md). 6881 is gone: rb's
+  router forwards it no more than it forwards 30024.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -347,7 +360,9 @@ markdown.
   minutes is the answer, not a defect.
 - **Appdata backup and box rebuild.** With definitions in git, appdata is the
   remaining single point of failure — 24G, dominated by plex — and Komodo's own
-  database is new off-git state holding the resource records.
+  database is new off-git state holding the resource records. [24](issues/24-migrate-download-stack.md)
+  found the NordVPN key in that database in plaintext, left by 11's adoption, so
+  a backup of it is a backup of a secret.
 - **Authentication in front of the services.** 04 and 05 both declined it,
   correctly: the repo publishes nothing, so there is nothing to defend. 05 built
   the *gate*, deliberately not the defence — and [16](issues/16-deploy-caddy.md)
@@ -357,6 +372,10 @@ markdown.
   looks like: it is reachable from the internet, but by its own port forward and
   behind its own account auth, which is
   [31](issues/31-plex-own-internet-exposure.md)'s question, not this one's.
+  qbittorrent is the sharpest case: [24](issues/24-migrate-download-stack.md)
+  left its API unauthenticated to everything on `shared` and, through Caddy, to
+  everything the `(internal)` guard admits. Deliberate, and only sound while that
+  guard is.
 - **Whether the LAN half of split-horizon ever needs its own resolver.** 05 leans
   on Cloudflare's public record *being* the view on rb's network, which works
   precisely because nothing is published. A forwarded port would break that

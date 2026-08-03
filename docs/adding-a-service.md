@@ -154,6 +154,22 @@ as 1000:1000 and qbittorrent as 1001:1001, so **their appdata is only compatible
 once the chown in [ticket 20](../.scratch/unraid-gitops/issues/20-chown-to-99-100.md)
 has run.**
 
+## 6b. **[adopt]** Diff the container's env against the image's
+
+Copy across what the image actually reads, not what the old template set:
+
+```sh
+ssh root@tower 'docker inspect <container> --format "{{range .Config.Env}}{{println .}}{{end}}"'
+ssh root@tower 'docker image inspect <image>  --format "{{range .Config.Env}}{{println .}}{{end}}"'
+```
+
+A variable the image does not declare is either a real setting or **cargo** —
+calibre carried eighteen cargo variables [22] and gluetun four [24]. Cargo is not
+merely untidy: two of gluetun's were misspelled firewall settings, and copying
+them forward invites a later reader to "fix" the spelling, which would route
+every packet around the tunnel. Drop them, and say in a comment what the absence
+means.
+
 ## 7. Deploy
 
 Add the Stack's name to the `BatchDeployStackIfChanged` pattern in

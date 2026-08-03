@@ -34,3 +34,19 @@ guard becoming the only way in rather than one of two.
 prowlarr fails silently — search returns nothing and nothing logs an error.
 Change the URLs first, confirm a search still returns results end to end, and
 only then delete the ports.
+
+## Unblocked by [24](24-migrate-download-stack.md), and one leg already walked
+
+The download Stack is on `shared`, so `http://gluetun:30024` resolves for every
+service here. Homepage has already moved — both its widget and its `container:`
+entries — which leaves this ticket the four *arr and nothing else.
+
+Two things 24 hands over:
+
+- **`30024` is the download Stack's only host port now**; 6881 is gone. So this
+  ticket ends with `ports:` disappearing from five compose files, not four.
+- **qbittorrent's `AuthSubnetWhitelist` still carries `172.18.0.0/16`**, the dead
+  `qbittorrent_default` subnet, kept only so 24's rollback would work. Drop it in
+  the same pass that drops the port, leaving `172.20.0.0/16` and — decide —
+  whether `192.168.1.0/24` is still earning its place once nothing on the LAN
+  addresses qbittorrent directly.
