@@ -130,11 +130,12 @@ has run.**
 
 Add the Stack's name to the `BatchDeployStackIfChanged` pattern in
 [komodo/procedures.toml](../komodo/procedures.toml) — the list is explicit, and a
-Stack missing from it is never deployed. Then commit and push.
+Stack missing from it is never deployed. Then commit and push, and run
+`just reconcile` for the first deploy.
 
-Editing that file needs **`just sync`**, not `just reconcile` — a Procedure
-cannot update itself while running. Then `just reconcile` for the first deploy,
-or wait 15 minutes.
+**Do not just wait 15 minutes for this one.** The cron cannot apply an edit to
+`procedures.toml` — only `just reconcile` can, because it syncs before running
+the Procedure. Until it runs, every scheduled reconcile fails.
 
 ## 8. Check it
 

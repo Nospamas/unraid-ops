@@ -2,15 +2,13 @@
 	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
 }
 
-# Ticket 05. `respond` sorts before `reverse_proxy`, so this ends the chain
-# before the proxy sees anything.
+# Ticket 05. `respond` sorts before `reverse_proxy`, so this ends the chain first.
 (internal) {
 	@external not remote_ip 192.168.1.0/24 100.64.0.0/10
 	respond @external 403
 }
 
-# Naming the wildcard is what makes Caddy issue one rather than a certificate
-# per hostname. Wildcard-host blocks sort last, so labelled names still win.
+# Naming the wildcard is what makes Caddy issue one, not a cert per hostname.
 *.rbrb.in {
 	import internal
 	respond "no service by that name" 404

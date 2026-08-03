@@ -31,8 +31,9 @@ Every rule's reasoning is in the ticket it links, under
   container will not start. `TZ` in `common.env` does the job.
 - **Bind directories, never single files**, out of a Stack's run directory. A
   git pull replaces the file and the mount goes `stale file handle`.
-- **`komodo/procedures.toml` is applied by `just sync`, not `just reconcile`** —
-  a Procedure cannot update itself while running, and the failure is opaque.
+- **A `komodo/procedures.toml` edit needs `just reconcile`, never the cron** — a
+  Procedure cannot update itself while running, so the scheduled run fails
+  outright until someone runs the recipe, which syncs first.
 - **`just secret <stack>`, never `sops --encrypt`** on a path outside a Stack
   directory: it finds no creation rule.
 - **Do not POST to Komodo's API ad hoc.** New operations go in

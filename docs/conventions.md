@@ -92,13 +92,17 @@ unattended [06] [08]. Adding a Stack to the pattern is a step of migrating it.
 Drive it with `just reconcile`, not the UI and not ad-hoc API calls. A new
 operation goes in [scripts/komodo.sh](../scripts/komodo.sh) behind a recipe.
 
-**A change to this file cannot be applied by `reconcile`** [16]. Komodo refuses
-to update a Procedure while it is running, and `reconcile` *is* the Procedure
-that runs the sync that would update it — it retries ten times and fails with
-`procedure sync loop exited after max iterations`, the real reason discarded.
-Use **`just sync`**, which runs the ResourceSync on its own. The scheduled
-reconcile hits the same wall, so an unapplied `procedures.toml` fails every 15
-minutes until someone runs it.
+**The scheduled Procedure cannot apply a change to this file** [16]. Komodo
+refuses to update a Procedure while it is running, and the Procedure *is* what
+runs the sync that would update it — ten retries, then
+`procedure sync loop exited after max iterations` with the real reason
+discarded, and no Stack deploys at all.
+
+`just reconcile` runs the sync **bare first**, then the Procedure, which is why
+one command still covers it; the Procedure's own sync stage then finds no
+changes. But **the cron only runs the Procedure**, so a `procedures.toml` edit
+that lands without `just reconcile` fails every 15 minutes until someone runs
+it — silently, because [12]'s `failure_alert` still has no alerter.
 
 ## Tracked files
 
@@ -271,7 +275,7 @@ to do this? [27]
 |---|---|---|
 | `default`, `lint`, `verify-secrets`, `host-check` | local / read-only | no |
 | `secret <stack>` | a repo file, via `$EDITOR` | no — the repo is not the box |
-| `sync`, `reconcile` | Komodo API | no — the cron does this anyway |
+| `reconcile` | Komodo API | no — the cron does this anyway |
 | `bootstrap` | Komodo API | **`--apply`** |
 | `host-ports` | the box over SSH | **`--apply`** |
 

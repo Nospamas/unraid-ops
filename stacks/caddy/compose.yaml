@@ -2,13 +2,12 @@ services:
   caddy:
     image: ghcr.io/serfriz/caddy-cloudflare-dockerproxy:2.11.4@sha256:5682eeef783b7df37a88c3906d3b5cfce1183119fcaeaec547ed2be1088818e0
     restart: unless-stopped
-    # Tailscale masquerades anything it routes onward, and docker's DNAT counts:
-    # on published ports every tailnet client arrives as the bridge gateway and
-    # 05's remote_ip guard 403s it.
+    # Published ports would show every tailnet client as the bridge gateway,
+    # and 05's guard would 403 it.
     network_mode: host
     environment:
       TZ: ${TZ}
-      # Nothing to auto-detect without a docker network of its own.
+      # Nothing to auto-detect without a network of its own.
       CADDY_INGRESS_NETWORKS: shared
       CADDY_DOCKER_CADDYFILE_PATH: /etc/caddy/Caddyfile
     env_file:
@@ -16,7 +15,7 @@ services:
         required: false
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # The directory, never the file -- see docs/conventions.md, 'Tracked files'.
+      # Directory, never the file -- docs/conventions.md, 'Tracked files'.
       - ./conf:/etc/caddy:ro
       - ${APPDATA}/caddy/data:/data
       - ${APPDATA}/caddy/config:/config

@@ -106,8 +106,7 @@ await_update() {
     done
 }
 
-# Komodo renders log text as HTML, and a failed stage reports only the id of the
-# nested update holding the actual error.
+# Komodo renders logs as HTML, and nests the real error in another update.
 show_update() {
     local update stage
     update="$(get_update "$1")"
@@ -124,39 +123,26 @@ show_update() {
     done
 }
 
-# A Procedure cannot be updated while it is running, and `reconcile` runs the
-# sync that would update it -- so a change to komodo/procedures.toml can only be
-# applied by a RunSync outside the Procedure. Ticket 16.
-cmd_sync() {
+run() {
     local id
-    login
-    id="$(api execute "$(jq -n --arg n "$(sync_name)" \
-        '{type:"RunSync",params:{sync:$n}}')" |
-        jq -r '._id."$oid" // .id // empty')"
+    # Execute responses serialize the id raw; reads return it flattened.
+    id="$(api execute "$2" | jq -r '._id."$oid" // .id // empty')"
     if [[ -z "$id" ]]; then
-        echo "sync did not return an update id" >&2
+        echo "$1 did not return an update id" >&2
         exit 1
     fi
-    echo "sync started ($id)"
+    echo "$1 started ($id)"
     await_update "$id"
     show_update "$id" "  "
     get_update "$id" | jq -e '.success' >/dev/null
 }
 
 cmd_reconcile() {
-    local id
     login
-    # Execute responses serialize the id raw; reads return it flattened.
-    id="$(api execute '{"type":"RunProcedure","params":{"procedure":"reconcile"}}' |
-        jq -r '._id."$oid" // .id // empty')"
-    if [[ -z "$id" ]]; then
-        echo "reconcile did not return an update id" >&2
-        exit 1
-    fi
-    echo "reconcile started ($id)"
-    await_update "$id"
-    show_update "$id" "  "
-    get_update "$id" | jq -e '.success' >/dev/null
+    # Bare first: Komodo will not update a Procedure while it is running.
+    run sync "$(jq -n --arg n "$(sync_name)" \
+        '{type:"RunSync",params:{sync:$n}}')"
+    run reconcile '{"type":"RunProcedure","params":{"procedure":"reconcile"}}'
 }
 
 case "${1:-}" in
@@ -164,7 +150,6 @@ case "${1:-}" in
         shift
         cmd_bootstrap "$@"
         ;;
-    sync) cmd_sync ;;
     reconcile) cmd_reconcile ;;
     *)
         cat >&2 <<'EOF'
@@ -172,10 +157,9 @@ usage: komodo.sh <command>
 
   bootstrap [--apply]   create the ResourceSync Komodo cannot create for itself,
                         and run it. Dry run without --apply.
-  sync                  run the ResourceSync alone. The only way to apply a
-                        change to komodo/procedures.toml.
-  reconcile             run the reconcile Procedure now, rather than waiting for
-                        the poll. Ungated -- the cron does this anyway.
+  reconcile             sync the resources, then run the reconcile Procedure,
+                        rather than waiting for the poll. Ungated -- the cron
+                        does this anyway.
 EOF
         exit 1
         ;;

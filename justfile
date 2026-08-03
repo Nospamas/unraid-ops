@@ -34,10 +34,6 @@ secret stack:
 bootstrap *args:
     bash scripts/komodo.sh bootstrap {{ args }}
 
-# Run the ResourceSync alone -- the only way to apply komodo/procedures.toml
-sync:
-    bash scripts/komodo.sh sync
-
 # Reconcile the box now, rather than waiting for the 15-minute poll. Ungated
 reconcile:
     bash scripts/komodo.sh reconcile
