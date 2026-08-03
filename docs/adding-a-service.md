@@ -143,6 +143,13 @@ just verify-secrets   # every *.sops.env still decrypts
 
 ## Exceptions worth knowing before you hit them
 
+- **Never bind `/etc/localtime`.** Old unraid templates and upstream examples
+  offer it as the way to sync container time; on this box it is fatal. runc
+  under Docker 29.5.3 refuses to mount onto that destination — the path is a
+  symlink inside most images — and the container will not start:
+  `not a directory: Are you trying to mount a directory onto a file?`. It cost
+  plex an outage after the 7.3.2 upgrade. `TZ` in `common.env` already does the
+  job.
 - **qbittorrent's labels live on gluetun.** It has no network identity of its
   own. Anything addressed at it is addressed at `gluetun` — the *arr use
   `http://gluetun:30024`.

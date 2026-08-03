@@ -441,11 +441,12 @@ concrete artifact would settle an argument faster than discussion.
   recreates the containers or no-ops is unproven** — Komodo matched them by
   project name but records nothing as deployed, so the answer is compose's
   config-hash call, and for `download` a needless recreate is exactly 06's
-  silent-orphan hazard. **plex's definition also moved**: the human hand-edited
-  it to bring plex back up after the Unraid 7.3.2 upgrade, so it now pins
-  `VERSION` and `PLEX_DOWNLOAD` and 01's record of it is stale. That pin is
-  load-bearing and Renovate cannot see it — the image tag and the `VERSION` env
-  var pin different things. Graduates once 08 resolves.
+  silent-orphan hazard. **And no Stack may bind `/etc/localtime`** — the human
+  had to drop that bind by hand to bring plex back up after the 7.3.2 upgrade,
+  and [11](issues/11-stand-up-komodo.md) proved it is a **box-wide** failure,
+  not a plex one: runc under Docker 29.5.3 refuses to mount onto that
+  destination on any image. `TZ` in [common.env](../../common.env) already
+  covers it. Graduates once 08 resolves.
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,

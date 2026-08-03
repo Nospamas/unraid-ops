@@ -492,23 +492,53 @@ and clone deleted afterwards.
   `KOMODO_JWT_SECRET` would invalidate it and log the human out; judged
   disproportionate, but recorded rather than swallowed.
 
-### plex's compose file changed under us, and the answer matters for the migration
+### `/etc/localtime` is now a broken bind on this box, and it cost plex an outage
 
-`/mnt/user/appdata/portainer/compose/1/docker-compose.yml` was modified at
-03:01 today, ~40 minutes before this session, and `plex` restarted with it. The
-file now pins `VERSION=1.43.1.10495-10cfae054` and sets `PLEX_DOWNLOAD`, where
-[01](01-inventory-running-containers.md)'s inventory has neither.
+`/mnt/user/appdata/portainer/compose/1/docker-compose.yml` was modified at 03:01
+today, ~40 minutes before this session, and `plex` restarted with it.
 
-**Answered by the human**: a hand edit, made to bring plex back up after the
-Unraid 7.3.2 upgrade recorded above. So:
+**Answered by the human**: a hand edit to bring plex back up after the Unraid
+**7.2.0 → 7.3.2** upgrade recorded above. The fix was **commenting out the
+`/etc/localtime:/etc/localtime:ro` bind**, which the upgrade turned into a
+conflict. `VERSION` and `PLEX_DOWNLOAD` are unchanged — both appear in
+[01](01-inventory-running-containers.md)'s raw capture
+(`assets/inventory-part2.out:26`), and only 01's summary table omitted them.
 
-- **The migration lifts the file as it stands now, not 01's record of it.** 01's
-  plex entry is stale on exactly these two fields, and the *arr entries are the
-  only ones the upgrade left untouched.
-- **The `VERSION` pin is load-bearing, not incidental.** plex needed a specific
-  build to start after the host upgrade, which makes it a real config decision
-  rather than a stray edit — and it sits awkwardly beside
-  [12](12-image-update-strategy.md)'s version@digest convention, since the
-  linuxserver image tag and the `VERSION` env var pin *different things* (the
-  container and the Plex Media Server binary it downloads). Whichever ticket
-  migrates plex has to carry both, and Renovate only sees one of them.
+**It is not plex-specific**, which was the obvious guess and is wrong. Tested
+directly: mounting onto `/etc/localtime` fails identically on the
+`komodo-periphery` image, which shares nothing with plex —
+
+```
+error mounting "/etc/localtime" to rootfs at "/etc/localtime":
+  not a directory: Are you trying to mount a directory onto a file (or vice-versa)?
+```
+
+The failure is at the **destination, not the source**. `/etc/localtime` is a
+*symlink* inside these images (plex's points at `Etc/UTC`), and runc under
+**Docker 29.5.3** refuses to bind onto it. Proved by elimination:
+
+| source | destination | result |
+|---|---|---|
+| `/etc/localtime` | `/etc/localtime` | **fails** |
+| `/etc/localtime` | `/probe` | works |
+| `/usr/share/zoneinfo/America/Vancouver` | `/etc/localtime` | **fails** |
+
+Any source works anywhere except that one destination. Symlinked bind sources
+in general are fine — tested separately, file and directory both.
+
+**What triggered it is indicated but not proved.** The same Unraid upgrade took
+Docker **27.5.1 → 29.5.3**, and the bind demonstrably worked before it, so the
+daemon is the likely cause rather than the image. Confirming that would mean
+downgrading Docker, which is not worth it — the practical rule is the same
+either way:
+
+- **No Stack in this repo may bind `/etc/localtime`.** The supported way to set
+  container time is `TZ`, which [09](09-unify-uid-gid.md) already put in
+  [common.env](../../../common.env) as `America/Vancouver` — so every migrated
+  Stack gets it for free and nothing needs the bind.
+- **Zero containers still carry it** — checked all 13. This is a trap for
+  anything *copied in* from an old unraid template or an upstream example, not a
+  cleanup the migration owes. 01's inventory records it on plex
+  (`assets/01-inventory.md:84`); that entry is now historical.
+- It is the first thing to suspect if a container will not start after a future
+  Docker or Unraid bump.
