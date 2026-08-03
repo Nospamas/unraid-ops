@@ -94,8 +94,57 @@ cmd_bootstrap() {
     echo "ran sync '$name' -- komodo/ and stacks/ are now declared to Komodo"
 }
 
+get_update() {
+    api read "$(jq -n --arg i "$1" '{type:"GetUpdate",params:{id:$i}}')"
+}
+
+await_update() {
+    local _
+    for _ in $(seq 60); do
+        [[ "$(get_update "$1" | jq -r '.status')" == Complete ]] && return
+        sleep 5
+    done
+}
+
+# Komodo renders log text as HTML, and a failed stage reports only the id of the
+# nested update holding the actual error.
+show_update() {
+    local update stage
+    update="$(get_update "$1")"
+    printf '%s\n' "$update" |
+        jq -r '.logs[] | "\(.stage): \(if .success then "ok" else "FAILED" end)",
+                 (select(.success | not) | (.stdout, .stderr)
+                  | select(. != null and . != "") | split("\n")[] | "  | \(.)")' |
+        sed -e 's/<[^>]*>//g' -e "s/^/${2}/"
+
+    for stage in $(printf '%s\n' "$update" |
+        jq -r '.logs[] | select(.success | not) | (.stdout, .stderr) // ""' |
+        grep -o '/updates/[0-9a-f]\{24\}' | sed 's|.*/||' | sort -u); do
+        show_update "$stage" "${2}    "
+    done
+}
+
+# A Procedure cannot be updated while it is running, and `reconcile` runs the
+# sync that would update it -- so a change to komodo/procedures.toml can only be
+# applied by a RunSync outside the Procedure. Ticket 16.
+cmd_sync() {
+    local id
+    login
+    id="$(api execute "$(jq -n --arg n "$(sync_name)" \
+        '{type:"RunSync",params:{sync:$n}}')" |
+        jq -r '._id."$oid" // .id // empty')"
+    if [[ -z "$id" ]]; then
+        echo "sync did not return an update id" >&2
+        exit 1
+    fi
+    echo "sync started ($id)"
+    await_update "$id"
+    show_update "$id" "  "
+    get_update "$id" | jq -e '.success' >/dev/null
+}
+
 cmd_reconcile() {
-    local id status
+    local id
     login
     # Execute responses serialize the id raw; reads return it flattened.
     id="$(api execute '{"type":"RunProcedure","params":{"procedure":"reconcile"}}' |
@@ -105,17 +154,9 @@ cmd_reconcile() {
         exit 1
     fi
     echo "reconcile started ($id)"
-
-    for _ in $(seq 60); do
-        status="$(api read "$(jq -n --arg i "$id" \
-            '{type:"GetUpdate",params:{id:$i}}')" | jq -r '.status')"
-        [[ "$status" == Complete ]] && break
-        sleep 5
-    done
-
-    api read "$(jq -n --arg i "$id" '{type:"GetUpdate",params:{id:$i}}')" |
-        jq -r '"\(.status)  success=\(.success)",
-               (.logs[] | "  \(.stage): \(if .success then "ok" else "FAILED" end)")'
+    await_update "$id"
+    show_update "$id" "  "
+    get_update "$id" | jq -e '.success' >/dev/null
 }
 
 case "${1:-}" in
@@ -123,6 +164,7 @@ case "${1:-}" in
         shift
         cmd_bootstrap "$@"
         ;;
+    sync) cmd_sync ;;
     reconcile) cmd_reconcile ;;
     *)
         cat >&2 <<'EOF'
@@ -130,6 +172,8 @@ usage: komodo.sh <command>
 
   bootstrap [--apply]   create the ResourceSync Komodo cannot create for itself,
                         and run it. Dry run without --apply.
+  sync                  run the ResourceSync alone. The only way to apply a
+                        change to komodo/procedures.toml.
   reconcile             run the reconcile Procedure now, rather than waiting for
                         the poll. Ungated -- the cron does this anyway.
 EOF

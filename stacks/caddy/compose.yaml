@@ -10,9 +10,9 @@ services:
     restart: unless-stopped
     environment:
       TZ: ${TZ}
-      # Auto-detection of ingress networks is documented as unreliable
-      # (caddy-docker-proxy#207). Named explicitly: `{{upstreams}}` resolves
-      # container addresses on `shared` and nowhere else.
+      # On host networking Caddy joins no docker network, so there is nothing
+      # for caddy-docker-proxy to auto-detect. This is what tells it which
+      # address to read off each container.
       CADDY_INGRESS_NETWORKS: shared
       CADDY_DOCKER_CADDYFILE_PATH: /etc/caddy/Caddyfile
     # No PUID/PGID/UMASK: this is the official caddy image, not linuxserver's, so
@@ -22,12 +22,12 @@ services:
       # Written by pre_deploy. Absent on a laptop, where `just lint` runs.
       - path: secrets.env
         required: false
-    ports:
-      - "80:80"
-      - "443:443"
-      # HTTP/3. Caddy advertises it in Alt-Svc by default; without this the
-      # advertisement points at a port nothing is listening on.
-      - "443:443/udp"
+    # Host networking, not published ports, and this is load-bearing: Tailscale
+    # masquerades any tailnet packet it routes onward, and docker's DNAT into a
+    # container counts as onward. Published ports therefore show every tailnet
+    # client to Caddy as the bridge gateway, and 05's remote_ip guard can never
+    # match 100.64.0.0/10. On the host netns Caddy sees the real client address.
+    network_mode: host
     volumes:
       # Read-only: caddy-docker-proxy reads container labels and never writes.
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -36,9 +36,3 @@ services:
       # and every hostname re-issues, into Let's Encrypt's rate limits.
       - ${APPDATA}/caddy/data:/data
       - ${APPDATA}/caddy/config:/config
-    networks:
-      - shared
-
-networks:
-  shared:
-    external: true
