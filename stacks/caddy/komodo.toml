@@ -14,7 +14,7 @@ additional_env_files = ["../../common.env"]
 # edit to it would reach the box and change nothing. `restart`, not `redeploy`:
 # it arrives through a bind mount, and Caddy reads it at startup.
 config_files = [
-  { path = "Caddyfile", requires = "restart" },
+  { path = "conf/Caddyfile", requires = "restart" },
 ]
 
 pre_deploy.command = """

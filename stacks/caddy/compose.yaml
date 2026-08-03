@@ -20,7 +20,11 @@ services:
         required: false
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # The directory, never the file: a git pull replaces the Caddyfile rather
+      # than writing it in place, and a single-file bind out of appdata (shfs,
+      # FUSE) goes ESTALE when the inode changes. Caddy then loses the
+      # (internal) snippet and discards every site block that imports it.
+      - ./conf:/etc/caddy:ro
       # The ACME account key and every issued certificate. Lose it and every
       # hostname re-issues, into Let's Encrypt's rate limits.
       - ${APPDATA}/caddy/data:/data
