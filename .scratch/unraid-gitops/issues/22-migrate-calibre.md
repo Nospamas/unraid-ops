@@ -8,7 +8,10 @@ Status: open
 Adopt calibre into git. Already **99:100**
 ([01](01-inventory-running-containers.md)), so
 [20](20-chown-to-99-100.md) does not gate it, but it is not uniform with
-[21](21-migrate-arr-stacks.md) in three ways:
+[21](21-migrate-arr-stacks.md) in three ways — though it **is** uniform in the
+one 21 got wrong: calibre is unraid's, not Portainer's, so there is no compose
+project to adopt. Run `just adopt calibre --apply` before the first deploy, and
+add it to the deploy pattern only once it is free.
 
 - **It carries a secret** — the GUI password — so it is the second Stack with a
   `secrets.sops.env`. Follow [08](08-deploy-homepage.md)'s correction: the

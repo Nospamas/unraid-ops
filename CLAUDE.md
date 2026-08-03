@@ -34,6 +34,9 @@ Every rule's reasoning is in the ticket it links, under
 - **A `komodo/procedures.toml` edit needs `just reconcile`, never the cron** — a
   Procedure cannot update itself while running, so the scheduled run fails
   outright until someone runs the recipe, which syncs first.
+- **A green reconcile is not a running service.** Twice a deploy has left a
+  workload dead while Komodo reported success. Check the workload, not the
+  update log; `just redeploy <stack>` is the cure, since a restart is not.
 - **`just secret <stack>`, never `sops --encrypt`** on a path outside a Stack
   directory: it finds no creation rule.
 - **Do not POST to Komodo's API ad hoc.** New operations go in

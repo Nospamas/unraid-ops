@@ -140,11 +140,15 @@ on one click.
 prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four built new
 (homepage, Caddy, CoreDNS, dockerproxy). No two-tier box. Portainer is retired
 once its stacks are adopted; Komodo's own four containers are the only
-non-workload tenants. **Homepage, dockerproxy and Caddy are live**; the eight
-adopted are
-[21](issues/21-migrate-arr-stacks.md)–[24](issues/24-migrate-download-stack.md)
-— **none of them blocked any more**, since [20](issues/20-chown-to-99-100.md) is
-closed. Caddy is the one Stack on **host networking**, and it is not a preference —
+non-workload tenants. **Homepage, dockerproxy, Caddy, CoreDNS and the four *arr are live**;
+[22](issues/22-migrate-calibre.md)–[24](issues/24-migrate-download-stack.md)
+hold calibre, plex and the download pair, **none of them blocked**.
+**Adoption splits by manager, not by service**
+([21](issues/21-migrate-arr-stacks.md)): unraid's dockerMan containers carry no
+compose labels and are *removed* by `just adopt` — that is calibre too —
+while Portainer's plex, gluetun and qbittorrent are adopted in place by
+`project_name`. Whether an in-place adoption recreates or no-ops is **still
+unanswered**; 21 never got to test it. Caddy is the one Stack on **host networking**, and it is not a preference —
 [16](issues/16-deploy-caddy.md).
 
 **Secret severity**: the NordVPN *client* key and the calibre GUI password are
@@ -162,6 +166,19 @@ anywhere. `UMASK=022` is a bug, not a default — it is what forced the `chmod -
 **Samba is not involved** — its masks are 0777 and strip nothing. `just
 permissions` re-normalises; the rule is in
 [docs/conventions.md](../../docs/conventions.md).
+
+**A green reconcile is not a running service.** Twice now
+([16](issues/16-deploy-caddy.md), [21](issues/21-migrate-arr-stacks.md)) a
+deploy has left a workload dead while Komodo reported success — a stale bind,
+then containers `Up` with no networks at all. `DeployStackIfChanged` compares
+the config hash, so a correct hash over a broken container is silence, and a
+restart does not repair it. `just redeploy <stack>` destroys and rebuilds one
+named Stack, which is the only cure. **Check the workload, never the update
+log.** [29](issues/29-alerting-on-failed-reconcile.md) is where this goes.
+
+**Add one Stack to the deploy pattern at a time** when adopting. All four at
+once is what caused the above: the three not yet freed deployed into ports
+unraid still held.
 
 **Skills to consult**: `/grilling` and `/domain-modeling` for decision tickets,
 `/research` for AFK reading, `/prototype` where a rough artifact settles an
@@ -283,6 +300,15 @@ markdown.
   CoreDNS global (killing all DNS everywhere) is the same dialog; and on Windows
   `nslookup` bypasses the NRPT and reports a false failure.
 
+- [21 — Migrate sonarr, radarr, prowlarr and lazylibrarian](issues/21-migrate-arr-stacks.md)
+  — **all four are Stacks, on `shared`, behind Caddy, with their libraries
+  intact.** The framing was wrong: these came from unraid's Docker tab, carry
+  **no compose labels**, and so cannot be adopted at all — `just adopt` removes
+  them and the Stack rebinds the same appdata. Adding all four to the deploy
+  pattern at once left three `Up` with no networks and no ports, which
+  **`Execution ok` reported as success**; spawned `just redeploy` and
+  [30](issues/30-arr-urls-on-shared.md).
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -310,8 +336,8 @@ markdown.
   router, which [05](issues/05-remote-access.md) declined on shadowed-route
   grounds. Sharp only if something on that network that cannot run tailscale
   (a TV, a printer, a guest) actually needs a service.
-*(Monitoring graduated to [29](issues/29-alerting-on-failed-reconcile.md) —
-[16](issues/16-deploy-caddy.md) hit two silent failures in one session.)*
+*(Monitoring graduated to [29](issues/29-alerting-on-failed-reconcile.md), and
+the *arr host ports to [30](issues/30-arr-urls-on-shared.md).)*
 
 ## Out of scope
 

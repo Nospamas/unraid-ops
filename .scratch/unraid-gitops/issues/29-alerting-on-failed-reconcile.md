@@ -33,6 +33,14 @@ Those are two different questions and the ticket has to separate them:
   a container that is up but serving 404s is invisible to it. Ruling this out of
   scope is a legitimate answer; leaving it unstated is not.
 
+**A third sighting, from [21](21-migrate-arr-stacks.md)** — and it is the same
+shape as the Caddy one, which makes it a pattern rather than an accident. Three
+containers were left `Up` with no networks and no published ports by a deploy
+that failed half-way. The *next* reconcile reported `Execution ok`, because
+`DeployStackIfChanged` compares the config hash and the hash was right. Green
+loop, three dead services, nothing anywhere saying so. Whatever this ticket
+decides about liveness has now been argued for twice by events.
+
 Also revisit: [12](12-image-update-strategy.md)'s four human-merge carve-outs
 were explicitly **the stand-in for monitoring**. If something is now watching,
 say whether they stay.
