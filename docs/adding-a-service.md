@@ -176,4 +176,8 @@ just verify-secrets   # every *.sops.env still decrypts
   500 if it cannot. The repo ships the complete skeleton so nothing is seeded
   untracked into the clone; logs go to `${APPDATA}/homepage/logs`.
 - **CoreDNS** binds an explicit host address, `100.126.56.26:53`, not a port on
-  every interface.
+  every interface. Docker cannot bind that before `tailscale0` is up, so a
+  reconcile racing a reboot fails until `restart: unless-stopped` catches up. Its
+  `.` block **REFUSEs** — Tailscale Split DNS is restricted to `rbrb.in`, so no
+  other name is ever sent there and a forwarder would only mask a
+  misconfiguration [17].

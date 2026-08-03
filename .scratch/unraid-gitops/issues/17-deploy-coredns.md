@@ -1,8 +1,9 @@
 # 17 — Deploy CoreDNS for the tailnet view
 
 Type: task
-Status: open
+Status: closed
 Assignee: Nospamas
+Resolved: 2026-08-03
 Blocked by: 07, 11
 
 **Read the map's "Two networks" note first.** `192.168.1.0/24` is rb's network,
@@ -67,3 +68,72 @@ from the repo.
   `"100.126.56.26:53:53/udp"` and the `/tcp` pair. 07 accommodated this rather
   than forcing a uniform port convention on it.
 - No secrets, so `pre_deploy` is the bare `shared`-network create.
+
+## Resolution
+
+CoreDNS 1.14.6 is live on `100.126.56.26:53`, udp and tcp, and answers every
+`rbrb.in` name with tower's tailnet address. `stacks/coredns/` reproduces it from
+the repo; `coredns` is in the `BatchDeployStackIfChanged` list.
+
+Verified from a machine off both networks, over the tailnet:
+
+| | |
+|---|---|
+| `home.rbrb.in`, `sonarr.rbrb.in`, the apex, `a.b.c.rbrb.in` | all `100.126.56.26` |
+| `AAAA` | `NOERROR`, `ANSWER: 0` — NODATA, not NXDOMAIN |
+| `example.com` | `REFUSED` |
+| TCP | answers |
+| `dig @192.168.1.195` | no answer — it does not listen on rb's LAN |
+
+End to end: following CoreDNS's answer reaches Caddy at HTTP 200 with the
+trusted wildcard, in 30ms. **The chain is complete except for delivery** — no
+client asks CoreDNS anything until [18](18-tailnet-split-dns.md) lands.
+
+### The question was reopened before it was built
+
+The human stopped the session to ask whether CoreDNS was needed at all, since
+the public record already covers rb's network and a pihole entry could cover the
+home network. Laid out, the two options are **identical everywhere except one
+row**: a device on neither network — a laptop tethered in a café, a phone on
+cellular — has no pihole and no route to `192.168.1.195`. Only Split DNS reaches
+it.
+
+**Ruling: roaming is in scope**, and it is the entire justification for CoreDNS
+over a pihole record. Both options put one record in state git does not own, so
+that is a wash and not a tiebreaker. If roaming is ever dropped from the
+destination, this Stack has no remaining reason to exist.
+
+### Three departures from what this ticket wrote down
+
+- **The Corefile is `conf/Corefile`**, not beside the compose file as 07 settled.
+  [16](16-deploy-caddy.md) found a single-file bind goes ESTALE on the next git
+  pull, silently. `docs/conventions.md` already said so; this ticket predated it.
+- **`.` REFUSEs rather than forwarding.** Split DNS is *restricted to a domain*,
+  so a client sends only `rbrb.in` here and keeps its own resolver for everything
+  else — pihole at home, rb's router on rb's network, DHCP's when roaming. The
+  `.` block is therefore unreachable in normal operation, and refusing keeps that
+  true instead of quietly becoming a general resolver on the tailnet. This ticket's
+  `forward . /etc/resolv.conf` was wrong regardless: inside a container that file
+  is `127.0.0.11`, docker's embedded DNS.
+- **No PUID/PGID.** The image is `nonroot:nonroot` fixed at build, takes no such
+  env, and needs `-conf /etc/coredns/Corefile` explicitly — its default config
+  path is `./Corefile`.
+
+### Findings
+
+- **No port collision, and the risk was never real.** Nothing binds `:53` on the
+  box at all. `tailscaled` takes `100.100.100.100:53` only when a device has
+  `--accept-dns=true`, and tower has it **off** — and that is a different address
+  in any case. The fallback to `192.168.1.195:53` is not needed.
+- **Boot-order hazard, new.** Docker cannot bind `100.126.56.26:53` before
+  `tailscale0` is up, so a reconcile racing a reboot fails until
+  `restart: unless-stopped` catches up. Recorded in the compose file. It is a
+  candidate symptom for [29](29-alerting-on-failed-reconcile.md).
+- **A source-IP `view` would force host networking.** A device on rb's network
+  that also joins the tailnet with `--accept-dns=true` would get
+  `100.126.56.26` and reach tower over WireGuard rather than straight across the
+  LAN. Today only tower is in that position and its `--accept-dns` is off, so it
+  is moot. The fix, if it ever matters, is CoreDNS's `view` plugin keyed on
+  client IP — which cannot work behind a published port, because
+  [16](16-deploy-caddy.md) proved tailnet clients arrive masqueraded as the
+  bridge gateway. It would have to be host-networked, like Caddy.

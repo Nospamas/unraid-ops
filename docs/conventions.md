@@ -50,8 +50,8 @@ stacks/<name>/      komodo.toml + compose.yaml, always
 
 Eleven Stacks, twelve containers: `caddy`, `coredns`, `homepage`,
 `dockerproxy`, `download` (gluetun + qbittorrent), `sonarr`, `radarr`,
-`prowlarr`, `lazylibrarian`, `plex`, `calibre`. Built so far: `homepage` and
-`dockerproxy`; `caddy` holds only its secret. The rest are [21]–[24].
+`prowlarr`, `lazylibrarian`, `plex`, `calibre`. Built so far: `dockerproxy`,
+`homepage`, `caddy` and `coredns`. The rest are [21]–[24].
 
 `bootstrap/` is in git so a rebuild starts from a file, and **never gets a
 `komodo.toml`**: Core can redeploy itself but Periphery cannot, and upstream

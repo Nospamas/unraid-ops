@@ -32,24 +32,40 @@ thing will get it wrong:
 | | rb's network | the home network |
 |---|---|---|
 | holds | `tower`, `192.168.1.0/24` | the human, this clone, `~/home-ops` |
-| resolver | **none of ours** — Telus or Cloudflare, generic external | **pihole**, and we can change it |
+| addressing | `192.168.1.0/24` | **`192.168.0.0/16`**, local domain `xgy.im`, IPv6 ULA present |
+| resolver | `192.168.1.254`, rb's router — **none of ours** | **pihole** at `192.168.2.254`, and we can change it |
 | means "LAN" in tickets | yes, and in the `(internal)` guard | no |
 
-**Tailscale is the only path between them.** A home-network device cannot reach
-`192.168.1.195` at all — it reaches `tower` at `100.126.56.26` or not at all.
+**Separate physical networks, joined only over the internet by tailscale.**
+Their address space nonetheless overlaps: the home network's `/16` covers rb's
+`/24`, so a home device sends `192.168.1.195` **out its own LAN interface**
+(`ip route get` confirms) and gets silence. The public record is not merely
+unroutable there — it is absorbed locally. Two consequences: it independently
+confirms [05](issues/05-remote-access.md)'s shadowed-route grounds for declining
+a subnet router, and the `(internal)` guard's `192.168.1.0/24` entry would 403 a
+home device if one ever arrived by a non-tailscale path.
+
+**The tailnet is four nodes** — `tower`, `ubuntu-dev`, `earth`, `uranus`. No
+phone. MagicDNS is already on tailnet-wide; the per-device switch that matters is
+`--accept-dns`, **off on tower** and unaudited on the two Windows nodes
+([18](issues/18-tailnet-split-dns.md)).
 
 So [04](issues/04-reverse-proxy-and-domain.md)'s public
 `*.rbrb.in` → `192.168.1.195` is the correct answer **only on rb's network** —
 where, conveniently, there is no custom resolver to configure and none is needed.
 Everywhere else that record is unroutable, which is what
-[17](issues/17-deploy-coredns.md)/[18](issues/18-tailnet-split-dns.md) fix.
+[17](issues/17-deploy-coredns.md) — now closed — and
+[18](issues/18-tailnet-split-dns.md) fix.
 
-**Pihole is a real option, and still not the plan.** It could answer
-`rbrb.in` → `100.126.56.26` for the whole home network in one edit. But the
-answer is only *useful* to a device that can route to `100.64.0.0/10`, i.e. one
-already on the tailnet — and Split DNS gives that device the same answer while
-also working when it roams off the home network entirely. CoreDNS wins on
-covering the phone on cellular, not on covering the house.
+**Pihole is a real option, reopened, and ruled against on the record.** It could
+answer `rbrb.in` → `100.126.56.26` for the whole home network in one edit, and
+the human stopped [17](issues/17-deploy-coredns.md) mid-session to ask whether
+CoreDNS was needed at all. Laid out, the two are **identical everywhere except
+one row**: a device on neither network has no pihole and no route to
+`192.168.1.195`. **Roaming is in scope** — that ruling is the entire
+justification for CoreDNS, and both options put one record in state git does not
+own, so that is a wash rather than a tiebreaker. **Do not re-raise this without
+redrawing the destination.**
 
 **The repo holds the standing rules, not this map**
 ([07](issues/07-repo-layout-and-conventions.md),
@@ -226,6 +242,15 @@ markdown.
   giving the repo something auto-loaded. The reusable part is the division:
   rationale lives in the ticket, the doc holds the rule — later applied to this
   map too, 614 → 217 lines.
+
+- [17 — Deploy CoreDNS for the tailnet view](issues/17-deploy-coredns.md)
+  — **CoreDNS is live on `100.126.56.26:53` and every `rbrb.in` name answers
+  tower's tailnet address**, verified from off both networks. The question was
+  reopened before it was built and **roaming was ruled in scope**, which is the
+  whole justification for the Stack. `.` **REFUSEs** rather than forwarding:
+  Split DNS is restricted to a domain, so each client keeps its own resolver for
+  everything else. No `:53` collision existed. Corrected [18](issues/18-tailnet-split-dns.md),
+  whose MagicDNS prerequisite was already done.
 
 ## Not yet specified
 
