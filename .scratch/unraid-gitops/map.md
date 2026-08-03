@@ -24,13 +24,32 @@ loss.
 coordination. A reference for *taste* only: the SOPS habit, Renovate, and the
 shape of its gethomepage config.
 
-**One correction**: its **pihole is this LAN's resolver**, so "no shared DNS" was
-wrong. It still needs no change — [04](04-reverse-proxy-and-domain.md) pointed
-public `*.rbrb.in` at `192.168.1.195` precisely so the public record *is* the LAN
-view. Pihole only has to forward `rbrb.in` upstream rather than block or rewrite
-it. Putting `rbrb.in` records *into* pihole is a second implementation of the LAN
-half and is **not** the plan; the tailnet half is
-[17](17-deploy-coredns.md)/[18](18-tailnet-split-dns.md).
+### Two networks, bridged only by tailscale
+
+This matters for every DNS and reachability decision, and reading "LAN" as one
+thing will get it wrong:
+
+| | rb's network | the home network |
+|---|---|---|
+| holds | `tower`, `192.168.1.0/24` | the human, this clone, `~/home-ops` |
+| resolver | **none of ours** — Telus or Cloudflare, generic external | **pihole**, and we can change it |
+| means "LAN" in tickets | yes, and in the `(internal)` guard | no |
+
+**Tailscale is the only path between them.** A home-network device cannot reach
+`192.168.1.195` at all — it reaches `tower` at `100.126.56.26` or not at all.
+
+So [04](issues/04-reverse-proxy-and-domain.md)'s public
+`*.rbrb.in` → `192.168.1.195` is the correct answer **only on rb's network** —
+where, conveniently, there is no custom resolver to configure and none is needed.
+Everywhere else that record is unroutable, which is what
+[17](issues/17-deploy-coredns.md)/[18](issues/18-tailnet-split-dns.md) fix.
+
+**Pihole is a real option, and still not the plan.** It could answer
+`rbrb.in` → `100.126.56.26` for the whole home network in one edit. But the
+answer is only *useful* to a device that can route to `100.64.0.0/10`, i.e. one
+already on the tailnet — and Split DNS gives that device the same answer while
+also working when it roams off the home network entirely. CoreDNS wins on
+covering the phone on cellular, not on covering the house.
 
 **The repo holds the standing rules, not this map**
 ([07](issues/07-repo-layout-and-conventions.md),
@@ -226,8 +245,15 @@ markdown.
   actually published, or the LAN stops being trusted (guest wifi, IoT). **No
   ticket should be opened for it before then.**
 - **Whether the LAN half of split-horizon ever needs its own resolver.** 05 leans
-  on Cloudflare's public record *being* the LAN view, which works precisely
-  because nothing is published. A forwarded port would break that coupling.
+  on Cloudflare's public record *being* the view on rb's network, which works
+  precisely because nothing is published. A forwarded port would break that
+  coupling. Note there is **no resolver of ours on rb's network to change** —
+  only pihole on the home network, which is a different question.
+- **Home-network devices that are not on the tailnet.** They have no route to
+  tower at all, and no DNS answer can give them one — it would take a subnet
+  router, which [05](issues/05-remote-access.md) declined on shadowed-route
+  grounds. Sharp only if something on that network that cannot run tailscale
+  (a TV, a printer, a guest) actually needs a service.
 *(Monitoring graduated to [29](issues/29-alerting-on-failed-reconcile.md) —
 [16](issues/16-deploy-caddy.md) hit two silent failures in one session.)*
 

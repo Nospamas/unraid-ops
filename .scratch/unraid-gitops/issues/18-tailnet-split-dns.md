@@ -33,8 +33,32 @@ routes client DNS through `100.100.100.100` and adds a `ts.net` search domain to
 `earth` and `uranus`. Benign, but it is a change to machines that are not the
 box, so it is worth knowing before rather than after.
 
-Record in the resolution: the exact console settings applied, and whether the
-off-LAN check actually passed.
+### The pihole interaction — this ticket's real risk
+
+The home network's resolver is `~/home-ops`'s **pihole**, and the tailnet devices
+that matter (`earth`, `uranus`, this clone) sit on that network. MagicDNS takes
+over client DNS, so the thing to establish before touching the console is
+**whether pihole keeps resolving everything that is not `rbrb.in`**.
+
+- **Leave "Override local DNS" off**, and configure **no global nameservers**.
+  Split DNS should then be a single-domain exception with all other queries going
+  to the device's existing resolver. Verify that claim rather than trusting it —
+  it is the difference between one domain moving and the whole house losing
+  ad-blocking.
+- **Windows is the one to check**, not Linux. `earth` and `uranus` have no
+  systemd-resolved to do per-domain routing, so Tailscale's Windows client is
+  where a single-domain split is most likely to become a total takeover.
+- **The tell is silent**: ads reappearing days later, not an error. So check it
+  explicitly — resolve a known-blocked domain on `uranus` before and after and
+  confirm the answer is still pihole's.
+
+If Split DNS turns out to be all-or-nothing on Windows, **say so and stop** —
+that reopens 05's choice, because pihole answering `rbrb.in` → `100.126.56.26`
+would then cover the house without disturbing anything, leaving only roaming
+devices needing the tailnet answer.
+
+Record in the resolution: the exact console settings applied, whether the off-LAN
+check passed, and whether pihole survived.
 
 Blocked by [17](17-deploy-coredns.md) — pointing Split DNS at a nameserver that
 is not yet running would break `rbrb.in` resolution for every tailnet client

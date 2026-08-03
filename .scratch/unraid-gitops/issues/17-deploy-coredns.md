@@ -4,12 +4,17 @@ Type: task
 Status: open
 Blocked by: 07, 11
 
-**The LAN half already works and this ticket must not touch it.** The LAN's
-resolver is a pihole in `~/home-ops`; it only has to forward `rbrb.in` upstream
-to Cloudflare's public `*.rbrb.in` → `192.168.1.195`, which
-[16](16-deploy-caddy.md) confirmed Caddy answers. Adding `rbrb.in` records to
-pihole would be a second implementation of the same view. **CoreDNS serves the
-tailnet only** — that is the whole point of binding `100.126.56.26:53`.
+**Read the map's "Two networks" note first.** `192.168.1.0/24` is rb's network,
+where tower is; the human sits on a separate home network whose only path to
+tower is tailscale, so the public `192.168.1.195` record resolves for them to an
+address they cannot route to. **This ticket is what fixes that**, and it is more
+load-bearing than "the tailnet view" makes it sound.
+
+**Why not just put the record in pihole**, now that it is known to be editable?
+Because pihole is only the resolver *on the home network*. It cannot answer for
+the laptop in a café or the phone on cellular — and the destination says
+"reachable from outside the house". CoreDNS earns its place on the roaming case,
+not on the house.
 
 ## Question
 
