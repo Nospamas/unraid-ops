@@ -1,38 +1,27 @@
-# The reverse proxy. Ticket 16 stands it up; ticket 04 chose it, ticket 05 wrote
-# the guard it enforces. Every other Stack's routing is labels on that Stack.
+# The reverse proxy. Ticket 16 stands it up, 04 chose it, 05 wrote the guard.
 
 services:
   caddy:
-    # Not built. Ticket 12 found this image is exactly the xcaddy build ticket 04
-    # planned -- caddy-docker-proxy + caddy-dns/cloudflare -- maintained
-    # upstream. Human-merged, never automerged: it fronts every hostname.
     image: ghcr.io/serfriz/caddy-cloudflare-dockerproxy:2.11.4@sha256:5682eeef783b7df37a88c3906d3b5cfce1183119fcaeaec547ed2be1088818e0
     restart: unless-stopped
+    # Host networking, not published ports, and it is load-bearing: Tailscale
+    # masquerades any tailnet packet it routes onward, and docker's DNAT into a
+    # container counts. Published ports show every tailnet client to Caddy as
+    # the bridge gateway, and 05's remote_ip guard then 403s the tailnet.
+    network_mode: host
     environment:
       TZ: ${TZ}
       # On host networking Caddy joins no docker network, so there is nothing
-      # for caddy-docker-proxy to auto-detect. This is what tells it which
-      # address to read off each container.
+      # to auto-detect. This is what keeps `{{upstreams}}` resolving.
       CADDY_INGRESS_NETWORKS: shared
       CADDY_DOCKER_CADDYFILE_PATH: /etc/caddy/Caddyfile
-    # No PUID/PGID/UMASK: this is the official caddy image, not linuxserver's, so
-    # it neither reads them nor drops privileges. It runs as root, which is what
-    # binding 80 and 443 takes.
     env_file:
-      # Written by pre_deploy. Absent on a laptop, where `just lint` runs.
       - path: secrets.env
         required: false
-    # Host networking, not published ports, and this is load-bearing: Tailscale
-    # masquerades any tailnet packet it routes onward, and docker's DNAT into a
-    # container counts as onward. Published ports therefore show every tailnet
-    # client to Caddy as the bridge gateway, and 05's remote_ip guard can never
-    # match 100.64.0.0/10. On the host netns Caddy sees the real client address.
-    network_mode: host
     volumes:
-      # Read-only: caddy-docker-proxy reads container labels and never writes.
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      # /data holds the ACME account key and every issued certificate. Lose it
-      # and every hostname re-issues, into Let's Encrypt's rate limits.
+      # The ACME account key and every issued certificate. Lose it and every
+      # hostname re-issues, into Let's Encrypt's rate limits.
       - ${APPDATA}/caddy/data:/data
       - ${APPDATA}/caddy/config:/config
