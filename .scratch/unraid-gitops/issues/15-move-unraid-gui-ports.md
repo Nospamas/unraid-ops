@@ -2,6 +2,7 @@
 
 Type: task (HITL)
 Status: open
+Assignee: Nospamas
 
 ## Question
 
