@@ -88,8 +88,20 @@ compose path resolution breaks
    ```
 
 7. **Log in** at `http://192.168.1.195:9120` with the admin credentials from
-   `secrets.env`. Change the password in the UI if you like — the init values
-   only apply on first launch.
+   `secrets.env` — user `admin`, password generated per-install, never a default.
+
+   `KOMODO_INIT_ADMIN_*` is **create-if-absent**, verified by restarting Core
+   with the admin already present: it seeds nothing and logs nothing. So
+   **prefer not to change the password in the UI.** A UI change survives every
+   restart and the committed value never catches up, which forks the truth two
+   ways: `secrets.sops.env` stops being what logs you in, and a rebuild reseeds
+   the *old* password while your password manager holds the new one — quietly
+   breaking the clone-plus-one-key story below. If you do change it, change
+   `secrets.sops.env` to match in the same sitting (`just secret bootstrap`).
+
+   Komodo enforces no strength of its own: Core's startup config reads
+   `min_password_length: 1`. It rate-limits at 5 attempts per 15s, and issues
+   session JWTs with a 1-day TTL.
 
 ## What is a secret here, and why it cannot follow the usual route
 

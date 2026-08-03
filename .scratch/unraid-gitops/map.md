@@ -118,7 +118,12 @@ on a path outside the Stack directory, which finds no creation rule.
 an agent drives — `POST /auth/login` with the admin credentials from
 `/mnt/user/appdata/komodo/bootstrap/secrets.env` returns a JWT, and no call an
 agent names can deploy by accident, where the UI keeps Deploy one mis-click
-away. Five wrong passwords lock the account. Two facts every box ticket needs:
+away. Credentials are `admin` plus a generated password in
+[bootstrap/secrets.sops.env](../../bootstrap/secrets.sops.env) — **that file is
+the source of truth and should stay it**; `KOMODO_INIT_ADMIN_*` is
+create-if-absent (verified), so changing the password in the UI silently strands
+the committed value and the rebuild story with it. Five wrong passwords lock the
+account. Two facts every box ticket needs:
 a `files_on_host` path must sit under `/mnt/user/appdata/komodo`, and **any
 image running as a non-root uid needs its bind-mount target pre-created and
 chowned** — Docker makes missing targets `root:root`, which crashlooped FerretDB
@@ -436,7 +441,11 @@ concrete artifact would settle an argument faster than discussion.
   recreates the containers or no-ops is unproven** — Komodo matched them by
   project name but records nothing as deployed, so the answer is compose's
   config-hash call, and for `download` a needless recreate is exactly 06's
-  silent-orphan hazard. Graduates once 08 resolves.
+  silent-orphan hazard. **plex's definition also moved**: the human hand-edited
+  it to bring plex back up after the Unraid 7.3.2 upgrade, so it now pins
+  `VERSION` and `PLEX_DOWNLOAD` and 01's record of it is stale. That pin is
+  load-bearing and Renovate cannot see it — the image tag and the `VERSION` env
+  var pin different things. Graduates once 08 resolves.
 - **Appdata backup and box rebuild.** Once container definitions are in git, the
   remaining single point of failure is appdata — 24G of it, dominated by plex's
   20G. Ticket 02 added to the pile: Komodo's own database is new off-git state,

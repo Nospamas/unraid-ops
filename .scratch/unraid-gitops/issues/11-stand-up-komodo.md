@@ -492,12 +492,23 @@ and clone deleted afterwards.
   `KOMODO_JWT_SECRET` would invalidate it and log the human out; judged
   disproportionate, but recorded rather than swallowed.
 
-### One thing this session did not do, and cannot explain
+### plex's compose file changed under us, and the answer matters for the migration
 
-`/mnt/user/appdata/portainer/compose/1/docker-compose.yml` was **modified at
-03:01 UTC today**, ~40 minutes before this session started, and `plex` restarted
-at the same time. The file now pins `VERSION=1.43.1.10495-10cfae054` and sets
-`PLEX_DOWNLOAD`, where [01](01-inventory-running-containers.md)'s inventory has
-neither. Nothing in this session touched it. **A question for the human**: if
-that was a hand edit through Portainer, the migration must lift the *current*
-file, not 01's record of it.
+`/mnt/user/appdata/portainer/compose/1/docker-compose.yml` was modified at
+03:01 today, ~40 minutes before this session, and `plex` restarted with it. The
+file now pins `VERSION=1.43.1.10495-10cfae054` and sets `PLEX_DOWNLOAD`, where
+[01](01-inventory-running-containers.md)'s inventory has neither.
+
+**Answered by the human**: a hand edit, made to bring plex back up after the
+Unraid 7.3.2 upgrade recorded above. So:
+
+- **The migration lifts the file as it stands now, not 01's record of it.** 01's
+  plex entry is stale on exactly these two fields, and the *arr entries are the
+  only ones the upgrade left untouched.
+- **The `VERSION` pin is load-bearing, not incidental.** plex needed a specific
+  build to start after the host upgrade, which makes it a real config decision
+  rather than a stray edit — and it sits awkwardly beside
+  [12](12-image-update-strategy.md)'s version@digest convention, since the
+  linuxserver image tag and the `VERSION` env var pin *different things* (the
+  container and the Plex Media Server binary it downloads). Whichever ticket
+  migrates plex has to carry both, and Renovate only sees one of them.
