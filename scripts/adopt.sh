@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 # Hand a container from unraid's Docker tab to compose. Ticket 21.
 #
-# Nothing in this map needs it after calibre (ticket 22), the last container
-# unraid's Docker tab still owns -- a rebuilt box is a fresh unraid install
-# Komodo populates from git, so no adoption is on the route. It takes any
-# container name rather than a Stack, though, so it still works the day
-# something is installed from Community Applications and wants to come in.
+# Since ticket 22 the only container unraid's Docker tab still owns is
+# PortainerCE, which ticket 25 retires rather than adopts -- and a rebuilt box
+# is a fresh unraid install Komodo populates from git, so no adoption is on the
+# route. It takes any container name rather than a Stack, though, so it still
+# works the day something is installed from Community Applications and wants to
+# come in.
 #
 # An unraid dockerMan container carries no com.docker.compose.* labels, so
 # there is nothing for compose to take over: `docker compose up` in the Stack

@@ -140,15 +140,17 @@ on one click.
 prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four built new
 (homepage, Caddy, CoreDNS, dockerproxy). No two-tier box. Portainer is retired
 once its stacks are adopted; Komodo's own four containers are the only
-non-workload tenants. **Homepage, dockerproxy, Caddy, CoreDNS and the four *arr are live**;
-[22](issues/22-migrate-calibre.md)–[24](issues/24-migrate-download-stack.md)
-hold calibre, plex and the download pair, **none of them blocked**.
+non-workload tenants. **Everything is live but plex and the download pair**
+([23](issues/23-migrate-plex.md), [24](issues/24-migrate-download-stack.md)),
+**neither blocked** — and they are the two hard ones, the only remaining
+migrations Portainer owns rather than unraid.
 **Adoption splits by manager, not by service**
 ([21](issues/21-migrate-arr-stacks.md)): unraid's dockerMan containers carry no
-compose labels and are *removed* by `just adopt` — that is calibre too —
-while Portainer's plex, gluetun and qbittorrent are adopted in place by
-`project_name`. Whether an in-place adoption recreates or no-ops is **still
-unanswered**; 21 never got to test it. Caddy is the one Stack on **host networking**, and it is not a preference —
+compose labels and were *removed* by `just adopt`, all five of them. Portainer's
+plex, gluetun and qbittorrent are the other case — adopted in place by
+`project_name`, and **whether that recreates or no-ops is still unanswered**,
+because nothing has tested it yet. 23 and 24 find out, and 06's hazard is what
+makes it matter. Caddy is the one Stack on **host networking**, and it is not a preference —
 [16](issues/16-deploy-caddy.md).
 
 **Secret severity**: the NordVPN *client* key and the calibre GUI password are
@@ -308,6 +310,15 @@ markdown.
   pattern at once left three `Up` with no networks and no ports, which
   **`Execution ok` reported as success**; spawned `just redeploy` and
   [30](issues/30-arr-urls-on-shared.md).
+
+- [22 — Migrate calibre](issues/22-migrate-calibre.md)
+  — **calibre is a Stack and `https://calibre.rbrb.in` is its only door.** All
+  three host ports went: 8081's content server had **nothing listening behind
+  it**, 8181 is the same GUI over a self-signed cert, and nothing but a browser
+  addresses calibre — lazylibrarian uses `calibredb` on the shared mount, not
+  HTTP. Diffing the container's env against the *image's* showed the unraid
+  template had set only the five standard vars and the login pair; the other
+  eighteen were cargo. **Unraid's Docker tab now holds only `PortainerCE`.**
 
 ## Not yet specified
 

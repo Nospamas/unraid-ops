@@ -52,8 +52,8 @@ stacks/<name>/      komodo.toml + compose.yaml, always
 Eleven Stacks, twelve containers: `caddy`, `coredns`, `homepage`,
 `dockerproxy`, `download` (gluetun + qbittorrent), `sonarr`, `radarr`,
 `prowlarr`, `lazylibrarian`, `plex`, `calibre`. Built so far: `dockerproxy`,
-`homepage`, `caddy`, `coredns`, and the four *arr Stacks [21]. `plex`,
-`calibre` and `download` are left, in [22]–[24].
+`homepage`, `caddy`, `coredns`, the four *arr Stacks [21] and `calibre` [22].
+`plex` and `download` are left, in [23]–[24].
 
 `bootstrap/` is in git so a rebuild starts from a file, and **never gets a
 `komodo.toml`**: Core can redeploy itself but Periphery cannot, and upstream
@@ -318,10 +318,11 @@ to do this? [27]
 | `host-ports` | the box over SSH | **`--apply`** |
 | `adopt <container>` | the box over SSH | **`--apply`** |
 
-`adopt` has **no scheduled use after [22]**, the last container unraid's Docker
-tab owns — a rebuilt box is a fresh unraid install populated from git. It takes
-a container name rather than a Stack, so it keeps working for anything later
-installed from Community Applications; it is just not on the route.
+`adopt` has **no use left on this route** — since [22] the only container
+unraid's Docker tab still owns is `PortainerCE`, which [25] retires rather than
+adopts, and a rebuilt box is a fresh unraid install populated from git. It
+takes a container name rather than a Stack, so it keeps working for anything
+later installed from Community Applications.
 
 `reconcile` is a big act and stays ungated: the cron performs the identical
 Procedure whether anyone types it or not, so the decision was the merge, where
