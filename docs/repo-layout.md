@@ -63,6 +63,14 @@ Eleven Stacks, twelve containers. `bootstrap/` is the exception that proves the
 rule: it is in git so a rebuild starts from a file rather than from memory, but
 nothing reconciles it — Komodo cannot deploy the containers it runs inside.
 
+**`bootstrap/` never gets a `komodo.toml`, and this is not an oversight to
+tidy up.** Komodo Core *can* redeploy itself — Periphery does the work — but
+Periphery cannot redeploy itself, and upstream requires the two match versions.
+So the half that could automate is chained to the half that cannot. Bootstrap is
+deliberately the one hand-updated thing on the box: Renovate raises the bump, a
+human merges it, and a human applies it over SSH
+([ticket 12](../.scratch/unraid-gitops/issues/12-image-update-strategy.md)).
+
 That exception reaches the secrets convention too. `bootstrap/secrets.sops.env`
 follows the same creation rule as every Stack's, but it is decrypted **by hand**
 during bootstrap rather than by a `pre_deploy`, because the thing that runs
@@ -281,15 +289,17 @@ The digest is what actually pins; the version tag is what a human reads. Both in
 the image reference and both maintained by Renovate, so the readable part cannot
 drift the way a comment beside it would.
 
-**The one exception is a locally built image.** Caddy is built on the box by a
-Komodo `Build` and never touches a registry, so it has no digest to pin — it is
-referenced by tag alone. This is the only place a bare tag is allowed, and the
-reason is that there is no registry, not that pinning was skipped.
+**There is no exception.** This section previously carved one out for Caddy, on
+the grounds that a locally built image has no registry digest to pin.
+[Ticket 12](../.scratch/unraid-gitops/issues/12-image-update-strategy.md)
+removed the build entirely, so the carve-out went with it — every image in the
+repo is `version@digest`, without qualification.
 
-This decides most of
-[ticket 12](../.scratch/unraid-gitops/issues/12-image-update-strategy.md) in
-Renovate's favour — digests are what Renovate bumps, and Komodo's own
-auto-update path wants `latest`.
+12 also settled the mechanism: **Renovate, and only Renovate.** Komodo's
+`poll_for_updates` / `auto_update` are used nowhere, and could not be — a pinned
+digest cannot drift, so polling would never find anything. Minor and patch bumps
+automerge; `download`, `plex`, `caddy` and `coredns` are human-merged, and
+`bootstrap/` is human-merged *and* hand-applied.
 
 ### Restart policy
 
@@ -302,10 +312,18 @@ adopting, not an afterthought.
 
 ### Built images
 
-A Dockerfile sits beside the compose file that uses it, and its `[[build]]` sits
-in the same `komodo.toml` as the `[[stack]]`. One Stack that happens to be built
-is still one directory.
+**Nothing in this repo is built.** Every image is pulled from a registry and
+pinned by digest, including Caddy.
 
-Only Caddy is built, and only because `caddy-docker-proxy` and
-`caddy-dns/cloudflare` have to be compiled into one binary
-([ticket 04](../.scratch/unraid-gitops/issues/04-reverse-proxy-and-domain.md)).
+Caddy was going to be the exception — `caddy-docker-proxy` and
+`caddy-dns/cloudflare` must be compiled into one binary
+([ticket 04](../.scratch/unraid-gitops/issues/04-reverse-proxy-and-domain.md)) —
+until [ticket 12](../.scratch/unraid-gitops/issues/12-image-update-strategy.md)
+found `ghcr.io/serfriz/caddy-cloudflare-dockerproxy`, which is that build,
+maintained upstream and tagged by Caddy version. So there is no Dockerfile, no
+Komodo `Build`, and no build stage in the reconcile Procedure.
+
+If a future service does need building, build it in **GitHub Actions** and push
+to GHCR — never on the box, where a build competes with the thing running the
+deploys. 12 records the escape hatch for Caddy specifically, should serfriz go
+stale.

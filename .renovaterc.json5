@@ -32,7 +32,82 @@
       minimumReleaseAge: "3 days",
       ignoreTests: true,
     },
+
+    // --- Container images (ticket 12) ---------------------------------------
+    // Every image is pinned version@digest, so Komodo's own auto_update never
+    // applies: a pinned digest cannot drift. Renovate is the only thing that
+    // moves a tag.
+    {
+      description: "Auto-merge container images",
+      matchManagers: ["docker-compose"],
+      automerge: true,
+      automergeType: "branch",
+      matchUpdateTypes: ["minor", "patch"],
+      minimumReleaseAge: "3 days",
+      ignoreTests: true,
+    },
+    {
+      // Recreating gluetun leaves qbittorrent in a dead netns, silently, and
+      // whether Komodo's Deploy recreates both unaided is still unverified —
+      // see ticket 06. One PR so they can never bump apart.
+      description: "download stack — one PR, human merge",
+      matchFileNames: ["stacks/download/**"],
+      groupName: "download stack",
+      automerge: false,
+    },
+    {
+      // These three are the ones you cannot afford to have change at 3am with
+      // nothing watching: plex breaks clients, caddy fronts every hostname,
+      // coredns answers them on the tailnet.
+      description: "plex, caddy, coredns — human merge",
+      matchFileNames: [
+        "stacks/plex/**",
+        "stacks/caddy/**",
+        "stacks/coredns/**",
+      ],
+      automerge: false,
+    },
+
+    // --- Bootstrap (ticket 12) ----------------------------------------------
+    // Komodo cannot deploy itself, so bootstrap has no komodo.toml and nothing
+    // reconciles it. Renovate raises the bump; a human applies it on the box.
+    {
+      description: "Komodo Core + Periphery bump as a pair",
+      matchFileNames: ["bootstrap/**"],
+      matchPackageNames: [
+        "ghcr.io/moghtech/komodo-core",
+        "ghcr.io/moghtech/komodo-periphery",
+      ],
+      groupName: "komodo",
+      automerge: false,
+      prBodyNotes: [
+        "⚠️ **Bootstrap is not reconciled by Komodo.** Merging this changes nothing on the box.",
+        "```sh",
+        "ssh root@tower",
+        "cd $PERIPHERY_ROOT_DIRECTORY/bootstrap && git pull",
+        "docker compose up -d",
+        "```",
+        "Core and Periphery must move together — upstream requires Periphery match Core's version before builds and clones work again.",
+      ],
+    },
+    {
+      description: "FerretDB + postgres-documentdb bump as a pair",
+      matchFileNames: ["bootstrap/**"],
+      matchPackageNames: [
+        "ghcr.io/ferretdb/ferretdb",
+        "ghcr.io/ferretdb/postgres-documentdb",
+      ],
+      groupName: "ferretdb",
+      automerge: false,
+      prBodyNotes: [
+        "⚠️ **Bootstrap is not reconciled by Komodo.** Merging this changes nothing on the box.",
+        "```sh",
+        "ssh root@tower",
+        "cd $PERIPHERY_ROOT_DIRECTORY/bootstrap && git pull",
+        "docker compose up -d",
+        "```",
+        "The `postgres-documentdb` tag names the FerretDB release it was built against, so the two must move together. Upstream warns these updates can be breaking — back up Postgres first.",
+      ],
+    },
   ],
-  // Container image tags are ticket 12's, and extend this file rather than
-  // replace it: .scratch/unraid-gitops/issues/12-image-update-strategy.md
 }

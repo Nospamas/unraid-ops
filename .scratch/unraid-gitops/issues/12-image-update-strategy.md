@@ -1,7 +1,8 @@
 # 12 — Decide the image update strategy
 
 Type: grilling
-Status: open
+Status: closed
+Assignee: Nospamas
 Blocked by: 07
 
 ## Question
@@ -103,3 +104,145 @@ Two facts that change this ticket's shape:
   by commit digest with the version in a trailing comment. That is the same
   version-plus-digest habit 07 chose for images, so whatever this ticket decides
   for image tags should read consistently with it.
+
+## Resolution
+
+**Renovate, and only Renovate.** 07's reading confirmed and hardened: Komodo's
+`poll_for_updates` / `auto_update` are used **nowhere**, and could not be even if
+wanted — a `version@digest` pin cannot drift, so polling has nothing to find. The
+two candidates were never really two; digest pinning decided it.
+
+Config landed in [.renovaterc.json5](../../../.renovaterc.json5), extending 13's
+file rather than replacing it. Images inherit the existing `every weekend`
+schedule, deliberately: an automerged bump then deploys on the next poll while
+someone is around, not midweek at 3am.
+
+### Automerge, and the carve-outs
+
+Minor + patch automerge, matching mise and Actions. Four things are pulled back
+to human merge because a bad version is expensive and nothing is watching —
+**monitoring is still fog**:
+
+| human-merged | why |
+| --- | --- |
+| `stacks/download/**` | [06](06-qbittorrent-vpn-topology.md)'s hazard: recreating gluetun leaves qbittorrent in a dead netns, **silently**, and whether Komodo's Deploy recreates both unaided is still unverified |
+| `stacks/plex/**` | server bumps break clients; [09](09-unify-uid-gid.md) also left `/dev/dri` under uid 99 as a check, not an assumption |
+| `stacks/caddy/**` | fronts every `*.rbrb.in` hostname |
+| `stacks/coredns/**` | answers those hostnames on the tailnet |
+| `bootstrap/**` | see below |
+
+So automerge covers the four *arr, calibre and homepage. `digest`-only updates
+are **not** automerged for anything (mise/actions keep theirs) — deliberate, and
+cheap, because the one image whose tag is rebuilt in place is Caddy, which is
+human-merged regardless.
+
+**Grouping is one PR per Stack directory**, matching 07's deploy atom so a merge
+maps 1:1 to a redeploy. Implementation is smaller than the rule sounds: Renovate
+already defaults to one PR per dependency, and every Stack holds one image
+*except* `download` — so this needed **one** group rule, not one per Stack, and
+adding a Stack needs no config edit.
+
+### Bootstrap is not GitOps'd, on purpose
+
+The ticket had not noticed that Renovate's `docker-compose` manager (on by
+default via `config:recommended`) already matches
+[bootstrap/compose.yaml](../../../bootstrap/compose.yaml) — so image bumping was
+**already live**, on the one stack nothing reconciles.
+
+The obvious fix was to make bootstrap a Komodo Stack. It was investigated and
+**declined on evidence**:
+
+- Komodo Core **can** redeploy itself — Periphery does the work, and the update
+  log only *looks* failed because Core restarts mid-deploy
+  ([discussion #223](https://github.com/moghtech/komodo/discussions/223)).
+- **Periphery cannot.** Redeploying it kills the process running the deploy. The
+  maintainer's own answer is to keep Periphery out of the Core stack entirely; he
+  runs it under systemd.
+- They are a **pair**: upstream's
+  [version-upgrades doc](https://komo.do/docs/setup/version-upgrades) says some
+  Core upgrades *"require updating the Periphery binaries to match the Core
+  version before this functionality can be restored."*
+
+So the half that can automate is chained to the half that cannot, and
+self-management buys only a window where Core is ahead of Periphery. **`bootstrap/`
+therefore never gets a `komodo.toml`** — recorded in
+[docs/repo-layout.md](../../../docs/repo-layout.md) and
+[bootstrap/README.md](../../../bootstrap/README.md) as a deliberate choice, not
+an oversight for someone to tidy up later.
+
+Flow: Renovate raises a **pair-grouped** PR (`komodo` = Core + Periphery;
+`ferretdb` = FerretDB + postgres-documentdb, which name each other in their tags),
+never automerged. **Merge, then apply on the box** by hand. The alternative order
+— apply then merge, keeping git never ahead of the box — was put and declined.
+The accepted cost is a window where `main` claims a version the box is not
+running, mitigated by `prBodyNotes` stamping the SSH steps into the PR body so
+the instruction is in front of you at the moment you merge. A `just
+bootstrap-check` drift recipe was offered and declined as ceremony.
+
+### Caddy: the build is gone entirely
+
+The biggest change, and it overturns two closed tickets.
+
+[04](04-reverse-proxy-and-domain.md) chose to build Caddy on the box via a Komodo
+`Build`; 07 made the resulting image *"the only place a bare tag is allowed."*
+The human's standing rule — **building our own images should be exceptionally
+rare, and when needed it happens in GitHub Actions, never on the box** — sent
+this back for evaluation of prebuilt options. Four were assessed:
+
+| candidate | both modules | versioned tags | maintenance | verdict |
+| --- | --- | --- | --- | --- |
+| `zenjoy/caddy-cloudflare-proxy` | — | — | **repo 404** | dead |
+| `qcts33/caddy-docker-proxy-cloudflare` | ✗ no docker-proxy, despite the name | ✓ | 0★ | fails requirement |
+| `KingPin/caddy-docker-cloudflaredns` | ✓ | ✗ **`latest` only** | 2★, 0 forks | cannot do `version@digest` |
+| **`serfriz/caddy-cloudflare-dockerproxy`** | ✓ | ✓ semver, auto-built per Caddy release + monthly module refresh | 334★, builds ran hours before assessment | **adopted** |
+
+Its Dockerfile is byte-for-byte the build we would have written:
+
+```dockerfile
+FROM caddy:2.11.4-builder AS builder
+RUN xcaddy build \
+    --with github.com/caddy-dns/cloudflare \
+    --with github.com/lucaslorentz/caddy-docker-proxy/v2
+FROM caddy:2.11.4
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+CMD ["caddy", "docker-proxy"]
+```
+
+Building our own would be a strict duplicate with more machinery and *slower*
+tracking. **Keep those four lines** — they are the escape hatch if serfriz goes
+stale, and then the build goes in Actions and pushes to GHCR.
+
+Consequences: **no image in this repo is built**, `stacks/caddy/Dockerfile` and
+its `[[build]]` are void, the reconcile Procedure needs no build stage, and 07's
+bare-tag exception is deleted rather than narrowed. [16](16-deploy-caddy.md)
+amended accordingly (and retitled — it no longer builds anything).
+
+Supply chain, stated plainly rather than waved through: effectively a single
+maintainer, no provenance attestation. Bounded because the token it holds is
+**zone-scoped DNS-edit on `rbrb.in` only** — no box, no tailnet, revocable at
+Cloudflare — the tags are mutable but we pin by digest, so a silent rebuild
+surfaces as a human-merged PR, and the Dockerfile is four auditable lines.
+
+### Files touched
+
+- [.renovaterc.json5](../../../.renovaterc.json5) — five new `packageRules`.
+- [docs/repo-layout.md](../../../docs/repo-layout.md) — bare-tag exception
+  deleted, *Built images* rewritten to "nothing is built", bootstrap's
+  no-`komodo.toml` rule stated.
+- [bootstrap/README.md](../../../bootstrap/README.md) — new *Updating these four
+  images* section.
+- [16](16-deploy-caddy.md) — Dockerfile and `[[build]]` struck; also corrected a
+  stale `task lint` and a `check-exposure.sh` line 13 had already done.
+
+**Verification is partial, and this matters.** `just lint` passes. The config
+parses and the seven `packageRules` are in the right order — the broad automerge
+rule precedes every carve-out, so the later rules win as Renovate requires. But
+`renovate-config-validator` **could not be run**: there is no node on the laptop
+and this user cannot reach the docker socket. Schema validation therefore falls
+to Renovate's own next run, which reports config errors on
+[dashboard #1](https://github.com/Nospamas/unraid-ops/issues/1) — **check it.**
+
+Beyond that, **nothing is verified against a live Renovate run**, because
+`stacks/` is still empty — these rules are written ahead of the files they match and go live as
+Stacks land. The first Stack to arrive ([08](08-deploy-homepage.md)) is the first
+real test of them. No new secrets.

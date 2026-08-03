@@ -124,6 +124,14 @@ image running as a non-root uid needs its bind-mount target pre-created and
 chowned** — Docker makes missing targets `root:root`, which crashlooped FerretDB
 eight times.
 
+**Never build an image on the box** ([12](issues/12-image-update-strategy.md)):
+building our own images should be exceptionally rare, and when it is genuinely
+needed it happens in **GitHub Actions**, pushed to GHCR — never on the box,
+where a build competes with the thing running the deploys. Prefer a maintained
+upstream image; 12 found one for Caddy, which was the only planned build. Every
+image in the repo is `version@digest` with **no exceptions**, and Komodo's
+`auto_update` is used nowhere.
+
 **Skills to consult**: `/grilling` and `/domain-modeling` for the decision
 tickets, `/research` for the AFK reading tickets, `/prototype` where a rough
 concrete artifact would settle an argument faster than discussion.
@@ -359,6 +367,35 @@ concrete artifact would settle an argument faster than discussion.
   `KOMODO_WEBHOOK_SECRET`, admin password — decrypted **by hand, once**, since
   the thing that runs `pre_deploy` is what is being installed.
 
+- [12 — Decide the image update strategy](issues/12-image-update-strategy.md)
+  — **Renovate, and only Renovate**; rules landed in
+  [.renovaterc.json5](../../.renovaterc.json5), extending 13's file. 07's reading
+  confirmed *and* made structural: `auto_update`/`poll_for_updates` are used
+  nowhere and **could not be**, since a `version@digest` pin cannot drift.
+  Minor+patch automerge on the weekend schedule, with four human-merge carve-outs
+  where a bad version is expensive and **monitoring is still fog** — `download`
+  (06's silent-orphan hazard, still unverified), `plex`, `caddy`, `coredns`.
+  **One PR per Stack directory**, which needed exactly one group rule because
+  only `download` holds two images. **Bootstrap is deliberately not GitOps'd and
+  never gets a `komodo.toml`**: Core *can* redeploy itself, but **Periphery
+  cannot**, and upstream requires the two match versions — so the automatable
+  half is chained to the manual half. Renovate raises pair-grouped PRs
+  (`komodo`, `ferretdb`), the human merges **then** applies over SSH; apply-then-
+  merge was put and declined, and the resulting window where `main` is ahead of
+  the box is covered by `prBodyNotes` rather than a drift-check recipe.
+  **The biggest change: Caddy is no longer built — nothing is.** The human's
+  standing rule (build rarely, and in Actions, never on the box) sent 04's
+  `xcaddy` plan back; four prebuilt candidates were evaluated and
+  **`ghcr.io/serfriz/caddy-cloudflare-dockerproxy`** adopted — 334★, auto-built
+  per Caddy release, and its Dockerfile is byte-for-byte the build we'd have
+  written. The other three failed on missing `docker-proxy`, a dead repo, or
+  `latest`-only tags. So **07's bare-tag exception is deleted, not narrowed**,
+  16 loses its Dockerfile and `[[build]]`, and the Procedure needs no build
+  stage; the four-line Dockerfile is kept on 12 as the escape hatch. **Nothing is
+  verified against a live Renovate run** — `stacks/` is still empty, so these
+  rules are written ahead of the files they match and 08 is their first test.
+  No new secrets.
+
 ## Not yet specified
 
 - **Migrating the remaining services** — all *eight*, not four: sonarr, radarr,
@@ -425,6 +462,13 @@ concrete artifact would settle an argument faster than discussion.
   the coupling is not rediscovered the hard way.
 - **Monitoring and alerting** for the stack. Suspected, unsharp; may fall out of
   scope entirely once the stack is running.
+  [12](issues/12-image-update-strategy.md) has given it a **trigger** without
+  making it sharp: minor+patch image bumps automerge and deploy unattended on the
+  next poll, so from the first Stack onward the box can change with nobody
+  watching. 12 bought time by carving the expensive services out to human merge —
+  `download`, `plex`, `caddy`, `coredns` — but that carve-out *is* the stand-in
+  for monitoring, and it should be revisited the moment something is watching.
+  Komodo has its own alerters, which is the obvious first place to look.
 
 ## Out of scope
 

@@ -1,4 +1,4 @@
-# 16 — Build the Caddy image and stand the proxy up
+# 16 — Stand the Caddy proxy up
 
 Type: task
 Status: open
@@ -11,13 +11,14 @@ decided; this makes it real.
 
 Do:
 
-- **Write the Dockerfile** — multi-stage, `caddy:*-builder` running `xcaddy
-  build --with github.com/lucaslorentz/caddy-docker-proxy/v2 --with
-  github.com/caddy-dns/cloudflare`, then copy the binary onto a stock `caddy`
-  base. Its location in the repo is [07](07-repo-layout-and-conventions.md)'s
-  call.
-- **Declare a Komodo `Build`** in ResourceSync TOML pointing at it, and build it
-  on the box. Periphery ships buildx, per the 02 asset.
+- ~~**Write the Dockerfile**~~ and ~~**declare a Komodo `Build`**~~ —
+  **both dropped by [12](12-image-update-strategy.md).** Caddy is no longer
+  built. Pull `ghcr.io/serfriz/caddy-cloudflare-dockerproxy`, pinned
+  `version@digest` like every other image; it is exactly this build, maintained
+  upstream. There is no Dockerfile, no `[[build]]`, and no build stage in the
+  reconcile Procedure. 12 records the four-line Dockerfile as an escape hatch if
+  serfriz goes stale — and if it is ever needed, the build happens in **GitHub
+  Actions**, not on the box.
 - **Create the shared external `proxy` network** and deploy the Caddy stack on
   it, binding host **80 and 443** (free only after
   [15](15-move-unraid-gui-ports.md)) and mounting the docker socket **read-only**
@@ -54,29 +55,31 @@ the reconcile loop and can be reached by `IP:port`; this ticket proves the
 proxy. Whichever lands second gets to put homepage on a hostname.
 
 Resolved when a labelled service answers on `https://<name>.rbrb.in` with a
-valid wildcard certificate, and the whole thing — Dockerfile, Build TOML, stack,
-labels — reproduces from the repo.
+valid wildcard certificate, and the whole thing — stack, Caddyfile, labels —
+reproduces from the repo.
 
 ## Settled by [07](07-repo-layout-and-conventions.md)
 
 The file locations this ticket deferred are now fixed — nothing left to decide,
 only to do:
 
-- `stacks/caddy/Dockerfile`, beside the compose file that uses it.
-- The `[[build]]` sits in `stacks/caddy/komodo.toml`, the same file as the
-  `[[stack]]`.
+- ~~`stacks/caddy/Dockerfile`~~ and ~~the `[[build]]`~~ — void, per
+  [12](12-image-update-strategy.md). `stacks/caddy/komodo.toml` holds a
+  `[[stack]]` only.
 - `stacks/caddy/Caddyfile` is a **real bind-mounted file**, not labels on the
   Caddy container, and it holds the global options plus the `(internal)` snippet
   that every service's `caddy.import: internal` resolves to.
 - The Cloudflare token is `stacks/caddy/secrets.sops.env`, decrypted by the
   Stack's `pre_deploy`.
-- The built image is the **only** bare tag in the repo — it never reaches a
-  registry, so there is no digest to pin.
+- ~~The built image is the **only** bare tag in the repo~~ — **overturned by
+  [12](12-image-update-strategy.md).** There are no bare tags anywhere; Caddy is
+  `version@digest` like everything else, and is **human-merged**, never
+  automerged, because it fronts every hostname.
 - Caddy joins the `shared` network like everything else; it does not own or
   create it. Every Stack's `pre_deploy` creates it idempotently, so Caddy is
   **not** a deploy-order dependency for the rest of the box.
 
-Also do here, since it is Caddy's file: **write `scripts/check-exposure.sh`** —
-07's enforced default-deny. It asserts every compose Service carrying a `caddy:`
-hostname label also carries either `caddy.import: internal` or an explicit
-`x-published: true`. [13](13-local-tooling.md) wires it into `task lint`.
+~~Also do here: **write `scripts/check-exposure.sh`**~~ — **already done by
+[13](13-local-tooling.md)**, which wrote it and wired it into `just lint` (the
+runner is `just`, not go-task). Nothing to write; just make sure the Caddy stack
+passes it.

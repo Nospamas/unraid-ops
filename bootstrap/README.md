@@ -123,3 +123,27 @@ compose network.
 Pin both images together: the `postgres-documentdb` tag names the FerretDB
 release it was built against (`17-0.107.0-ferretdb-2.7.0` ↔ `ferretdb:2.7.0`),
 so they must be bumped as a pair. Upstream warns that updates can be breaking.
+
+## Updating these four images
+
+**There is no `komodo.toml` here, and there never will be.** Komodo Core can
+redeploy itself (Periphery does the work; the update log looks failed because
+Core restarts mid-deploy, but it succeeds). Periphery cannot — redeploying it
+kills the process running the deploy — and upstream requires Periphery match
+Core's version before builds and clones work again. So the automatable half is
+chained to the manual half, and self-management would only buy a window where
+Core is ahead of Periphery.
+
+This is therefore the one thing on the box that is **not** GitOps'd:
+
+1. Renovate opens a bump PR — `komodo` (Core + Periphery) or `ferretdb`
+   (FerretDB + postgres-documentdb), always grouped as pairs, never automerged.
+2. Merge it.
+3. `ssh root@tower`, `cd $PERIPHERY_ROOT_DIRECTORY/bootstrap && git pull`,
+   `docker compose up -d`.
+4. Confirm Core and Periphery are both healthy and the Server shows connected.
+
+Between 2 and 3, `main` claims a version the box is not running. The PR body
+carries these steps as a reminder — see the `prBodyNotes` in
+[.renovaterc.json5](../.renovaterc.json5). Back up Postgres before a FerretDB
+pair bump.
