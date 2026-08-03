@@ -1,5 +1,8 @@
 [env]
 SOPS_AGE_KEY_FILE = "{{config_root}}/age.key"
+# Core's LAN address in bootstrap/compose.env is unreachable off the LAN; the
+# laptop gets there over tailscale.
+KOMODO_HOST = "http://tower:9120"
 
 [tools]
 "aqua:casey/just" = "1.57.0"

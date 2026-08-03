@@ -9,8 +9,9 @@ services:
       PGID: ${PGID}
       UMASK: ${UMASK}
       TZ: ${TZ}
-      # Required since v1.0. IP:port entries go with the host port, at ticket 16.
-      HOMEPAGE_ALLOWED_HOSTS: home.rbrb.in,192.168.1.195:3000,100.126.56.26:3000
+      # Required since v1.0. Homepage rejects any Host header not listed here.
+      # Everything but home.rbrb.in goes with the host port, at ticket 16.
+      HOMEPAGE_ALLOWED_HOSTS: home.rbrb.in,192.168.1.195:3000,100.126.56.26:3000,tower:3000,tower.gute-morpho.ts.net:3000
       # Nothing else is on the shared network yet; see config/services.yaml.
       HOMEPAGE_VAR_HOST: 192.168.1.195
     env_file:

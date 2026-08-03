@@ -30,6 +30,14 @@ secret stack:
     fi
     sops "$dir/secrets.sops.env"
 
+# Declare this repo to a freshly bootstrapped Komodo. Step 8 of bootstrap/README
+bootstrap:
+    bash scripts/komodo.sh bootstrap
+
+# Reconcile the box now, rather than waiting for the 15-minute poll
+reconcile:
+    bash scripts/komodo.sh reconcile
+
 # Check exposure, compose files, shell scripts and Dockerfiles
 lint:
     #!/usr/bin/env bash
