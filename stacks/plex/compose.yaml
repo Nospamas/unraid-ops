@@ -1,0 +1,46 @@
+# Ticket 23. Adopted in place from Portainer's `plex-media-server` project; the
+# appdata and every media bind are unchanged.
+
+services:
+  plex:
+    image: lscr.io/linuxserver/plex:1.43.3.10828-00f62d37d-ls317@sha256:0f57346cb9eda39631da8e6f6517dbf0471b91f8e65621305a3e166f8ffce952
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+      # The image is the version. What this replaces named a Plex Pass build
+      # that the container downloaded and installed at every start, so the
+      # digest above described nothing -- ticket 23.
+      VERSION: docker
+    devices:
+      # Hardware transcoding on the B580. renderD128 is 0777, so the
+      # container's groups do not enter into it -- ticket 20.
+      - /dev/dri:/dev/dri
+    volumes:
+      - ${APPDATA}/plexmediaserver:/config
+      # /transcode, not /mnt/transcode: plex's own TranscoderTempDirectory has
+      # said /transcode for years and nothing ever mounted it -- ticket 23.
+      - ${APPDATA}/transcode:/transcode
+      # /mnt/<category>, not /<category> -- plex's library paths are in its
+      # database, and moving them would orphan every item.
+      - ${MEDIA}/tv:/mnt/tv
+      - ${MEDIA}/movies:/mnt/movies
+      - ${MEDIA}/music-rb:/mnt/music-rb
+      - ${MEDIA}/music-reg:/mnt/music-reg
+      - ${MEDIA}/podcasts:/mnt/podcasts
+    ports:
+      # Every client that is not a browser reaches plex here, and plex.tv
+      # advertises this address to them -- ticket 23.
+      - "32400:32400"
+    networks:
+      - shared
+    labels:
+      caddy: plex.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 32400}}"
+
+networks:
+  shared:
+    external: true

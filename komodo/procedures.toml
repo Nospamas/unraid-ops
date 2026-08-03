@@ -24,7 +24,7 @@ executions = [
 name = "Deploy changed stacks"
 executions = [
   # Never "*": an adopted-but-never-deployed Stack has no deployed contents to
-  # diff, which DeployStackIfChanged reads as "deploy it" — recreating plex and
-  # the gluetun/qbittorrent pair unattended (ticket 06). Extend as each migrates.
-  { execution.type = "BatchDeployStackIfChanged", execution.params.pattern = "dockerproxy, homepage, caddy, coredns, sonarr, radarr, prowlarr, lazylibrarian, calibre" },
+  # diff, which DeployStackIfChanged reads as "deploy it" — recreating the
+  # gluetun/qbittorrent pair unattended (ticket 06). Extend as each migrates.
+  { execution.type = "BatchDeployStackIfChanged", execution.params.pattern = "dockerproxy, homepage, caddy, coredns, sonarr, radarr, prowlarr, lazylibrarian, calibre, plex" },
 ]

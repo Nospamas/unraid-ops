@@ -2,6 +2,7 @@
 
 Type: task
 Status: open
+Assignee: Nospamas
 Blocked by: 20
 
 ## Question

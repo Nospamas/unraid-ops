@@ -52,8 +52,8 @@ stacks/<name>/      komodo.toml + compose.yaml, always
 Eleven Stacks, twelve containers: `caddy`, `coredns`, `homepage`,
 `dockerproxy`, `download` (gluetun + qbittorrent), `sonarr`, `radarr`,
 `prowlarr`, `lazylibrarian`, `plex`, `calibre`. Built so far: `dockerproxy`,
-`homepage`, `caddy`, `coredns`, the four *arr Stacks [21] and `calibre` [22].
-`plex` and `download` are left, in [23]–[24].
+`homepage`, `caddy`, `coredns`, the four *arr Stacks [21], `calibre` [22] and
+`plex` [23]. `download` is the last one left, in [24].
 
 `bootstrap/` is in git so a rebuild starts from a file, and **never gets a
 `komodo.toml`**: Core can redeploy itself but Periphery cannot, and upstream
@@ -94,8 +94,8 @@ reports pending changes:
 
 **Never widen that list to `*`.** A Stack that Komodo adopted but never deployed
 has no deployed contents to diff, and `DeployStackIfChanged` reads that as
-*deploy it* — so a wildcard recreates `plex` and the gluetun/qbittorrent pair
-unattended [06] [08]. Adding a Stack to the pattern is a step of migrating it.
+*deploy it* — so a wildcard recreates the gluetun/qbittorrent pair unattended
+[06] [08]. Adding a Stack to the pattern is a step of migrating it.
 
 Drive it with `just reconcile`, not the UI and not ad-hoc API calls. A new
 operation goes in [scripts/komodo.sh](../scripts/komodo.sh) behind a recipe.
@@ -150,13 +150,17 @@ this — its `[env]` block configures the laptop and never runs on the box.
 
 `${APPDATA}/<stack>` → `/config`, with two exceptions carried over as found:
 
-- plex is `${APPDATA}/plexmediaserver`
+- plex is `${APPDATA}/plexmediaserver`, and also binds `${APPDATA}/transcode` →
+  `/transcode`, which is the path its own `TranscoderTempDirectory` names [23]
 - calibre also binds `${MEDIA}/books` → `/config/Calibre Library` — the space in
   that container path is real
 
 Media binds are **per category, exactly as the box already has them** —
 `${MEDIA}/tv` → `/tv`, `${MEDIA}/downloads` → `/downloads`. No service gets
 `${MEDIA}` mounted whole.
+
+**plex's media binds are `/mnt/<category>`**, not `/<category>` [23]. Its library
+paths live in its database, so the prefix is not a style choice.
 
 **Do not "tidy" these into a single `/media` mount.** It is the TRaSH layout and
 it exists for hardlinked imports, which cannot pay off on six XFS disks under one
@@ -286,6 +290,12 @@ human reads. Both are maintained by Renovate, so the readable part cannot drift.
 `poll_for_updates` are used nowhere and could not be — a pinned digest cannot
 drift. Minor and patch bumps automerge; `download`, `plex`, `caddy` and `coredns`
 are human-merged, and `bootstrap/` is human-merged *and* hand-applied.
+
+**An image that updates itself at runtime is not pinned** [23]. plex's `VERSION`
+names a Plex Media Server build to fetch and install at every container start;
+set to anything but `docker` it makes the digest describe a container that no
+longer exists by the time it serves. `VERSION: docker` is what puts the image
+back in charge, and it is what lets Renovate see the version at all.
 
 **Nothing in this repo is built.** Caddy was going to be the exception until [12]
 found `ghcr.io/serfriz/caddy-cloudflare-dockerproxy`, which is that build,

@@ -1,0 +1,17 @@
+[[stack]]
+name = "plex"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/plex"
+# Portainer's project, taken over in place -- ticket 23. The Stack is named
+# `plex`; the compose project it inherits is not, and renaming it would build a
+# second container beside the running one.
+project_name = "plex-media-server"
+additional_env_files = ["../../common.env"]
+
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+"""

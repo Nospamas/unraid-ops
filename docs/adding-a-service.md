@@ -191,12 +191,10 @@ just verify-secrets   # every *.sops.env still decrypts
   own; the *arr address it as `http://gluetun:30024`.
 - **gluetun and qbittorrent deploy together, always.** Recreating gluetun alone
   leaves qbittorrent in a dead namespace with no error.
-- **plex** needs `/dev/dri` passthrough and a pinned `VERSION`, and its appdata
-  is `${APPDATA}/plexmediaserver`. Dropping to uid 99 can cost hardware
-  transcoding, since `/dev/dri` access is group-dependent — after the first
-  deploy, play something that transcodes and confirm the dashboard still says
-  `(hw)`. If it does not, that is a group problem, not a reason to restore its
-  old uid.
+- **plex** needs `/dev/dri` passthrough, `VERSION: docker`, and appdata at
+  `${APPDATA}/plexmediaserver`. Any other `VERSION` makes it download and install
+  a Plex build over the image at every start, which unpins the digest [23]. Its
+  media binds are `/mnt/<category>`.
 - **calibre** binds `${MEDIA}/books` → `/config/Calibre Library`. The space in
   that path is real.
 - **homepage** is the one service whose config git owns outright. `/app/config`

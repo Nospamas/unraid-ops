@@ -11,13 +11,15 @@
 - Media:
     - Plex:
         icon: plex.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:32400/web
+        href: https://plex.rbrb.in
         description: Media server
         server: tower
-        container: plex
+        # plex-media-server, not plex: the Stack inherited Portainer's project
+        # name rather than renaming it (ticket 23).
+        container: plex-media-server-plex-1
         widget:
           type: plex
-          url: http://{{HOMEPAGE_VAR_HOST}}:32400
+          url: http://plex:32400
           key: '{{HOMEPAGE_VAR_PLEX_TOKEN}}'
           enableNowPlaying: true
     - Sonarr:
