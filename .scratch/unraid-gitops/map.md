@@ -137,8 +137,8 @@ saying what stays broken until it is done. 13's Renovate config sat inert waitin
 on one click.
 
 **Container scope is closed.** Git owns all eight adopted workloads (sonarr,
-radarr, prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus four
-built new (homepage, Caddy, CoreDNS, dockerproxy). No two-tier box. **Nothing is
+radarr, prowlarr, qbittorrent, gluetun, plex, calibre, lazylibrarian) plus six
+built new (homepage, Caddy, CoreDNS, dockerproxy, ntfy, gatus). No two-tier box. **Nothing is
 left to migrate** — the only containers git does not own are Portainer, which
 [25](issues/25-retire-portainer.md) removes, and Komodo's own four.
 **Adoption splits by manager, not by service**
@@ -174,7 +174,10 @@ then containers `Up` with no networks at all. `DeployStackIfChanged` compares
 the config hash, so a correct hash over a broken container is silence, and a
 restart does not repair it. `just redeploy <stack>` destroys and rebuilds one
 named Stack, which is the only cure. **Check the workload, never the update
-log.** [29](issues/29-alerting-on-failed-reconcile.md) is where this goes.
+log.** [29](issues/29-alerting-on-failed-reconcile.md) closed this: gatus probes
+every fronted service end to end, because Komodo cannot see it — all three
+sightings were containers that stayed `Up`, and `StackStateChange` fires on a
+*mix* of container states.
 
 **"Nothing is published" is no longer true, and the grep that says so is blind.**
 [23](issues/23-migrate-plex.md) verified plex answering on
@@ -360,6 +363,17 @@ markdown.
   tooling that repairs Caddy must not sit behind Caddy* — so `komodo.rbrb.in`
   and `unraid.rbrb.in` are served **and** keep `:9120` and `:8008`.
 
+- [29 — Give `failure_alert` somewhere to go](issues/29-alerting-on-failed-reconcile.md)
+  — **two Stacks, one Alerter, and no seventh secret**: a self-hosted `ntfy` the
+  phone reaches over the tailnet, and a `gatus` that probes all ten hostnames
+  plus a DNS query end to end. The rule it produced is **the alert path must not
+  traverse the thing it reports on** — so ntfy takes no `caddy` label and gatus
+  is host-networked, since a probe from `shared` is 403'd by 05's guard before
+  `reverse_proxy` runs. Komodo's premise was wrong (22 alert variants, not one)
+  and it changed nothing: all three sightings stayed `Up`. **Six of ten services
+  do not answer 200** — measured, not assumed. Released 12's `download` and
+  `coredns` carve-outs. **Box-down is not closed** and now depends on home-ops.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -402,6 +416,20 @@ markdown.
   router, which [05](issues/05-remote-access.md) declined on shadowed-route
   grounds. Sharp only if something on that network that cannot run tailscale
   (a TV, a printer, a guest) actually needs a service.
+- **Knowing the box itself is gone.** [29](issues/29-alerting-on-failed-reconcile.md)
+  built alerting and deliberately did not close this: ntfy and gatus both die
+  with tower, so silence stays indistinguishable from health — and self-hosting
+  made it *worse* than a third party, since the notification server is now part
+  of the outage. The shape is settled, not fogged: **each site runs its own ntfy,
+  alerts to its own, and probes the other**, which needs no cross-site
+  credential. tower's half is built and tailnet-reachable by construction. What
+  is genuinely open is **home-ops**, which has no tailscale in the cluster at
+  all — specified in
+  [assets/29-home-ops-alerting-brief.md](assets/29-home-ops-alerting-brief.md)
+  and worked in that repo, not this one. This map's own remaining piece is the
+  mirror-image probes in `stacks/gatus/conf/config.yaml`, which cannot be written
+  until home-ops has addresses to probe. **Not a ticket until then.**
+
 *(Monitoring graduated to [29](issues/29-alerting-on-failed-reconcile.md), and
 the *arr host ports to [30](issues/30-arr-urls-on-shared.md).)*
 
