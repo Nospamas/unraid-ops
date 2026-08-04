@@ -204,7 +204,39 @@ scheduled run fails outright until someone runs the recipe [16].
 `ntfy` precedes `gatus` in the pattern. Ports 8090 and 8095 were confirmed free
 on the box before choosing them.
 
-**Not verified against a running box.** Nothing here has been deployed. The
-Komodo Alerter TOML shape in particular is written from `AlerterConfig`'s field
-list and this repo's existing `[x.config]` convention, not from a Komodo example
-— the first `just reconcile` is its first real test.
+### Deployed and verified, after three failures it caused
+
+All eleven probes pass, gatus has delivered a real alert to ntfy, and Core's
+Alerter exists and is enabled with the `Ntfy` endpoint — so the TOML shape,
+written from `AlerterConfig`'s field list rather than an example, was right.
+**Not yet proven:** an actual Komodo-originated alert. Core reaches ntfy's
+health endpoint, but nothing has failed a Procedure since.
+
+Three things broke on the first deploy, and every one was silent behind a green
+`Execution ok`:
+
+- **`pre_deploy` runs inside Periphery, which binds only
+  `/mnt/user/appdata/komodo`.** So `mkdir -p` and `chown 99:100` on a Stack's
+  appdata built a correct directory *inside Periphery's own filesystem* while
+  docker made the real bind target `root:root` on the host. Both Stacks
+  crash-looped on "unable to open database file". Every `pre_deploy` command
+  written before this one touched the docker socket or the run directory, both
+  of which Periphery does see — so nothing had ever exercised it. `bootstrap`
+  now binds the whole of appdata, which grants nothing the docker socket did
+  not already.
+- **The box cannot resolve its own hostnames.** tower's resolver is rb's router,
+  and it strips answers in `192.168.0.0/16` — `10/8`, `172.16/12`, `127/8` and
+  public addresses all pass, so it is rebind protection scoped to the LAN's own
+  range, not DNSSEC and not the usual RFC1918 filter. Every `rbrb.in` name came
+  back `NOERROR` with the answer removed. gatus resolves via CoreDNS instead,
+  which also fixes its source address: probes arrive as `100.126.56.26` and the
+  guard admits them. **This is [32](32-lan-resolver.md)** — the LAN half of
+  split-horizon has never worked, and nothing had exercised it.
+- **gatus follows redirects by default**, so five probes reported the login
+  page's 200 rather than the service's own 302 or 303. `client.ignore-redirect`
+  has no global form, so it is repeated on all ten HTTP probes.
+
+Also found: Renovate's bootstrap instructions told a human to `git pull` in
+`/mnt/user/appdata/komodo/bootstrap`, which is a hand-copied snapshot and not a
+repository. Corrected to copy from a Stack clone, every one of which is a full
+clone of the repo.

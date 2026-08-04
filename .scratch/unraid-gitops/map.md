@@ -33,7 +33,7 @@ thing will get it wrong:
 |---|---|---|
 | holds | `tower`, `192.168.1.0/24` | the human, this clone, `~/home-ops` |
 | addressing | `192.168.1.0/24` | **`192.168.0.0/16`**, local domain `xgy.im`, IPv6 ULA present |
-| resolver | `192.168.1.254`, rb's router — **none of ours** | **pihole** at `192.168.2.254`, and we can change it |
+| resolver | `192.168.1.254`, rb's router — **none of ours, and it strips `192.168/16` answers** ([32](issues/32-lan-resolver.md)) | **pihole** at `192.168.2.254`, and we can change it |
 | means "LAN" in tickets | yes, and in the `(internal)` guard | no |
 
 **Separate physical networks, joined only over the internet by tailscale.**
@@ -52,11 +52,20 @@ phone. MagicDNS is on tailnet-wide; the per-device switch that matters is
 ([18](issues/18-tailnet-split-dns.md)).
 
 So [04](issues/04-reverse-proxy-and-domain.md)'s public
-`*.rbrb.in` → `192.168.1.195` is the correct answer **only on rb's network** —
-where, conveniently, there is no custom resolver to configure and none is needed.
+`*.rbrb.in` → `192.168.1.195` is the correct answer **only on rb's network**.
 Everywhere else that record is unroutable, which
 [17](issues/17-deploy-coredns.md) and [18](issues/18-tailnet-split-dns.md) — both
-now closed — fix. **Split-horizon is delivered end to end.**
+now closed — fix. **Split-horizon is delivered on the tailnet, and has never
+worked on rb's LAN.**
+
+The "conveniently, no resolver to configure" claim this map carried until
+[29](issues/29-alerting-on-failed-reconcile.md) was **false, and untested**.
+rb's router strips answers in `192.168.0.0/16` and returns `NOERROR` with no
+answer, so nothing using it resolves any `rbrb.in` name. It is not rebind
+protection in the usual sense — `10/8`, `172.16/12` and `127/8` all pass; only
+its own LAN range is filtered. Every verification this map ever ran came from
+the tailnet, where `--accept-dns` routes around the router entirely. **This is
+[32](issues/32-lan-resolver.md).**
 
 **Pihole is a real option, reopened, and ruled against on the record.** It could
 answer `rbrb.in` → `100.126.56.26` for the whole home network in one edit, and
@@ -116,6 +125,14 @@ Two facts every box ticket needs: a `files_on_host` path must sit under
 `/mnt/user/appdata/komodo`, and **any image running as a non-root uid needs its
 bind-mount target pre-created and chowned** — Docker makes missing targets
 `root:root`.
+
+**And `pre_deploy` is only able to do that because
+[29](issues/29-alerting-on-failed-reconcile.md) widened Periphery's binds.** It
+runs *inside* Periphery, which saw only `/mnt/user/appdata/komodo`, so a `mkdir`
+and `chown` on any other path silently built a correct directory nobody could
+see while docker made the real one `root:root`. Every earlier `pre_deploy` only
+ever touched the docker socket or the run directory, so nothing had exercised
+it. **A path outside Periphery's binds is still a no-op that reports success.**
 
 **No agent POSTs to Core's API ad hoc.** New operations go in
 [scripts/komodo.sh](../../scripts/komodo.sh) behind a recipe; drive the loop with
@@ -372,7 +389,11 @@ markdown.
   `reverse_proxy` runs. Komodo's premise was wrong (22 alert variants, not one)
   and it changed nothing: all three sightings stayed `Up`. **Six of ten services
   do not answer 200** — measured, not assumed. Released 12's `download` and
-  `coredns` carve-outs. **Box-down is not closed** and now depends on home-ops.
+  `coredns` carve-outs. **Live: 11/11 probes pass and gatus has delivered a real
+  alert.** Three silent failures on first deploy — `pre_deploy` writing to
+  Periphery's own filesystem, the box unable to resolve its own hostnames, and
+  gatus following redirects into a 200. **Box-down is not closed** and now
+  depends on home-ops.
 
 ## Not yet specified
 
@@ -400,17 +421,14 @@ markdown.
   left its API unauthenticated to everything on `shared` and, through Caddy, to
   everything the `(internal)` guard admits. Deliberate, and only sound while that
   guard is.
-- **Whether the LAN half of split-horizon ever needs its own resolver.** 05 leans
-  on Cloudflare's public record *being* the view on rb's network, which works
-  precisely because nothing is published. A forwarded port would break that
-  coupling. Note there is **no resolver of ours on rb's network to change** —
-  only pihole on the home network, which is a different question.
-  [26](issues/26-host-state-scope.md) found the sharper edge: `192.168.1.195` is
-  a **DHCP lease**, not configuration, and after 30 that Cloudflare record is the
-  last thing betting on it. A moved lease breaks `rbrb.in` **on rb's network
-  only** — the tailnet resolves via CoreDNS and is untouched — and one Cloudflare
-  edit repairs it. A reservation on rb's router is the mitigation and is a
-  hand-off, not a ticket.
+- **What a moved DHCP lease costs.** [26](issues/26-host-state-scope.md) found
+  that `192.168.1.195` is a lease, not configuration, and after 30 the Cloudflare
+  record is the last thing betting on it. This shrank when
+  [29](issues/29-alerting-on-failed-reconcile.md) showed rb's router never served
+  that record anyway: a moved lease breaks nothing that currently works, and the
+  tailnet resolves via CoreDNS regardless. A reservation on rb's router is still
+  the mitigation, and still a hand-off rather than a ticket — but see
+  [32](issues/32-lan-resolver.md), which may make the lease matter again.
 - **Home-network devices that are not on the tailnet.** They have no route to
   tower at all, and no DNS answer can give them one — it would take a subnet
   router, which [05](issues/05-remote-access.md) declined on shadowed-route
@@ -430,8 +448,9 @@ markdown.
   mirror-image probes in `stacks/gatus/conf/config.yaml`, which cannot be written
   until home-ops has addresses to probe. **Not a ticket until then.**
 
-*(Monitoring graduated to [29](issues/29-alerting-on-failed-reconcile.md), and
-the *arr host ports to [30](issues/30-arr-urls-on-shared.md).)*
+*(Monitoring graduated to [29](issues/29-alerting-on-failed-reconcile.md), the
+*arr host ports to [30](issues/30-arr-urls-on-shared.md), and the LAN resolver
+question to [32](issues/32-lan-resolver.md).)*
 
 ## Out of scope
 
