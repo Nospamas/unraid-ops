@@ -30,13 +30,10 @@ secret stack:
     fi
     sops "$dir/secrets.sops.env"
 
-# Declare this repo to a freshly bootstrapped Komodo -- pass --apply to commit
+# Put Komodo on the box and this repo into Komodo -- pass --apply to commit.
+# Idempotent: the same command on a fresh box, and to apply a Komodo bump.
 bootstrap *args:
-    bash scripts/komodo.sh bootstrap {{ args }}
-
-# Push bootstrap/ to the box and recreate Komodo -- pass --apply to commit
-bootstrap-up *args:
-    bash scripts/bootstrap-up.sh {{ args }}
+    bash scripts/bootstrap.sh {{ args }}
 
 # Deliver a real notification through every Alerter, to prove the path. Ungated
 alert-test:

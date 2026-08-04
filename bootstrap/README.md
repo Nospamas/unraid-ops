@@ -35,6 +35,15 @@ database, and it still works after Portainer is gone.
 
 ## Order
 
+**`just bootstrap` does all of this**, and is the same command on a fresh box
+and on a running one — each step below reports what is already true and does
+only what is missing. The steps are kept here because they are the reasoning,
+not a checklist to retype: a checklist nobody runs goes stale, and both copies
+of this one had ([ticket 29](../.scratch/unraid-gitops/issues/29-alerting-on-failed-reconcile.md)).
+
+The one thing the recipe cannot do is **step 1** if the clone has no `age.key` —
+that comes out of KeePassXC and nowhere else. It stops and says so.
+
 Everything lives under `/mnt/user/appdata/komodo`, which is also
 `PERIPHERY_ROOT_DIRECTORY` — **identical inside and outside the container**, or
 compose path resolution breaks
@@ -105,11 +114,11 @@ compose path resolution breaks
    `min_password_length: 1`. It rate-limits at 5 attempts per 15s, and issues
    session JWTs with a 1-day TTL.
 
-8. **Declare this repo to Komodo**, from a laptop clone with `age.key` in place:
+8. **Declare this repo to Komodo** — the last phase of the same recipe:
 
    ```sh
-   just bootstrap            # reports whether the sync exists -- changes nothing
-   just bootstrap --apply    # create it, and run it
+   just bootstrap            # reports what is already true -- changes nothing
+   just bootstrap --apply    # do whatever is missing, then run the sync
    ```
 
    Everything else Komodo runs comes from git, but the ResourceSync that reads
@@ -119,8 +128,8 @@ compose path resolution breaks
    repo. The recipe is idempotent, and `just reconcile` afterwards deploys
    without waiting for the 15-minute poll.
 
-   **`bootstrap` is dry-run by default** — it is one of the two recipes that
-   change the box out of band, so it is gated like `host-ports`
+   **`bootstrap` is dry-run by default** — it changes the box out of band, so it
+   is gated like `host-ports`
    ([ticket 27](../.scratch/unraid-gitops/issues/27-recipe-safety-convention.md),
    convention in [docs/conventions.md](../docs/conventions.md#recipes)). On a
    fresh box you want `--apply`; the dry run earns its place later, when it
@@ -140,8 +149,8 @@ same pair is embedded in `FERRETDB_POSTGRESQL_URL`, so both move together.
 
 ## Rebuilding the box
 
-Clone the repo, restore `age.key` from KeePassXC, re-fetch the sops binary, then
-steps 3–8. Appdata under `/mnt/user/appdata/komodo` carries the Core/Periphery
+Clone the repo, restore `age.key` from KeePassXC, then `just bootstrap --apply`
+— it fetches the sops binary, places everything, and runs the sync. Appdata under `/mnt/user/appdata/komodo` carries the Core/Periphery
 keypair, and `/mnt/cache/appdata/komodo/postgres` carries the database — the
 same files, reached without shfs. A restore of appdata plus this file is the
 whole of it. Everything Komodo manages comes back from the repo through
@@ -207,7 +216,7 @@ This is therefore the one thing on the box that is **not** GitOps'd:
 1. Renovate opens a bump PR — `komodo` (Core + Periphery) or `ferretdb`
    (FerretDB + postgres-documentdb), always grouped as pairs, never automerged.
 2. Merge it.
-3. `just bootstrap-up` to see what differs, then `just bootstrap-up --apply`.
+3. `just bootstrap` to see what differs, then `just bootstrap --apply`.
 4. Confirm Core and Periphery are both healthy and the Server shows connected.
 
 **These steps were wrong until [ticket 29](../.scratch/unraid-gitops/issues/29-alerting-on-failed-reconcile.md)**,

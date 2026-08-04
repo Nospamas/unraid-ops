@@ -95,8 +95,8 @@
       prBodyNotes: [
         "⚠️ **Bootstrap is not reconciled by Komodo.** Merging this changes nothing on the box.",
         "```sh",
-        "just bootstrap-up            # what differs, and what would run",
-        "just bootstrap-up --apply    # copy it over and recreate the containers",
+        "just bootstrap            # what differs, and what would run",
+        "just bootstrap --apply    # copy it over and recreate the containers",
         "```",
         "Core and Periphery must move together — upstream requires Periphery match Core's version before builds and clones work again.",
       ],
@@ -113,8 +113,8 @@
       prBodyNotes: [
         "⚠️ **Bootstrap is not reconciled by Komodo.** Merging this changes nothing on the box.",
         "```sh",
-        "just bootstrap-up            # what differs, and what would run",
-        "just bootstrap-up --apply    # copy it over and recreate the containers",
+        "just bootstrap            # what differs, and what would run",
+        "just bootstrap --apply    # copy it over and recreate the containers",
         "```",
         "The `postgres-documentdb` tag names the FerretDB release it was built against, so the two must move together. Upstream warns these updates can be breaking — back up Postgres first.",
       ],
