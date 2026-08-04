@@ -275,6 +275,16 @@ Repeated in every file **on purpose** [07]: it is order-independent, it survives
 a box rebuild with nobody remembering a step, and it lives in git — which one
 Stack owning the network, or a hand-run `docker network create`, each give up.
 
+**`pre_deploy` runs inside Periphery, so it only sees what Periphery binds** [29].
+Every command here before 29 touched the docker socket or the run directory,
+both of which it does see — so this went unnoticed until a `mkdir -p` and
+`chown` on a Stack's appdata created a correct directory inside Periphery's own
+filesystem, invisible to everything, while docker made the real bind target
+`root:root` on the host. It failed with a green deploy and a container in a
+restart loop. `bootstrap/compose.yaml` now binds the whole of
+`/mnt/user/appdata`, which costs nothing given the socket is already there. **A
+path outside that bind is still a no-op that reports success.**
+
 ## Networks
 
 One external bridge named `shared`, joined by everything and declared `external`

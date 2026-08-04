@@ -100,7 +100,17 @@ services:
       - /proc:/proc
       # Identical inside and outside, or compose path resolution breaks:
       # https://github.com/moghtech/komodo/discussions/180
-      - /mnt/user/appdata/komodo:/mnt/user/appdata/komodo
+      #
+      # The whole of appdata, not just komodo's own (ticket 29). A `pre_deploy`
+      # that prepares a bind target -- `mkdir -p` then `chown 99:100`, which any
+      # image that is not a linuxserver one needs -- was silently operating on
+      # Periphery's own filesystem, creating a correct directory nobody could
+      # see while docker made the real one root:root on the host. It failed the
+      # way this map keeps getting bitten: quietly, with a green deploy.
+      #
+      # Not a privilege increase. Periphery holds the docker socket below, so
+      # it can already mount anything on the host it likes.
+      - /mnt/user/appdata:/mnt/user/appdata
       # Ticket 03: sops is one static binary, bind-mounted rather than baked
       # into a custom image -- which would mean rebuilding the container that
       # runs the deploys.

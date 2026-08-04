@@ -18,6 +18,24 @@ services:
     network_mode: host
     # Not a linuxserver image; see the note in stacks/ntfy/compose.yaml.
     user: "${PUID}:${PGID}"
+    # The box cannot resolve its own hostnames. tower's resolver is rb's router,
+    # which applies DNS rebind protection and returns an empty answer for every
+    # `rbrb.in` name because the public record is 192.168.1.195 -- a private
+    # address. `example.com` resolves there fine; `sonarr.rbrb.in` does not.
+    #
+    # So point gatus at CoreDNS, which answers 100.126.56.26 for every name.
+    # Docker accepts --dns alongside host networking, verified on the box.
+    #
+    # This also fixes the source address the probes present. Caddy sees
+    # 100.126.56.26 -- inside the guard's 100.64.0.0/10 -- where 127.0.0.1 is
+    # 403'd. It is not interchangeable with 192.168.1.195: the *arr disable auth
+    # for local addresses, so the LAN path answers 200 where the tailnet path
+    # answers 302, and conf/config.yaml asserts the tailnet codes.
+    #
+    # CoreDNS REFUSEs everything outside rbrb.in [17], which is survivable only
+    # because every other address in this Stack is a literal IP.
+    dns:
+      - 100.126.56.26
     environment:
       TZ: ${TZ}
       GATUS_CONFIG_PATH: /config/config.yaml
