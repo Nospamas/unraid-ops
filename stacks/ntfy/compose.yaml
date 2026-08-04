@@ -1,0 +1,45 @@
+# Ticket 29. Where alerts land. Komodo's `failure_alert` and gatus both publish
+# here, and an Android client holds a direct WebSocket to it over the tailnet.
+#
+# No Caddy label, deliberately: the alert path must not traverse the thing it
+# reports on. A Caddy outage that silenced the alert about the Caddy outage is
+# the exact failure this Stack exists to catch [16, 29].
+
+services:
+  ntfy:
+    image: binwiederhier/ntfy:v2.27.0@sha256:f2419f405127afa868f10985c1a41449e673477cee1eb19994339a5ae8b592e7
+    restart: unless-stopped
+    # The entrypoint is the bare binary and takes no default subcommand.
+    command: serve
+    # Not a linuxserver image -- it reads no PUID/PGID and would otherwise write
+    # as root. UMASK is inert here for the same reason: a Go binary does not
+    # read it. Nothing but ntfy reads this tree, so 755 costs nothing [09, 19].
+    user: "${PUID}:${PGID}"
+    environment:
+      TZ: ${TZ}
+      # The address a subscriber actually uses, or notification links break.
+      NTFY_BASE_URL: http://100.126.56.26:8095
+      NTFY_LISTEN_HTTP: ":80"
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_CACHE_DURATION: 48h
+      # Stated rather than defaulted [29]: the tailnet is the trust boundary and
+      # no ntfy accounts exist. Everything the bind below admits may publish and
+      # subscribe.
+      NTFY_AUTH_DEFAULT_ACCESS: read-write
+      # NTFY_UPSTREAM_BASE_URL is deliberately unset. It exists only to relay
+      # iOS wake-ups through ntfy.sh; Android holds a direct WebSocket, so
+      # setting it would put a third party in the path for nothing [29].
+    x-host-port: Komodo Core, gatus and the phone -- the alert path must not go through Caddy [29]
+    ports:
+      # The tailnet address explicitly, exactly as CoreDNS does -- this must not
+      # answer on rb's LAN. Same reboot race: docker cannot bind it before
+      # tailscale0 is up, and restart: unless-stopped is what catches up [17].
+      - "100.126.56.26:8095:80"
+    volumes:
+      - ${APPDATA}/ntfy:/var/cache/ntfy
+    networks:
+      - shared
+
+networks:
+  shared:
+    external: true

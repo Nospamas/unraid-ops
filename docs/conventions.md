@@ -12,6 +12,7 @@ the templates to copy.
 | [The tree](#the-tree) | finding where something goes |
 | [Stacks](#stacks) | adding or removing a directory under `stacks/` |
 | [The reconcile loop](#the-reconcile-loop) | a change has to reach the box |
+| [Alerting](#alerting) | something must be noticed when it breaks |
 | [Tracked files](#tracked-files) | the service reads config out of the repo |
 | [Shared config](#shared-config) | writing `compose.yaml` or `komodo.toml` |
 | [Paths](#paths) | binding appdata or media |
@@ -110,7 +111,54 @@ discarded, and no Stack deploys at all.
 one command still covers it; the Procedure's own sync stage then finds no
 changes. But **the cron only runs the Procedure**, so a `procedures.toml` edit
 that lands without `just reconcile` fails every 15 minutes until someone runs
-it — silently, because [12]'s `failure_alert` still has no alerter.
+it. That failure is now loud rather than silent — see below.
+
+## Alerting
+
+Two paths, one destination, and they cover different failures [29]:
+
+| path | catches |
+|---|---|
+| Komodo Alerter, `komodo/alerters.toml` | `ProcedureFailed`, `StackStateChange`, `ServerUnreachable` — the loop itself failing |
+| gatus, `stacks/gatus/conf/config.yaml` | a service that answers wrongly while its container stays `Up` |
+
+Both publish to the `ntfy` Stack, which an Android client subscribes to directly
+over the tailnet.
+
+**A green reconcile is not a running service, and Komodo cannot tell you
+otherwise.** All three silent failures this map has seen were containers left
+`Up` — a stale bind [16], then three containers with no networks at all [21].
+`DeployStackIfChanged` compares a config hash, so a correct hash over a broken
+container reports success. `StackStateChange` does not help either: it fires on
+a *mix* of container states, and there was no mix. Only an end-to-end request
+sees it, which is what gatus is for.
+
+**The alert path must not traverse the thing it reports on.** Routing alerts
+through Caddy would mean a Caddy outage silences the alert about the Caddy
+outage. So `ntfy` carries no `caddy` label and binds the tailnet address
+directly, and gatus keeps `:8090` alongside `status.rbrb.in`.
+
+**gatus is host-networked** [16]'s reason, not a preference: a probe from a
+bridge address arrives at host-networked Caddy as `172.20.x.x` and the
+`(internal)` guard 403s it before `reverse_proxy` runs. Every probe would fail
+identically, and a 403 proves the guard works, never that a backend is alive.
+
+**Probe an exact status, not `< 400`.** Six of the ten services answer something
+other than 200 when unauthenticated — 302, 303 and 401 are all healthy. The two
+signatures worth knowing: **404** is Caddy having discarded the block and the
+`*.rbrb.in` wildcard catching the request [16]; **502** is Caddy holding the
+block but unable to reach the container [21].
+
+**Alert on sustained failure.** 60s interval, three consecutive failures. A
+reconcile that legitimately redeploys a Stack takes it down for seconds, and
+paging on that is how a channel gets muted; short blips stay visible in the
+status page's history.
+
+**Nothing watches tower from off tower.** ntfy and gatus both die with the box,
+so silence is indistinguishable from health. Closing that needs home-ops probing
+tower over the tailnet — see [29]'s brief. Until it lands, `stacks/ntfy/**` and
+`stacks/gatus/**` are human-merge in Renovate, because nothing would notice a bad
+bump to the watcher.
 
 ## Tracked files
 
@@ -296,15 +344,18 @@ Three reasons qualify. `just lint` checks only that one is stated:
   plex.tv advertises that address to clients and rb's router forwards it, so the
   port is a published path Caddy does not carry and `x-published` does not
   describe — see [31] before touching it.
-- **a backup path to whatever repairs Caddy** [26]. Komodo (`:9120`) and the
-  Unraid GUI (`:8008`) answer at `*.rbrb.in` *and* keep their host port, because
-  the tooling that fixes the proxy must not sit behind it. Neither is a Stack, so
-  neither carries the key.
+- **a backup path to whatever detects or repairs a Caddy outage** [26] [29].
+  Komodo (`:9120`) and the Unraid GUI (`:8008`) answer at `*.rbrb.in` *and* keep
+  their host port, because the tooling that fixes the proxy must not sit behind
+  it. Neither is a Stack, so neither carries the key. [29] widened *repairs* to
+  *detects*: gatus keeps `:8090` alongside `status.rbrb.in`, and `ntfy` takes no
+  hostname at all, because an alert routed through Caddy cannot report on Caddy.
 
 Nothing else. A host port for a browser is the rule being broken, not a fourth
 reason.
 
-CoreDNS binds a full explicit address, because it must not answer on the LAN [05]:
+CoreDNS binds a full explicit address, because it must not answer on the LAN [05]
+— and `ntfy` follows it for the same reason, at `100.126.56.26:8095`:
 
 ```yaml
 ports:

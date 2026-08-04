@@ -223,3 +223,17 @@ just verify-secrets   # every *.sops.env still decrypts
   `.` block **REFUSEs** — Tailscale Split DNS is restricted to `rbrb.in`, so no
   other name is ever sent there and a forwarder would only mask a
   misconfiguration [17].
+- **An image that is not a linuxserver one reads no `PUID`/`PGID`.** Most of this
+  repo's images chown `/config` as root and then drop privileges; a plain Go
+  binary like ntfy or gatus does neither. Set `user: "${PUID}:${PGID}"` **and**
+  pre-create the bind target in `pre_deploy`, because docker creates a missing
+  one `root:root` and the container then cannot write to it [29]. `UMASK` is
+  inert for these — nothing reads it — which is only acceptable because no human
+  shares those trees.
+- **gatus is host-networked**, so caddy-docker-proxy never sees its labels — it
+  reads only containers on `shared`. `status.rbrb.in` lives in the Caddyfile
+  instead, alongside `komodo` and `unraid` [29]. Adding a probe means editing
+  `stacks/gatus/conf/config.yaml`, and the condition is the service's **actual**
+  unauthenticated status: 302, 303 and 401 are all healthy answers here.
+- **ntfy carries no `caddy` label on purpose.** An alert routed through Caddy
+  cannot report a Caddy outage [29].

@@ -1,0 +1,27 @@
+# Ticket 29. The detector. Probes every fronted service end to end and publishes
+# failures to the ntfy Stack.
+#
+# No `caddy` label, and not by preference: caddy-docker-proxy reads labels only
+# from containers on `shared` (CADDY_INGRESS_NETWORKS), and a host-networked
+# container is on no network at all. `status.rbrb.in` is therefore served from
+# stacks/caddy/conf/Caddyfile, the same way komodo and unraid are [26].
+
+services:
+  gatus:
+    image: ghcr.io/twin/gatus:v5.36.0@sha256:c5f210d095fa78e6efaa20ffeb14803f2ba4f10615e16a6d12087697149617f0
+    restart: unless-stopped
+    # Host networking for the same reason Caddy has it [16]. A probe from a
+    # bridge address arrives at host-networked Caddy as 172.20.x.x -- no
+    # masquerade applies to the host's own IP -- and 05's `(internal)` guard
+    # 403s it before `reverse_proxy` runs. Every probe would fail identically,
+    # and a 403 proves only that the guard works, never that a backend is alive.
+    network_mode: host
+    # Not a linuxserver image; see the note in stacks/ntfy/compose.yaml.
+    user: "${PUID}:${PGID}"
+    environment:
+      TZ: ${TZ}
+      GATUS_CONFIG_PATH: /config/config.yaml
+    volumes:
+      # Directory, never the file -- docs/conventions.md, 'Tracked files'.
+      - ./conf:/config:ro
+      - ${APPDATA}/gatus:/data

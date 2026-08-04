@@ -1,0 +1,159 @@
+# Ticket 29. Liveness probes for every fronted service.
+#
+# The probes go through Caddy on purpose. All three silent failures this map has
+# seen were containers that stayed `Up` while serving nothing [16, 21], which is
+# invisible to Komodo's StackStateChange -- a mix of container states is what
+# that alerts on, and there was no mix. Only an end-to-end request sees it.
+#
+# Two failure signatures worth recognising:
+#   404 -- Caddy discarded the service's block. The `*.rbrb.in` wildcard catches
+#          the request and answers "no service by that name". This is [16].
+#   502 -- Caddy has the block but cannot reach the container. This is [21].
+# Both are why the conditions below assert an exact status rather than `< 400`.
+#
+# Every status here was measured against the running box, not assumed. Six of
+# the ten are not 200.
+
+web:
+  # Reachable without Caddy, which is the whole point of [26]'s rule that the
+  # tooling reporting on the proxy must not sit behind it.
+  address: 0.0.0.0
+  port: 8090
+
+storage:
+  type: sqlite
+  path: /data/gatus.db
+  caching: true
+
+ui:
+  title: Status | tower
+  header: tower
+
+alerting:
+  ntfy:
+    url: http://100.126.56.26:8095
+    topic: tower
+    # 4 is ntfy's "high". 3 is its default and reads as chatter on a phone.
+    priority: 4
+    default-alert:
+      enabled: true
+      # ~3 minutes of sustained failure. A reconcile that legitimately redeploys
+      # a Stack takes it down for seconds, and paging on that is how a channel
+      # gets muted. Short blips are still visible in the history below [29].
+      failure-threshold: 3
+      success-threshold: 2
+      send-on-resolved: true
+
+endpoints:
+  - name: homepage
+    group: services
+    url: https://home.rbrb.in/
+    interval: 60s
+    conditions:
+      - '[STATUS] == 200'
+    alerts:
+      - type: ntfy
+
+  - name: sonarr
+    group: services
+    url: https://sonarr.rbrb.in/
+    interval: 60s
+    # Redirects to its login page unauthenticated. 302 is the healthy answer.
+    conditions:
+      - '[STATUS] == 302'
+    alerts:
+      - type: ntfy
+
+  - name: radarr
+    group: services
+    url: https://radarr.rbrb.in/
+    interval: 60s
+    conditions:
+      - '[STATUS] == 302'
+    alerts:
+      - type: ntfy
+
+  - name: prowlarr
+    group: services
+    url: https://prowlarr.rbrb.in/
+    interval: 60s
+    conditions:
+      - '[STATUS] == 302'
+    alerts:
+      - type: ntfy
+
+  - name: lazylibrarian
+    group: services
+    url: https://lazylibrarian.rbrb.in/
+    interval: 60s
+    conditions:
+      - '[STATUS] == 303'
+    alerts:
+      - type: ntfy
+
+  - name: calibre
+    group: services
+    url: https://calibre.rbrb.in/
+    interval: 60s
+    # 401 is the GUI password prompt [22] -- the service answering, not a fault.
+    conditions:
+      - '[STATUS] == 401'
+    alerts:
+      - type: ntfy
+
+  - name: plex
+    group: services
+    url: https://plex.rbrb.in/
+    interval: 60s
+    # Plex account auth. This probe covers the internal path only; plex's own
+    # :32400 from the internet is [31]'s question, not this file's.
+    conditions:
+      - '[STATUS] == 401'
+    alerts:
+      - type: ntfy
+
+  - name: qbittorrent
+    group: services
+    url: https://qbittorrent.rbrb.in/
+    interval: 60s
+    # The one probe that would catch [06]'s hazard: recreating gluetun alone
+    # leaves qbittorrent in a dead namespace with no route and no error.
+    conditions:
+      - '[STATUS] == 200'
+    alerts:
+      - type: ntfy
+
+  - name: komodo
+    group: infrastructure
+    url: https://komodo.rbrb.in/
+    interval: 60s
+    conditions:
+      - '[STATUS] == 200'
+    alerts:
+      - type: ntfy
+
+  - name: unraid
+    group: infrastructure
+    url: https://unraid.rbrb.in/
+    interval: 60s
+    conditions:
+      - '[STATUS] == 302'
+    alerts:
+      - type: ntfy
+
+  - name: coredns
+    group: infrastructure
+    # The only end-to-end test of the split horizon [17, 18]. Asking CoreDNS
+    # directly for a name whose public answer is different is what makes this
+    # meaningful: 192.168.1.195 is the Cloudflare record, so an answer of
+    # 100.126.56.26 proves the tailnet view specifically.
+    url: 100.126.56.26
+    dns:
+      query-name: sonarr.rbrb.in
+      query-type: A
+    interval: 60s
+    conditions:
+      - '[DNS_RCODE] == NOERROR'
+      - '[BODY] == 100.126.56.26'
+    alerts:
+      - type: ntfy

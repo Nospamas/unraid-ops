@@ -1,0 +1,24 @@
+# Ticket 29. Somewhere for `failure_alert` to go. Before this, procedures.toml
+# set `failure_alert = true` and no alerter existed to receive it, so a failing
+# reconcile was silent -- which it was, every 15 minutes for hours, during [16].
+
+[[alerter]]
+name = "ntfy"
+description = "Reconcile failures to the ntfy Stack, over the tailnet"
+
+[alerter.config]
+enabled = true
+endpoint.type = "Ntfy"
+# The topic URL, not the server root. Reached by IP because Core is a container
+# on the bootstrap network with `--accept-dns` off on the host, so MagicDNS
+# names do not resolve for it -- and going via `ntfy.rbrb.in` would arrive at
+# host-networked Caddy as a bridge address and be 403'd by 05's guard [29].
+endpoint.params.url = "http://100.126.56.26:8095/tower"
+
+# Named rather than left empty, which would send all 22 variants -- including
+# every image-update-available notice, which Renovate already owns [12].
+#
+# StackStateChange earns its place despite catching none of this map's three
+# silent failures: those were containers that stayed `Up`, and this fires on a
+# genuine mix of container states. gatus covers the rest.
+alert_types = ["ProcedureFailed", "StackStateChange", "ServerUnreachable"]

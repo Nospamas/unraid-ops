@@ -1,0 +1,19 @@
+[[stack]]
+name = "ntfy"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/ntfy"
+project_name = "ntfy"
+additional_env_files = ["../../common.env"]
+
+# First Stack to need this. Every other image is a linuxserver one that chowns
+# /config as root before dropping to PUID; ntfy runs as 99:100 from PID 1, and
+# docker creates a missing bind target root:root [11].
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+mkdir -p /mnt/user/appdata/ntfy
+chown 99:100 /mnt/user/appdata/ntfy
+"""

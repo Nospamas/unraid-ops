@@ -47,23 +47,35 @@
       ignoreTests: true,
     },
     {
-      // Recreating gluetun leaves qbittorrent in a dead netns, silently, and
-      // whether Komodo's Deploy recreates both unaided is still unverified —
-      // see ticket 06. One PR so they can never bump apart.
-      description: "download stack — one PR, human merge",
+      // Still one PR — gluetun and qbittorrent must never bump apart, since
+      // qbittorrent lives in gluetun's netns (ticket 06). But no longer human
+      // merge: ticket 24 verified Komodo recreates both unaided, and ticket 29
+      // put a probe on qbittorrent that catches 06's hazard if it ever bites.
+      description: "download stack — one PR",
       matchFileNames: ["stacks/download/**"],
       groupName: "download stack",
-      automerge: false,
     },
     {
-      // These three are the ones you cannot afford to have change at 3am with
-      // nothing watching: plex breaks clients, caddy fronts every hostname,
-      // coredns answers them on the tailnet.
-      description: "plex, caddy, coredns — human merge",
+      // 12 held these back because nothing was watching. Ticket 29 changed that
+      // for coredns, which now has a DNS probe asserting the tailnet view, so it
+      // has been released. These two have not: gatus proves plex answers, not
+      // that a client can play from it, and a broken Caddy costs the same to
+      // repair however fast you hear about it.
+      description: "plex, caddy — human merge",
       matchFileNames: [
         "stacks/plex/**",
         "stacks/caddy/**",
-        "stacks/coredns/**",
+      ],
+      automerge: false,
+    },
+    {
+      // Nothing on tower watches the watcher. Until home-ops probes tower from
+      // off-box (ticket 29's hand-off), a bad bump here fails silently and
+      // takes every other alert with it.
+      description: "ntfy, gatus — human merge until home-ops watches tower",
+      matchFileNames: [
+        "stacks/ntfy/**",
+        "stacks/gatus/**",
       ],
       automerge: false,
     },
