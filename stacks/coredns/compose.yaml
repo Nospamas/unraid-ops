@@ -9,6 +9,7 @@ services:
     command: -conf /etc/coredns/Corefile
     environment:
       TZ: ${TZ}
+    x-host-port: tailscale Split DNS, which configures a resolver by address [17]
     ports:
       # The tailnet address explicitly, never 0.0.0.0 -- this resolver must not
       # answer on rb's LAN. Docker cannot bind it before tailscale0 is up, so a

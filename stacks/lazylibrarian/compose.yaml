@@ -16,9 +16,11 @@ services:
       - ${APPDATA}/lazylibrarian:/config
       - ${MEDIA}/books:/books
       - ${MEDIA}/downloads:/downloads
+    # The only host port in the repo with no reader at all -- kept as found by
+    # ticket 21, and nothing has ever addressed it. It is not a carve-out, it is
+    # a leftover, and ticket 30 deletes it with the other four.
+    x-host-port: nobody. Unjustified; delete with the port in [30]
     ports:
-      # Kept as found. Nothing addresses it by host today; it goes with the
-      # other three rather than alone -- ticket 30.
       - "5299:5299"
     networks:
       - shared

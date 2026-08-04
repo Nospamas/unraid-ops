@@ -30,9 +30,11 @@ services:
       - ${MEDIA}/music-rb:/mnt/music-rb
       - ${MEDIA}/music-reg:/mnt/music-reg
       - ${MEDIA}/podcasts:/mnt/podcasts
+    # A carve-out, not an instance of a general rule: plex.tv advertises this
+    # address to clients and rb's router forwards it, so 32400 is a published
+    # path Caddy does not carry -- ticket 31 rules on how the repo says so.
+    x-host-port: non-browser plex clients, and plex.tv advertises it to them [23, 31]
     ports:
-      # Every client that is not a browser reaches plex here, and plex.tv
-      # advertises this address to them -- ticket 23.
       - "32400:32400"
     networks:
       - shared

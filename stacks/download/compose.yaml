@@ -32,9 +32,11 @@ services:
         required: false
     volumes:
       - ${APPDATA}/gluetun:/gluetun
+    # Breaks the rule knowingly, and ticket 30 is the repair: the four *arr
+    # still address qbittorrent here rather than at gluetun:30024 on `shared`,
+    # and that URL lives in their appdata. This key and the port go together.
+    x-host-port: the four *arr, until [30] repoints them at gluetun on `shared`
     ports:
-      # qbittorrent's WebUI, which lives in this namespace. The four *arr and
-      # homepage address it here until ticket 30 moves them onto `shared`.
       # 6881, the torrent port, is not published: peers arrive through the
       # tunnel, and rb's router forwards nothing to it (ticket 24).
       - "30024:30024"

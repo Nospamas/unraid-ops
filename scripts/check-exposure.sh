@@ -10,6 +10,15 @@
 # Neither is a failure. Both is a failure, because the intent is unreadable.
 # `grep -rn x-published stacks/` is the answer to "what faces the internet".
 #
+# A Service that publishes a host port must also say who reaches it that way,
+# because humans go through Caddy and containers go by name on `shared` --
+# anything else is the exception (ticket 26):
+#
+#   x-host-port: <who reaches this, and why not by hostname>
+#
+# This is a separate question from x-published: it asks who the port is for,
+# not whether the internet can see it. A Service can need both keys.
+#
 # Labels are read in both compose forms -- the `key: value` map this repo writes
 # and the `- key=value` list -- so the check cannot be sidestepped by
 # reformatting. A yq error is fatal rather than an empty result, so a file this
@@ -24,12 +33,15 @@ read -r -d '' query <<'YQ' || true
   ((
     ($labels | select(tag == "!!map") | to_entries[] | [$service, .key, (.value | tostring)]),
     ($labels | select(tag == "!!seq") | .[] | [$service, (sub("=.*"; "")), (sub("^[^=]*=?"; ""))]),
-    [$service, "x-published", (.value["x-published"] // "" | tostring)]
+    [$service, "x-published", (.value["x-published"] // "" | tostring)],
+    [$service, "x-host-port", (.value["x-host-port"] // "" | tostring | sub("\n"; " "))],
+    [$service, "port-count", (.value.ports // [] | length | tostring)]
   ) | @tsv)
 YQ
 
 failed=0
 fronted=0
+ports=0
 
 shopt -s nullglob
 for compose in "$root"/stacks/*/compose.yaml; do
@@ -42,15 +54,26 @@ for compose in "$root"/stacks/*/compose.yaml; do
         continue
     fi
 
-    declare -A host=() internal=() published=()
+    declare -A host=() internal=() published=() hostport=() portcount=()
     while IFS=$'\t' read -r service key value; do
         [[ -z "$service" ]] && continue
         case "$key" in
             caddy) host["$service"]="$value" ;;
             caddy.import) internal["$service"]="$value" ;;
             x-published) published["$service"]="$value" ;;
+            x-host-port) hostport["$service"]="$value" ;;
+            port-count) portcount["$service"]="$value" ;;
         esac
     done <<<"$parsed"
+
+    for service in "${!portcount[@]}"; do
+        [[ "${portcount[$service]}" == 0 ]] && continue
+        ports=$((ports + 1))
+        if [[ -z "${hostport[$service]:-}" ]]; then
+            echo "FAIL      ${stack}/${service} publishes a host port and declares no x-host-port"
+            failed=1
+        fi
+    done
 
     for service in "${!host[@]}"; do
         [[ -z "${host[$service]}" ]] && continue
@@ -70,13 +93,13 @@ for compose in "$root"/stacks/*/compose.yaml; do
             failed=1
         fi
     done
-    unset host internal published
+    unset host internal published hostport portcount
 done
 
 if ((failed)); then
     echo
-    echo "Default-deny violated. See docs/conventions.md, 'Default-deny'."
+    echo "See docs/conventions.md -- 'Default-deny' and 'Addressing'."
     exit 1
 fi
 
-echo "exposure ok -- ${fronted} fronted service(s)"
+echo "exposure ok -- ${fronted} fronted service(s), ${ports} with a host port"

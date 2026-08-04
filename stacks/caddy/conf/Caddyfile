@@ -8,6 +8,22 @@
 	respond @external 403
 }
 
+# Ticket 26. The two human-facing UIs on this box that are not Stacks, so they
+# have no compose file to carry a `caddy` label. Caddy is host-networked
+# (ticket 16), so localhost is the box.
+#
+# Both keep their host port as well -- :9120 and :8008 stay bound whatever Caddy
+# does, because the tooling that repairs the proxy must not sit behind it.
+komodo.rbrb.in {
+	import internal
+	reverse_proxy localhost:9120
+}
+
+unraid.rbrb.in {
+	import internal
+	reverse_proxy localhost:8008
+}
+
 # Naming the wildcard is what makes Caddy issue one, not a cert per hostname.
 *.rbrb.in {
 	import internal

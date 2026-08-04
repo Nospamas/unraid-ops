@@ -13,9 +13,11 @@ services:
       - ${APPDATA}/radarr:/config
       - ${MEDIA}/movies:/movies
       - ${MEDIA}/downloads:/downloads
+    # Breaks the rule knowingly; ticket 30 is the repair. Prowlarr addresses
+    # radarr here, and that URL lives in prowlarr's appdata, not in this file.
+    # This key and the port go together.
+    x-host-port: prowlarr, until [30] repoints it at radarr on `shared`
     ports:
-      # Prowlarr writes indexers into radarr over http://192.168.1.195:7878,
-      # which lives in prowlarr's appdata, not here -- ticket 30.
       - "7878:7878"
     networks:
       - shared

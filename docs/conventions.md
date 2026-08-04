@@ -21,7 +21,7 @@ the templates to copy.
 | [Networks](#networks) | two containers must talk |
 | [Routing](#routing) | the service has a web UI |
 | [Default-deny](#default-deny) | anything is fronted by Caddy |
-| [Ports](#ports) | something must reach a container directly |
+| [Addressing](#addressing) | deciding how something reaches a service |
 | [Images](#images) | picking or bumping an image |
 | [Restart policy](#restart-policy) | writing `compose.yaml`, or adopting |
 | [Recipes](#recipes) | adding a `just` recipe |
@@ -38,7 +38,7 @@ CLAUDE.md           the rules that are expensive to break by accident
 CONTEXT.md          glossary
 
 bootstrap/          Komodo's own four containers, run by hand, never reconciled
-  host/ident.cfg    the Unraid host settings git owns [15]
+  host/ident.cfg    the only host state git owns -- the GUI's ports [15, 26]
 komodo/             sync.toml (the ResourceSync + the Server), procedures.toml
 scripts/            check-exposure.sh, komodo.sh, host.sh
 
@@ -53,7 +53,7 @@ Eleven Stacks, twelve containers: `caddy`, `coredns`, `homepage`,
 `dockerproxy`, `download` (gluetun + qbittorrent), `sonarr`, `radarr`,
 `prowlarr`, `lazylibrarian`, `plex`, `calibre`. Built so far: `dockerproxy`,
 `homepage`, `caddy`, `coredns`, the four *arr Stacks [21], `calibre` [22] and
-`plex` [23]. `download` is the last one left, in [24].
+`plex` [23] and `download` [24]. Nothing is left to migrate.
 
 `bootstrap/` is in git so a rebuild starts from a file, and **never gets a
 `komodo.toml`**: Core can redeploy itself but Periphery cannot, and upstream
@@ -248,8 +248,9 @@ what `CADDY_INGRESS_NETWORKS` names now that there is nothing to auto-detect.
 ## Routing
 
 Routing lives in `caddy` labels on the Service. Caddy's global config and the
-`(internal)` snippet live in a real file, `stacks/caddy/Caddyfile`, bind-mounted
-in.
+`(internal)` snippet live in a real file, `stacks/caddy/conf/Caddyfile`,
+bind-mounted in. That file also carries the two hostnames Caddy serves for
+things that are not Stacks — `komodo.rbrb.in` and `unraid.rbrb.in` [26].
 
 **qbittorrent is the exception**: its labels sit on the gluetun Service, because
 a container in another container's namespace has no network identity of its own.
@@ -269,16 +270,53 @@ The guard is verified, not assumed [16]: LAN and tailnet clients get 200, and
 127.0.0.1 and a container on `shared` both get 403. It depends on Caddy seeing
 the real client address, so it is only sound while Caddy is host-networked.
 
-## Ports
+## Addressing
 
-Ordinary Stacks publish `<host>:<container>`. CoreDNS binds a full explicit
-address, because it must not answer on the LAN [05]:
+Humans reach a service at its `*.rbrb.in` hostname; containers reach each other
+by container name on `shared` [26]. **Neither is ever the box's address.**
+`192.168.1.195` is a DHCP lease, so an in-app URL pointing at it is a setting
+with an expiry date, and it lives in appdata where git cannot fix it [30].
+
+A host port is for traffic that is neither, and the Service must say which with
+`x-host-port` — checked by `check-exposure.sh`, which fails a `ports:` block
+without one:
+
+```yaml
+plex:
+  x-host-port: non-browser clients; plex.tv advertises this address to them [23]
+  ports:
+    - "32400:32400"
+```
+
+Three reasons qualify. `just lint` checks only that one is stated:
+
+- **a client configured by address, not by name** — CoreDNS, because tailscale's
+  Split DNS row takes an IP [17].
+- **plex's `32400`** [23], which is its own case and not a general licence.
+  plex.tv advertises that address to clients and rb's router forwards it, so the
+  port is a published path Caddy does not carry and `x-published` does not
+  describe — see [31] before touching it.
+- **a backup path to whatever repairs Caddy** [26]. Komodo (`:9120`) and the
+  Unraid GUI (`:8008`) answer at `*.rbrb.in` *and* keep their host port, because
+  the tooling that fixes the proxy must not sit behind it. Neither is a Stack, so
+  neither carries the key.
+
+Nothing else. A host port for a browser is the rule being broken, not a fourth
+reason.
+
+CoreDNS binds a full explicit address, because it must not answer on the LAN [05]:
 
 ```yaml
 ports:
   - "100.126.56.26:53:53/udp"
   - "100.126.56.26:53:53/tcp"
 ```
+
+**The rest of the box's host state is not git's** [26]. `ident.cfg`'s Management
+Access fields are the whole of it, because a fresh flash puts nginx back on
+80/443 where Caddy cannot bind [15]. `network.cfg`, `docker.cfg`, `shares/`,
+`plugins/` and the licence and password files were each tested against "would
+losing this break the stack or the rebuild" and each failed it.
 
 ## Images
 

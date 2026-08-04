@@ -1,8 +1,11 @@
 ---
-# {{HOMEPAGE_VAR_HOST}} is the box's LAN address, still used by everything the
-# repo does not own yet. A migrated service loses it twice over: href becomes
-# its https://<name>.rbrb.in hostname (ticket 16) and the widget url becomes
-# http://<service>:<port> across the shared network (ticket 21).
+# Every href is an https://<name>.rbrb.in hostname and every widget url is
+# http://<service>:<port> across the shared network -- docs/conventions.md,
+# 'Addressing' (ticket 26).
+#
+# {{HOMEPAGE_VAR_HOST}} is the box's LAN address and has one reader left,
+# Portainer, which has no hostname because it is not a Stack and is being
+# removed. Both go together in ticket 25; do not give it a second reader.
 #
 # `container:` reads state through the dockerproxy Stack, not the socket, and
 # names the compose *container* -- Komodo runs each Stack as its own project,
@@ -103,13 +106,13 @@
 - Infrastructure:
     - Komodo:
         icon: komodo.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:9120
+        href: https://komodo.rbrb.in
         description: What deploys everything here
         server: tower
         container: komodo-core
     - Unraid:
         icon: unraid.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}
+        href: https://unraid.rbrb.in
         description: The box itself
     - Portainer:
         icon: portainer.svg
