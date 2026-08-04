@@ -13,6 +13,11 @@
 #
 # Every status here was measured against the running box, not assumed. Six of
 # the ten are not 200.
+#
+# `ignore-redirect: true` on every HTTP probe, because gatus follows redirects
+# by default and five of these then reported the login page's 200 instead of
+# the service's own 302 or 303. There is no global default for it -- gatus reads
+# `client` only under `endpoints[]` -- so it is repeated rather than shared.
 
 web:
   # Reachable without Caddy, which is the whole point of [26]'s rule that the
@@ -49,6 +54,8 @@ endpoints:
     group: services
     url: https://home.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     conditions:
       - '[STATUS] == 200'
     alerts:
@@ -58,6 +65,8 @@ endpoints:
     group: services
     url: https://sonarr.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     # Redirects to its login page unauthenticated. 302 is the healthy answer.
     conditions:
       - '[STATUS] == 302'
@@ -68,6 +77,8 @@ endpoints:
     group: services
     url: https://radarr.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     conditions:
       - '[STATUS] == 302'
     alerts:
@@ -77,6 +88,8 @@ endpoints:
     group: services
     url: https://prowlarr.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     conditions:
       - '[STATUS] == 302'
     alerts:
@@ -86,6 +99,8 @@ endpoints:
     group: services
     url: https://lazylibrarian.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     conditions:
       - '[STATUS] == 303'
     alerts:
@@ -95,6 +110,8 @@ endpoints:
     group: services
     url: https://calibre.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     # 401 is the GUI password prompt [22] -- the service answering, not a fault.
     conditions:
       - '[STATUS] == 401'
@@ -105,6 +122,8 @@ endpoints:
     group: services
     url: https://plex.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     # Plex account auth. This probe covers the internal path only; plex's own
     # :32400 from the internet is [31]'s question, not this file's.
     conditions:
@@ -116,6 +135,8 @@ endpoints:
     group: services
     url: https://qbittorrent.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     # The one probe that would catch [06]'s hazard: recreating gluetun alone
     # leaves qbittorrent in a dead namespace with no route and no error.
     conditions:
@@ -127,6 +148,8 @@ endpoints:
     group: infrastructure
     url: https://komodo.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     conditions:
       - '[STATUS] == 200'
     alerts:
@@ -136,6 +159,8 @@ endpoints:
     group: infrastructure
     url: https://unraid.rbrb.in/
     interval: 60s
+    client:
+      ignore-redirect: true
     conditions:
       - '[STATUS] == 302'
     alerts:
