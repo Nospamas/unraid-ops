@@ -34,6 +34,10 @@ secret stack:
 bootstrap *args:
     bash scripts/komodo.sh bootstrap {{ args }}
 
+# Push bootstrap/ to the box and recreate Komodo -- pass --apply to commit
+bootstrap-up *args:
+    bash scripts/bootstrap-up.sh {{ args }}
+
 # Deliver a real notification through every Alerter, to prove the path. Ungated
 alert-test:
     bash scripts/komodo.sh alert-test

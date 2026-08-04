@@ -89,6 +89,8 @@ compose path resolution breaks
 
 7. **Log in** at `http://192.168.1.195:9120` with the admin credentials from
    `secrets.env` — user `admin`, password generated per-install, never a default.
+   That address works only from rb's LAN; from anywhere else use the tailnet
+   address, and once Caddy and CoreDNS are up, `https://komodo.rbrb.in`.
 
    `KOMODO_INIT_ADMIN_*` is **create-if-absent**, verified by restarting Core
    with the admin already present: it seeds nothing and logs nothing. So
@@ -205,9 +207,14 @@ This is therefore the one thing on the box that is **not** GitOps'd:
 1. Renovate opens a bump PR — `komodo` (Core + Periphery) or `ferretdb`
    (FerretDB + postgres-documentdb), always grouped as pairs, never automerged.
 2. Merge it.
-3. `ssh root@tower`, `cd $PERIPHERY_ROOT_DIRECTORY/bootstrap && git pull`,
-   `docker compose up -d`.
+3. `just bootstrap-up` to see what differs, then `just bootstrap-up --apply`.
 4. Confirm Core and Periphery are both healthy and the Server shows connected.
+
+**These steps were wrong until [ticket 29](../.scratch/unraid-gitops/issues/29-alerting-on-failed-reconcile.md)**,
+here and in the PR body both: they said `git pull` in a directory that is a
+hand-made copy rather than a clone, and `docker compose` on a host that has
+none. That is what the recipe is for — a paste-back checklist nobody runs goes
+stale silently, and this one had.
 
 Between 2 and 3, `main` claims a version the box is not running. The PR body
 carries these steps as a reminder — see the `prBodyNotes` in
