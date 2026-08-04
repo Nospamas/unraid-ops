@@ -34,6 +34,10 @@ secret stack:
 bootstrap *args:
     bash scripts/komodo.sh bootstrap {{ args }}
 
+# Deliver a real notification through every Alerter, to prove the path. Ungated
+alert-test:
+    bash scripts/komodo.sh alert-test
+
 # Reconcile the box now, rather than waiting for the 15-minute poll. Ungated
 reconcile:
     bash scripts/komodo.sh reconcile

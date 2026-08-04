@@ -235,5 +235,8 @@ just verify-secrets   # every *.sops.env still decrypts
   instead, alongside `komodo` and `unraid` [29]. Adding a probe means editing
   `stacks/gatus/conf/config.yaml`, and the condition is the service's **actual**
   unauthenticated status: 302, 303 and 401 are all healthy answers here.
-- **ntfy carries no `caddy` label on purpose.** An alert routed through Caddy
-  cannot report a Caddy outage [29].
+- **ntfy has two doors and they are not interchangeable** [29]. `:8095` on the
+  tailnet is the alert path — publishers and the phone — because an alert routed
+  through Caddy cannot report a Caddy outage. `ntfy.rbrb.in` is for a browser
+  only, whose notifications need a secure context. Pointing the phone at the
+  hostname silently undoes the design.

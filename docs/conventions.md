@@ -135,8 +135,15 @@ sees it, which is what gatus is for.
 
 **The alert path must not traverse the thing it reports on.** Routing alerts
 through Caddy would mean a Caddy outage silences the alert about the Caddy
-outage. So `ntfy` carries no `caddy` label and binds the tailnet address
-directly, and gatus keeps `:8090` alongside `status.rbrb.in`.
+outage. So `ntfy` binds the tailnet address directly at `:8095`, and gatus keeps
+`:8090` alongside `status.rbrb.in`.
+
+`ntfy` also answers at `ntfy.rbrb.in`, and **which door a client uses is the
+whole point**: publishers and the phone use `:8095`, so delivery survives Caddy;
+the hostname exists only because the *web* app's notifications need a secure
+context, which is a Notifications API rule and not an ntfy one. The Android app
+has never needed HTTPS. **Never point the phone at the hostname** — it is the
+subscriber whose delivery must outlive the proxy.
 
 **gatus is host-networked** [16]'s reason, not a preference: a probe from a
 bridge address arrives at host-networked Caddy as `172.20.x.x` and the

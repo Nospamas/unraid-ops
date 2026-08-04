@@ -189,12 +189,49 @@ cmd_redeploy() {
         '{type:"DeployStack",params:{stack:$s}}')"
 }
 
+# Prove the alerting path, end to end. Ticket 29.
+#
+# `TestAlerter` delivers a real, fully formatted notification through the same
+# routing a ProcedureFailed takes -- it is not a reachability ping -- so it is
+# the whole check.
+#
+# `SendAlert` is deliberately not used. It filters by the calling user's Execute
+# permission on the Alerter and fails with "could not find any valid alerters to
+# send to" for a resource created by the ResourceSync, even as admin. Nothing
+# here needs a custom message badly enough to chase that.
+#
+# Ungated on purpose, against the grain of 27's other recipes: it changes
+# nothing on the box, and a dry run of "send a test alert" tells you nothing
+# that running it would not. The only effect is a notification.
+cmd_alert_test() {
+    login
+
+    if ! api read '{"type":"ListAlerters","params":{}}' |
+        jq -e 'any(.[]; .info.enabled)' >/dev/null; then
+        echo "no enabled Alerter -- check komodo/alerters.toml reached the box" >&2
+        exit 1
+    fi
+
+    api read '{"type":"ListAlerters","params":{}}' |
+        jq -r '.[] | "  alerter " + .name + ": " + .info.endpoint_type +
+                     ", enabled=" + (.info.enabled | tostring)'
+
+    for id in $(api read '{"type":"ListAlerters","params":{}}' | jq -r '.[].id'); do
+        run "test alerter" "$(jq -n --arg i "$id" \
+            '{type:"TestAlerter",params:{alerter:$i}}')"
+    done
+}
+
 case "${1:-}" in
     bootstrap)
         shift
         cmd_bootstrap "$@"
         ;;
     reconcile) cmd_reconcile ;;
+    alert-test)
+        shift
+        cmd_alert_test "$@"
+        ;;
     redeploy)
         shift
         cmd_redeploy "$@"
@@ -208,6 +245,9 @@ usage: komodo.sh <command>
   reconcile             sync the resources, then run the reconcile Procedure,
                         rather than waiting for the poll. Ungated -- the cron
                         does this anyway.
+  alert-test            deliver a real notification through every enabled
+                        Alerter, by the same path a failed Procedure takes.
+                        Ungated -- it changes nothing.
   redeploy <stack>      destroy one Stack's containers and build them again,
                         for the deploy that left them broken with an unchanged
                         config hash. Dry run without --apply.

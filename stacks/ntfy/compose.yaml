@@ -1,9 +1,17 @@
 # Ticket 29. Where alerts land. Komodo's `failure_alert` and gatus both publish
 # here, and an Android client holds a direct WebSocket to it over the tailnet.
 #
-# No Caddy label, deliberately: the alert path must not traverse the thing it
-# reports on. A Caddy outage that silenced the alert about the Caddy outage is
-# the exact failure this Stack exists to catch [16, 29].
+# Two doors, and which one a client uses matters:
+#
+#   :8095 on the tailnet -- publishers, and the phone. The alert path must not
+#     traverse the thing it reports on: a subscription through Caddy dies with
+#     Caddy, so the alert about a Caddy outage would go nowhere [16, 29].
+#   https://ntfy.rbrb.in -- the browser, and nothing else. The web app's
+#     notifications need a secure context, which is a Notifications API rule
+#     rather than an ntfy one; the Android app has never needed it.
+#
+# **Do not point the phone at the hostname.** It is the one subscriber whose
+# delivery has to survive Caddy being the thing that broke.
 
 services:
   ntfy:
@@ -17,8 +25,14 @@ services:
     user: "${PUID}:${PGID}"
     environment:
       TZ: ${TZ}
-      # The address a subscriber actually uses, or notification links break.
-      NTFY_BASE_URL: http://100.126.56.26:8095
+      # Links generated inside notifications. Only one value is possible, and
+      # the hostname is the one that works from a browser on either network.
+      # The direct port keeps working regardless -- a client talks to the origin
+      # it was given, and base-url does not gate that.
+      NTFY_BASE_URL: https://ntfy.rbrb.in
+      # Trust Caddy's forwarded client address for rate limiting, since requests
+      # now arrive both ways.
+      NTFY_BEHIND_PROXY: "true"
       NTFY_LISTEN_HTTP: ":80"
       NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
       NTFY_CACHE_DURATION: 48h
@@ -39,6 +53,11 @@ services:
       - ${APPDATA}/ntfy:/var/cache/ntfy
     networks:
       - shared
+    labels:
+      # The browser door only. Publishers and the phone use the port above.
+      caddy: ntfy.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 80}}"
 
 networks:
   shared:
