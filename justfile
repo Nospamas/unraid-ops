@@ -30,8 +30,7 @@ secret stack:
     fi
     sops "$dir/secrets.sops.env"
 
-# Put Komodo on the box and this repo into Komodo -- pass --apply to commit.
-# Idempotent: the same command on a fresh box, and to apply a Komodo bump.
+# Put Komodo on the box and this repo into Komodo, idempotently -- pass --apply
 bootstrap *args:
     bash scripts/bootstrap.sh {{ args }}
 
