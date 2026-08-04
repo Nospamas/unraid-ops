@@ -12,9 +12,12 @@
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-# compose.env holds Core's LAN address, which is right when this runs on the
-# box. A laptop off that LAN overrides it in .mise.toml.
-host="${KOMODO_HOST:-$(sed -n 's/^KOMODO_HOST=//p' "$root/bootstrap/compose.env")}"
+# Deliberately NOT compose.env's KOMODO_HOST, which is Core's public identity
+# for links and webhooks and is now a *.rbrb.in name (ticket 29). Dialling that
+# would put Caddy and DNS in front of the tooling that repairs them -- and the
+# box cannot resolve rbrb.in at all (ticket 32), so a run there would just fail.
+# localhost is right on the box; a laptop overrides in .mise.toml.
+host="${KOMODO_HOST:-http://localhost:9120}"
 jwt=""
 
 login() {

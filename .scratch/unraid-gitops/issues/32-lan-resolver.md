@@ -69,5 +69,14 @@ remains the answer for roaming.
   is arguably a separate promise this map never made explicitly — and ruling it
   out of scope is a legitimate answer, though the human has asked for it.
 
+### What is already betting on this
+
+[29](29-alerting-on-failed-reconcile.md) set `KOMODO_HOST=https://komodo.rbrb.in`
+so that alert links resolve correctly on both sides of the split rather than
+being hardcoded to one. **Half of that bet is currently unpaid**: on rb's LAN
+the link does not resolve, and will not until this ticket lands. It works from
+the tailnet today, which is where alerts are read, so this is a reason to
+resolve 32 rather than to revert 29.
+
 Not a lockout risk on its own, but the first option touches DNS for rb's whole
 household. **State the rollback before changing what the router hands out.**

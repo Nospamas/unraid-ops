@@ -371,6 +371,14 @@ Three reasons qualify. `just lint` checks only that one is stated:
 Nothing else. A host port for a browser is the rule being broken, not a fourth
 reason.
 
+**A service's advertised identity is not the address tooling dials** [29].
+`KOMODO_HOST` is the hostname, because it ends up in alert links and generated
+webhook URLs that a human follows — and split-horizon then resolves it correctly
+from the tailnet *and* from rb's LAN, which no hardcoded address can do.
+[scripts/komodo.sh](../scripts/komodo.sh) dials `localhost:9120` instead, so the
+tooling that repairs Caddy and DNS never depends on either. Conflating the two
+is what put a dead `192.168.1.195` link in every notification.
+
 CoreDNS binds a full explicit address, because it must not answer on the LAN [05]
 — and `ntfy` follows it for the same reason, at `100.126.56.26:8095`:
 
