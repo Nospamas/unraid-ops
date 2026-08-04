@@ -350,6 +350,16 @@ markdown.
   [adding-a-service.md](../../docs/adding-a-service.md). 6881 is gone: rb's
   router forwards it no more than it forwards 30024.
 
+- [26 — Decide how much of the box's host state git owns](issues/26-host-state-scope.md)
+  — **ports only, and the ticket was asking the wrong question.** Every flash
+  candidate was tested on the box and every one failed; the one that passes —
+  `192.168.1.195` — is a **DHCP lease in rb's router**, so git cannot have it.
+  The fix is to stop addressing the box by IP, which is now the **Addressing**
+  rule in [docs/conventions.md](../../docs/conventions.md), enforced by
+  `x-host-port`. Three host ports qualify and no more, the third being new: *the
+  tooling that repairs Caddy must not sit behind Caddy* — so `komodo.rbrb.in`
+  and `unraid.rbrb.in` are served **and** keep `:9120` and `:8008`.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -381,6 +391,12 @@ markdown.
   precisely because nothing is published. A forwarded port would break that
   coupling. Note there is **no resolver of ours on rb's network to change** —
   only pihole on the home network, which is a different question.
+  [26](issues/26-host-state-scope.md) found the sharper edge: `192.168.1.195` is
+  a **DHCP lease**, not configuration, and after 30 that Cloudflare record is the
+  last thing betting on it. A moved lease breaks `rbrb.in` **on rb's network
+  only** — the tailnet resolves via CoreDNS and is untouched — and one Cloudflare
+  edit repairs it. A reservation on rb's router is the mitigation and is a
+  hand-off, not a ticket.
 - **Home-network devices that are not on the tailnet.** They have no route to
   tower at all, and no DNS answer can give them one — it would take a subnet
   router, which [05](issues/05-remote-access.md) declined on shadowed-route
@@ -394,6 +410,13 @@ the *arr host ports to [30](issues/30-arr-urls-on-shared.md).)*
 - **Decommissioning or migrating `~/home-ops`.** Different site, stays as it is.
 - **Unraid array, share and disk configuration.** This map governs containers and
   their config, not the storage layer underneath.
+- **The box's host state beyond the GUI's ports**
+  ([26](issues/26-host-state-scope.md)). `network.cfg`, `docker.cfg`, `plugins/`,
+  the licence and the password files were each tested against "would losing this
+  break the stack or the rebuild" and each failed. `bootstrap/host/ident.cfg`
+  stays a snapshot of which only Management Access is ever applied. Ruled out on
+  evidence, not on sharpness — do not reopen without a candidate that passes
+  that test.
 - **Hardlinked imports, and the single `/media` mount that would enable them**
   ([09](issues/09-unify-uid-gid.md)). Out on capability, not sharpness: the
   destination does not need them, and on six XFS disks under shfs they cannot
