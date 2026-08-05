@@ -20,31 +20,14 @@ services:
       VPN_TYPE: wireguard
       SERVER_COUNTRIES: United States
       SERVER_CITIES: Seattle
-      # Pinned to one server on purpose: the trackers we use bind a session to
-      # the exit IP, so this may not float across Seattle (ticket 06). The pin
-      # must therefore be replaced by hand when NordVPN retires the server --
-      # which is what happened to us8240.nordvpn.com on 2026-08-04, and it fails
-      # silently, wireguard dialling a dead endpoint with only the healthcheck's
-      # DNS timeouts to show for it.
-      #
-      # Replacing it: the server must be P2P (`legacy_p2p` in NordVPN's API)
-      # and must exist in gluetun's list. UPDATER_PERIOD below keeps that list
-      # current, so any live Seattle P2P server is a valid pin. Without it
-      # gluetun falls back to a bundle stamped March 2024 -- not a stale image,
-      # v3.41.3 is current -- which can only name pre-2024 hardware (ticket 06).
+      # One server, by hand: the trackers bind to the exit IP, and a
+      # replacement must be P2P and in gluetun's list (ticket 06).
       SERVER_HOSTNAMES: us13886.nordvpn.com
-      # Refreshes servers.json from NordVPN's API. It cannot rescue a pin that
-      # is already dead: it never runs at startup, and it needs the tunnel up to
-      # reach the API. What it buys is the next retirement failing loudly --
-      # with the list current, gluetun refuses an unknown hostname rather than
-      # dialling a corpse in silence, which is how us8240 cost 34 hours.
+      # Keeps servers.json current so a retired pin fails loudly at startup
+      # instead of dialling a dead endpoint in silence (ticket 06).
       UPDATER_PERIOD: 24h
-      # Default is 127.0.0.1:9999, reachable only by the container's own
-      # HEALTHCHECK. Widened so gatus can probe it from the host. This is the
-      # check that dials cloudflare.com:443 and github.com:443 *through the
-      # tunnel* -- 200 healthy, 500 with the reason -- so it is the one probe
-      # that sees a dead tunnel. qbittorrent's WebUI cannot: it is served inside
-      # the namespace and answered 200 for all 34 hours of the us8240 outage.
+      # Widened off its 127.0.0.1 default so gatus can probe the one check
+      # that dials through the tunnel (ticket 06).
       HEALTH_SERVER_ADDRESS: 0.0.0.0:9999
       # FIREWALL_OUTBOUND_SUBNETS is deliberately unset -- empty is gluetun's
       # default and it is the kill switch. What this replaces carried
@@ -61,20 +44,14 @@ services:
     # still address qbittorrent here rather than at gluetun:30024 on `shared`,
     # and that URL lives in their appdata. This key and the port go together.
     x-host-port: |
-      30024 the four *arr, until [30] repoints them at gluetun on `shared`;
-      30025 and 30026 gatus, which is host-networked and cannot see into this
-      namespace any other way. Both are bound to 127.0.0.1 -- neither the LAN
-      nor the tailnet reaches them, and 30026 carries mutating routes.
+      30024 the four *arr until [30] repoints them; 30025 and 30026 gatus,
+      which is host-networked and cannot see into this namespace otherwise.
     ports:
       # 6881, the torrent port, is not published: peers arrive through the
       # tunnel, and rb's router forwards nothing to it (ticket 24).
       - "30024:30024"
-      # Loopback only, and deliberately so. Anything that reaches the control
-      # server can stop the tunnel (PUT /v1/vpn/status) -- never on `shared`.
-      #
-      # Host side is 3002x, not 9999/8000: PortainerCE still holds host 8000
-      # until [25] retires it, and a collision here fails the whole Stack, not
-      # just the probe. Container ports stay gluetun's defaults.
+      # Loopback only -- 30026 can stop the tunnel -- and 3002x rather than
+      # 9999/8000 because PortainerCE holds host 8000 until [25].
       - "127.0.0.1:30025:9999"
       - "127.0.0.1:30026:8000"
     networks:
@@ -93,6 +70,11 @@ services:
     # and no label of its own. `service:`, not `container:`, cannot cross
     # compose projects -- which is why these two are one Stack (ticket 07).
     network_mode: service:gluetun
+    # Without this qbittorrent starts before tun0 exists and binds eth0
+    # instead, never re-binding (ticket 06).
+    depends_on:
+      gluetun:
+        condition: service_healthy
     environment:
       PUID: ${PUID}
       PGID: ${PGID}

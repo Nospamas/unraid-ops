@@ -139,24 +139,19 @@ endpoints:
       ignore-redirect: true
     # The one probe that would catch [06]'s hazard: recreating gluetun alone
     # leaves qbittorrent in a dead namespace with no route and no error.
-    #
-    # It does *not* see a dead tunnel. This WebUI is served from inside the
-    # namespace, so it answered 200 for all 34 hours of the us8240 outage while
-    # nothing egressed. The two vpn- probes below are what cover that.
+    # It does not see a dead tunnel -- served inside the namespace, it answered
+    # 200 throughout the us8240 outage -- which is what the vpn- probes cover.
     conditions:
       - '[STATUS] == 200'
     alerts:
       - type: ntfy
 
-  # Both reach gluetun on 127.0.0.1 because this Stack is host-networked and the
-  # tunnel's namespace is otherwise invisible to it. stacks/download/compose.yaml
-  # publishes them on loopback for exactly these two probes [06].
+  # On 127.0.0.1 because this Stack is host-networked and the tunnel's
+  # namespace is otherwise invisible to it [06].
   - name: vpn-tunnel
     group: infrastructure
-    # gluetun's own healthcheck, which dials cloudflare.com:443 and
-    # github.com:443 through the tunnel: 200 healthy, 500 carrying the reason.
-    # This is the check that failed 19,656 times during the us8240 outage with
-    # nothing listening. It is the general-connectivity probe.
+    # gluetun's own healthcheck, which dials out through the tunnel -- the
+    # general-connectivity probe.
     url: http://127.0.0.1:30025/
     interval: 60s
     conditions:
@@ -166,19 +161,25 @@ endpoints:
 
   - name: vpn-exit-ip
     group: infrastructure
-    # The trackers bind a session to this address [06], so a change is an
-    # outage even while traffic flows. The literal below is the commitment --
-    # when the pin legitimately moves, this line moves with it in the same
-    # commit, and re-authorising the trackers is the human half.
-    #
-    # gluetun refreshes this on connection, not on a timer, so it catches a
-    # reconnect landing elsewhere. A silent renumber of a live server is the
-    # gap, and vpn-tunnel does not cover it either.
+    # The trackers bind to this address, so a change is an outage even while
+    # traffic flows; move the literal with the pin (ticket 06).
     url: http://127.0.0.1:30026/v1/publicip/ip
     interval: 60s
     conditions:
       - '[STATUS] == 200'
       - '[BODY].public_ip == 187.15.91.66'
+    alerts:
+      - type: ntfy
+
+  - name: qbittorrent-bound-to-tunnel
+    group: infrastructure
+    # Reads empty when libtorrent is bound to eth0 rather than tun0, which
+    # gluetun destroys on every VPN restart (ticket 06).
+    url: http://127.0.0.1:30024/api/v2/transfer/info
+    interval: 60s
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].last_external_address_v4 == 187.15.91.66'
     alerts:
       - type: ntfy
 

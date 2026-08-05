@@ -251,3 +251,52 @@ would harden it further and is not done.
 
 When the pin legitimately moves, the literal in `stacks/gatus/conf/config.yaml`
 moves in the same commit, and re-authorising the trackers is the human half.
+
+## qbittorrent must bind `tun0` by name — added 2026-08-05
+
+**`tun0` does not survive a VPN restart.** gluetun creates the link with
+`LinkAdd` and tears it down through an explicit ladder —
+`internal/wireguard/cleanup.go`, `stepFour` shuts the link down and `stepFive`
+removes it — run from a `defer` on every VPN stop. `HEALTH_RESTART_VPN` triggers
+that on any health failure, so the interface is destroyed and recreated
+routinely: 19,656 times during the us8240 outage alone. This ticket previously
+recorded that auto-heal restarts the VPN *process* and the namespace survives,
+which is true and was read as reassuring. It is not: the namespace survives, the
+interface does not.
+
+**Anything bound to `10.5.0.2` dies with it and libtorrent does not re-bind.**
+Observed after the us13886 redeploy: qbittorrent was listening on `127.0.0.1`,
+`172.20.0.10` and `::1` but not on the tunnel, having enumerated interfaces
+before `tun0` existed. The visible symptom is the WebUI showing no external IP,
+because libtorrent learns its address from peers and trackers rather than
+computing it. The real cost is larger — libtorrent ties outgoing peer
+connections to a listen socket, so with only an `eth0` socket peer traffic
+sources off-tunnel and the kill switch drops it. **The leech-only posture above
+is therefore not the whole reason seeding sees no traffic**; a mis-bound
+listener is indistinguishable from it at the UI, and the human reports having
+had traffic through previously.
+
+**The fix is the interface *name*, set in qbittorrent, not an address.** With
+`Session\Interface=tun0` libtorrent reopens its listen socket whenever the
+interface reappears, covering both first start and every VPN restart with no
+orchestration. It also drops the `lo`/`eth0`/`::1` sockets entirely — verified,
+only `10.5.0.2:6881` remains — so peer traffic cannot source off-tunnel at all.
+This is a service setting in appdata, so it is a hand edit no push can perform,
+in the same class as the four *arr download-client URLs above.
+
+Two supports in git rather than appdata: `depends_on: condition:
+service_healthy` on qbittorrent, so a deploy cannot start it before the tunnel
+carries traffic; and a `qbittorrent-bound-to-tunnel` gatus probe asserting
+`last_external_address_v4`, which reads empty precisely when the bind has
+failed.
+
+**Rejected: restarting qbittorrent whenever gluetun restarts.** It misses the
+common case — the container does not restart, only the VPN process does — and
+nothing here can restart a container anyway, since `dockerproxy` is `POST: 0` on
+an `--internal` network by [09]'s decision. An autoheal-style watcher would need
+write access to the docker socket, which is a privilege question and not worth
+opening for a problem the interface binding already solves.
+
+Still open: `reannounce_when_address_changed` is `false`, so after a tunnel flap
+the trackers are never told the address moved. Worth flipping given they are
+IP-sensitive; another appdata setting.
