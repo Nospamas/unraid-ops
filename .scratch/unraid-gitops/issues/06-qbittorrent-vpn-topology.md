@@ -121,3 +121,83 @@ The host publish of 30024 stays, LAN + tailnet only per
 [05](05-remote-access.md). Auth in front of the WebUI is untouched and remains
 fog. The stale `ghcr.io/bubuntux/nordvpn:get_private_key` image is needed by
 nothing — delete it with the other cruft when Portainer goes.
+
+## Addendum, 2026-08-05 — the server pin is load-bearing
+
+This ticket recorded `us8240.nordvpn.com` as inherited state and never said why a
+single server was named. **It is a constraint: the trackers in use bind a session
+to the exit IP, so the tunnel may not float across Seattle.** The exit IP is a
+property of the server and holds for as long as the server does, so a hostname
+pin is what buys it. Stated by the human after `us8240` failed, and written down
+here because nothing in the repo carried it — the obvious repair at the time,
+dropping the pin so gluetun picks any Seattle server, would have quietly cost the
+thing the pin existed to protect.
+
+NordVPN decommissioned `us8240` on 2026-08-04 and the stack ran dead for 34 hours
+before anyone noticed. Two properties of that failure are worth keeping:
+
+- **It is silent.** WireGuard does not report a dead peer. gluetun kept dialling
+  the cached IP and the only symptom was the healthcheck's DNS timeouts, i.e. it
+  looks like a DNS fault and is not one.
+- **The kill switch held throughout.** Verified from inside the namespace:
+  qbittorrent had no outbound path for the whole window. A dead pin stalls
+  downloads, it does not leak them.
+
+**Replacing the pin has two conditions, and the second is not obvious.** The
+server must be P2P (`legacy_p2p` in NordVPN's API — the group is per-server, not
+per-city), *and* it must appear in gluetun's own bundled server list. Of 135 live
+Seattle P2P WireGuard servers, **65 exist in gluetun's list**, all with IPs still
+matching the API's. Pinned `us9983.nordvpn.com` (193.29.61.84) from that
+intersection. Avoid `212.102.4x` — `us8240`'s own block, being retired, though
+`us8275`–`us8281` still resolve.
+
+**The stale list is upstream, not ours, and no image bump fixes it.** v3.41.3 is
+the latest release and the box already runs it; the bundled NordVPN section is
+stamped **2024-03-21** while sibling providers were refreshed into 2026 (PIA
+2026-04, airvpn 2026-03) — NordVPN alone has been left behind. The
+`/gluetun/servers.json` in appdata is byte-identical to the image's bundle
+(md5 `45d678460a144e775753f03a8b5618ab`), so there is nothing local to clear
+either: gluetun merges the two and the bundle wins. Checked against the source,
+which has since moved from `qdm12/gluetun` to `passteque/gluetun` — the image
+stays digest-pinned regardless.
+
+**What that costs is hardware age, which is the same axis that just failed.**
+A bundle built 2024-03 can only name servers built before it, so the 65 pinnable
+ones are the 2022 cohort (55), 2020 (7) and 2021 (3). Every one of the 70 live
+servers it cannot name is newer: 2026 (50) and 2024 (20). The pin is therefore
+necessarily on ≤2022 hardware, and NordVPN is visibly retiring old cohorts —
+that is what `us8240` was.
+
+**Querying NordVPN for a replacement — two silent traps.** The list comes from
+`https://api.nordvpn.com/v1/servers`, undocumented but the same source gluetun's
+own updater uses. Filter server-side and pass `limit=0`:
+
+```
+curl -s "https://api.nordvpn.com/v1/servers" -G \
+  --data-urlencode "filters[servers_technologies][identifier]=wireguard_udp" \
+  --data-urlencode "filters[servers_groups][identifier]=legacy_p2p" \
+  --data-urlencode "limit=0"
+```
+
+`limit=<n>` **caps and does not say so** — `limit=8000` returns exactly 8000 of
+8580, so a server absent from that response is not thereby retired. And
+`filters[servers.hostname]` is **ignored, not rejected**: it returns a normal
+200 with unrelated servers, so checking one hostname that way reads as a
+confident wrong answer. Match hostnames client-side against the full set
+instead. Cross-check a retirement against DNS — a decommissioned host stops
+resolving, which is what confirmed `us8240` first.
+
+**`UPDATER_PERIOD` is the way off that, and it takes two steps, not one.** With
+it set, gluetun refreshes `servers.json` from NordVPN's live API (the updater
+ships in v3.41.3 at `internal/provider/nordvpn/updater`) and persists it to
+appdata. It cannot be done in a single move: the updater only runs once the
+tunnel is up, and the tunnel needs a pin gluetun can already resolve. So —
+pin a ≤2022 server first, let the refresh land, *then* repin onto the 2026
+cohort. Not taken here; restoring service came first.
+
+Two follow-ups this leaves open, neither taken here: nothing probes the tunnel,
+which is why 34 hours passed unnoticed ([29](29-alerting-on-failed-reconcile.md)
+owns the alerting path); and gluetun's `UPDATER_PERIOD` is unset, which is what
+makes a retired pin fail silently rather than loudly — with the list fresh,
+gluetun would refuse to start on an unknown hostname instead of dialling a
+corpse. Both are judgement calls about noise, not defects.

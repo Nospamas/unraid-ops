@@ -20,7 +20,25 @@ services:
       VPN_TYPE: wireguard
       SERVER_COUNTRIES: United States
       SERVER_CITIES: Seattle
-      SERVER_HOSTNAMES: us8240.nordvpn.com
+      # Pinned to one server on purpose: the trackers we use bind a session to
+      # the exit IP, so this may not float across Seattle (ticket 06). The pin
+      # must therefore be replaced by hand when NordVPN retires the server --
+      # which is what happened to us8240.nordvpn.com on 2026-08-04, and it fails
+      # silently, wireguard dialling a dead endpoint with only the healthcheck's
+      # DNS timeouts to show for it.
+      #
+      # Replacing it: the server must be P2P (`legacy_p2p` in NordVPN's API),
+      # and it must exist in gluetun's own bundled list, which is stamped
+      # March 2024 upstream -- not a stale image, v3.41.3 is current. That
+      # bundle can only name pre-2024 hardware, so this pin is on a 2022-cohort
+      # server; UPDATER_PERIOD is the way onto newer ones (ticket 06).
+      SERVER_HOSTNAMES: us9983.nordvpn.com
+      # 5m is a bootstrap window, not the resting value -- it becomes 24h in the
+      # commit that repins onto the 2026 cohort. The updater never runs at
+      # startup (it blocks until the first tick), and it needs the tunnel up to
+      # reach NordVPN's API, so the fresh list can only be earned by connecting
+      # on a server the stale bundle already knows. Hence two steps (ticket 06).
+      UPDATER_PERIOD: 5m
       # FIREWALL_OUTBOUND_SUBNETS is deliberately unset -- empty is gluetun's
       # default and it is the kill switch. What this replaces carried
       # FIREWALL_OUTBOUND_SUBNET=0.0.0.0/0 and FIREWALL_VPN_INPUT_ALLOW=
