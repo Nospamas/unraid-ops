@@ -193,7 +193,21 @@ ships in v3.41.3 at `internal/provider/nordvpn/updater`) and persists it to
 appdata. It cannot be done in a single move: the updater only runs once the
 tunnel is up, and the tunnel needs a pin gluetun can already resolve. So —
 pin a ≤2022 server first, let the refresh land, *then* repin onto the 2026
-cohort. Not taken here; restoring service came first.
+cohort.
+
+**Both steps ran on 2026-08-05.** `us9983` restored service at 12:41 and the
+first updater tick landed at 12:46, rewriting `servers.json` from 11548 entries
+stamped 2024-03-21 to 17105 stamped that afternoon — Seattle WireGuard went 114
+→ 185, matching the live API exactly. Repinned onto `us13886.nordvpn.com`
+(187.15.91.11, provisioned 2026-07-29) and dropped the period to 24h. `us8240`
+is now absent from gluetun's own list, which is the point: with the list
+current a retired pin makes gluetun refuse an unknown hostname at startup
+instead of silently dialling a corpse.
+
+Exit IPs, since trackers bind to them: `94.140.8.185` (us8240, dead) →
+`157.97.134.176` (us9983, transitional) → whatever `us13886` resolves to. The
+entry IP in the logs is never the exit IP — do not read the `wireguard
+Connecting to ...` line as the address a tracker sees.
 
 Two follow-ups this leaves open, neither taken here: nothing probes the tunnel,
 which is why 34 hours passed unnoticed ([29](29-alerting-on-failed-reconcile.md)
