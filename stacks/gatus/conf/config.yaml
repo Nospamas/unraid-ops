@@ -157,7 +157,7 @@ endpoints:
     # github.com:443 through the tunnel: 200 healthy, 500 carrying the reason.
     # This is the check that failed 19,656 times during the us8240 outage with
     # nothing listening. It is the general-connectivity probe.
-    url: http://127.0.0.1:9999/
+    url: http://127.0.0.1:30025/
     interval: 60s
     conditions:
       - '[STATUS] == 200'
@@ -174,7 +174,7 @@ endpoints:
     # gluetun refreshes this on connection, not on a timer, so it catches a
     # reconnect landing elsewhere. A silent renumber of a live server is the
     # gap, and vpn-tunnel does not cover it either.
-    url: http://127.0.0.1:8000/v1/publicip/ip
+    url: http://127.0.0.1:30026/v1/publicip/ip
     interval: 60s
     conditions:
       - '[STATUS] == 200'
