@@ -39,6 +39,13 @@ services:
       # with the list current, gluetun refuses an unknown hostname rather than
       # dialling a corpse in silence, which is how us8240 cost 34 hours.
       UPDATER_PERIOD: 24h
+      # Default is 127.0.0.1:9999, reachable only by the container's own
+      # HEALTHCHECK. Widened so gatus can probe it from the host. This is the
+      # check that dials cloudflare.com:443 and github.com:443 *through the
+      # tunnel* -- 200 healthy, 500 with the reason -- so it is the one probe
+      # that sees a dead tunnel. qbittorrent's WebUI cannot: it is served inside
+      # the namespace and answered 200 for all 34 hours of the us8240 outage.
+      HEALTH_SERVER_ADDRESS: 0.0.0.0:9999
       # FIREWALL_OUTBOUND_SUBNETS is deliberately unset -- empty is gluetun's
       # default and it is the kill switch. What this replaces carried
       # FIREWALL_OUTBOUND_SUBNET=0.0.0.0/0 and FIREWALL_VPN_INPUT_ALLOW=
@@ -53,11 +60,19 @@ services:
     # Breaks the rule knowingly, and ticket 30 is the repair: the four *arr
     # still address qbittorrent here rather than at gluetun:30024 on `shared`,
     # and that URL lives in their appdata. This key and the port go together.
-    x-host-port: the four *arr, until [30] repoints them at gluetun on `shared`
+    x-host-port: |
+      30024 the four *arr, until [30] repoints them at gluetun on `shared`;
+      9999 and 8000 gatus, which is host-networked and cannot see into this
+      namespace any other way. Both are bound to 127.0.0.1 -- neither the LAN
+      nor the tailnet reaches them, and 8000 carries mutating routes.
     ports:
       # 6881, the torrent port, is not published: peers arrive through the
       # tunnel, and rb's router forwards nothing to it (ticket 24).
       - "30024:30024"
+      # Loopback only, and deliberately so. Anything that reaches 8000 can stop
+      # the tunnel (PUT /v1/vpn/status), which is why it is not on `shared`.
+      - "127.0.0.1:9999:9999"
+      - "127.0.0.1:8000:8000"
     networks:
       - shared
     labels:

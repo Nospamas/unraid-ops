@@ -205,13 +205,49 @@ current a retired pin makes gluetun refuse an unknown hostname at startup
 instead of silently dialling a corpse.
 
 Exit IPs, since trackers bind to them: `94.140.8.185` (us8240, dead) →
-`157.97.134.176` (us9983, transitional) → whatever `us13886` resolves to. The
-entry IP in the logs is never the exit IP — do not read the `wireguard
-Connecting to ...` line as the address a tracker sees.
+`157.97.134.176` (us9983, transitional) → **`187.15.91.66`** (us13886). The
+entry IP in the logs is never the exit IP — `us13886` dials `187.15.91.11` and
+exits `187.15.91.66`, close enough to authorise the wrong one.
 
-Two follow-ups this leaves open, neither taken here: nothing probes the tunnel,
-which is why 34 hours passed unnoticed ([29](29-alerting-on-failed-reconcile.md)
-owns the alerting path); and gluetun's `UPDATER_PERIOD` is unset, which is what
-makes a retired pin fail silently rather than loudly — with the list fresh,
-gluetun would refuse to start on an unknown hostname instead of dialling a
-corpse. Both are judgement calls about noise, not defects.
+## What the pin does and does not buy
+
+**It fixes the server, provably.** The filters resolve to exactly one entry in
+gluetun's list, and the outage is the proof that a pin never drifts: gluetun
+redialled the dead `us8240` 19,656 times across 34 hours and never once chose
+another server.
+
+**It does not fix the exit IP.** `us13886` is a `Standard VPN servers` box —
+shared, and its exit is a NAT address the server happens to hold. Six
+consecutive samples returned `187.15.91.66` with no pool behaviour, so it is
+stable in practice, but NordVPN sells **Dedicated IP** as a separate product
+(`legacy_dedicated_ip`, 1527 servers, 50 in Seattle) precisely because standard
+exits carry no guarantee. If the address ever has to be contractual rather than
+merely reliable, that add-on is the answer and this pin is not.
+
+## Monitoring, added 2026-08-05
+
+The 34 hours were possible because nothing watched the tunnel — and the gatus
+probe on `qbittorrent` never would have, since that WebUI is served inside the
+namespace and answered 200 throughout. Two probes now cover it, both reaching
+gluetun on loopback because gatus is host-networked and the namespace is
+otherwise invisible to it:
+
+- **`vpn-tunnel`** — gluetun's own health server, widened off its
+  `127.0.0.1:9999` default by `HEALTH_SERVER_ADDRESS`. It dials
+  `cloudflare.com:443` and `github.com:443` *through the tunnel*, so it is the
+  general-connectivity check, and it is the exact check that failed 19,656
+  times with nobody listening. Widening the bind is safe: gluetun's own
+  `HealthCheck` CLI reads only the port and always dials `127.0.0.1`.
+- **`vpn-exit-ip`** — the control server's `/v1/publicip/ip`, asserting the
+  literal `187.15.91.66`. gluetun refreshes that value on connection rather
+  than on a timer, so it catches a reconnect landing on a different exit. A
+  silent renumber of a still-live server is the remaining gap, and `vpn-tunnel`
+  does not cover it either.
+
+Both ports are published to `127.0.0.1` only. 8000 especially: it carries
+mutating routes — `PUT /v1/vpn/status` stops the tunnel — so it must never
+reach the LAN or `shared`. gluetun's route-level auth (`/gluetun/auth/config.toml`)
+would harden it further and is not done.
+
+When the pin legitimately moves, the literal in `stacks/gatus/conf/config.yaml`
+moves in the same commit, and re-authorising the trackers is the human half.
