@@ -3,6 +3,7 @@
 Type: task
 Status: open
 Blocked by: —
+Claimed by: Claude session, 2026-08-06
 
 ## Question
 
