@@ -14,6 +14,7 @@ touches: [stacks/caddy/conf/Caddyfile]
 # 37 — Point the bare domain at homepage
 
 Blocked by: —
+Claimed by: Claude session, 2026-08-06
 
 ## Question
 
