@@ -1,0 +1,31 @@
+# Ticket 36. New service. Addresses the *arr as http://sonarr:8989 and
+# http://radarr:7878 -- container names on `shared`.
+#
+# The media binds mirror sonarr's and radarr's exactly, so bazarr sees every
+# file at the path the *arr report it under and no path mapping is needed. They
+# are not a copy of the *arr's list: no /downloads, because bazarr works the
+# library, not the grab.
+
+services:
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:v1.6.0-ls357@sha256:e464484e7e6cff8ee189036c9ba96977ab054104ea18067ecf6171d0f3f3f8f2
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/bazarr:/config
+      - ${MEDIA}/tv:/tv
+      - ${MEDIA}/movies:/movies
+    networks:
+      - shared
+    labels:
+      caddy: bazarr.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 6767}}"
+
+networks:
+  shared:
+    external: true

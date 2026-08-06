@@ -28,5 +28,5 @@ executions = [
   # gluetun/qbittorrent pair unattended (ticket 06). Extend as each migrates.
   # ntfy precedes gatus deliberately: gatus publishes to it, and the Caddy
   # entry for status.rbrb.in is useless until gatus is up (ticket 29).
-  { execution.type = "BatchDeployStackIfChanged", execution.params.pattern = "dockerproxy, homepage, caddy, coredns, sonarr, radarr, prowlarr, lazylibrarian, calibre, plex, download, ntfy, gatus, tautulli" },
+  { execution.type = "BatchDeployStackIfChanged", execution.params.pattern = "dockerproxy, homepage, caddy, coredns, sonarr, radarr, prowlarr, lazylibrarian, calibre, plex, download, ntfy, gatus, tautulli, bazarr" },
 ]
