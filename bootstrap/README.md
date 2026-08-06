@@ -27,11 +27,9 @@ alias dc='docker run --rm \
   --entrypoint docker ghcr.io/moghtech/komodo-periphery:2.3.1 compose -p komodo'
 ```
 
-Portainer is the fallback — it embeds compose too, and it is still on the box
-until [ticket 02](../.scratch/unraid-gitops/issues/02-choose-reconcile-mechanism.md)
-retires it. Paste `compose.yaml` into a web-editor stack and supply the env vars
-in its UI. Prefer the alias above: it keeps Komodo's secrets out of Portainer's
-database, and it still works after Portainer is gone.
+There is no fallback. Portainer used to be one, and
+[25](../.scratch/unraid-gitops/issues/25-retire-portainer.md) removed it — the
+alias above is the whole story, and it wants only SSH.
 
 ## Order
 

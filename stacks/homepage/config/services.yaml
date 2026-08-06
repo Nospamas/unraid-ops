@@ -3,10 +3,6 @@
 # http://<service>:<port> across the shared network -- docs/conventions.md,
 # 'Addressing' (ticket 26).
 #
-# {{HOMEPAGE_VAR_HOST}} is the box's LAN address and has one reader left,
-# Portainer, which has no hostname because it is not a Stack and is being
-# removed. Both go together in ticket 25; do not give it a second reader.
-#
 # `container:` reads state through the dockerproxy Stack, not the socket, and
 # names the compose *container* -- Komodo runs each Stack as its own project,
 # so a migrated service is <stack>-<service>-1.
@@ -114,9 +110,3 @@
         icon: unraid.svg
         href: https://unraid.rbrb.in
         description: The box itself
-    - Portainer:
-        icon: portainer.svg
-        href: http://{{HOMEPAGE_VAR_HOST}}:9000
-        description: Being retired — second lifeline until SSH proves itself
-        server: tower
-        container: PortainerCE

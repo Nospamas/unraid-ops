@@ -11,8 +11,6 @@ services:
       TZ: ${TZ}
       # Required since v1.0. Homepage rejects any Host header not listed here.
       HOMEPAGE_ALLOWED_HOSTS: home.rbrb.in
-      # Nothing else is on the shared network yet; see config/services.yaml.
-      HOMEPAGE_VAR_HOST: 192.168.1.195
     env_file:
       # Written by pre_deploy. Absent on a laptop, where `just lint` runs.
       - path: secrets.env

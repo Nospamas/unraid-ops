@@ -50,8 +50,9 @@ services:
       # 6881, the torrent port, is not published: peers arrive through the
       # tunnel, and rb's router forwards nothing to it (ticket 24).
       #
-      # Loopback only -- 30026 can stop the tunnel -- and 3002x rather than
-      # 9999/8000 because PortainerCE holds host 8000 until [25].
+      # Loopback only -- 30026 can stop the tunnel. 3002x rather than 9999/8000
+      # because PortainerCE held host 8000; [25] freed it, and these stay
+      # because a contiguous block reads better than the ports it dodged.
       - "127.0.0.1:30024:30024"
       - "127.0.0.1:30025:9999"
       - "127.0.0.1:30026:8000"
