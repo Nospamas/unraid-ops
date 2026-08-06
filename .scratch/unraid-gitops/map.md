@@ -54,6 +54,10 @@ discussion.
 
 <!-- one line per closed ticket — the ticket holds the detail -->
 
+- [25 — Retire Portainer](issues/25-retire-portainer.md) — gone entirely, appdata
+  included: the rollback it was held for was already dead, and the WireGuard key
+  now has exactly one plaintext copy on the box, the one the Stack needs.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.**
