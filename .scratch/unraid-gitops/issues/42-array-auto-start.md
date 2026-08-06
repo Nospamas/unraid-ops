@@ -68,7 +68,16 @@ Whichever wins, apply it to the **class**, not just this key — the answer deci
 what happens the next time a box setting matters, and stating it once is the
 point.
 
+## The checkbox is done (2026-08-05)
+
+Set through the GUI with the array running; nothing restarted. `disk.cfg` and
+emhttpd's `var.ini` both read `startArray="yes"` — they **agree**, which is the
+evidence a file edit could not have produced.
+
+So the outage is fixed and what remains is only the recording decision above. Do
+not reopen the box side; open the question of whether a rebuilt flash gets this
+back.
+
 ## Hand-offs
 
-The checkbox above. It cannot be done from this repo without teaching `host.sh`
-to talk to emhttpd about disk settings, which is one of the options being decided.
+None left.
