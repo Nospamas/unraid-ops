@@ -3,6 +3,7 @@
 Type: grilling
 Status: open
 Blocked by: —
+Claimed by: Claude session, 2026-08-05
 
 ## Question
 
