@@ -63,16 +63,23 @@ discussion.
   closed that `wont-fix`, so the question's three-way choice was moot, and rb
   declined the one route left: a converter that invents the watch durations plex
   never recorded.
+- [36 — Add bazarr](issues/36-add-bazarr.md) — bazarr runs from git, media binds
+  mirroring the *arr's, and ships inert as intended. The routine held: its one
+  decision was the probe endpoint, and `/` failed 35's test — it is a 200 only
+  while bazarr's UI auth is off. `/api/system/ping` is the API's one keyless
+  route and does not move.
 
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.**
   [CONTEXT.md](../../CONTEXT.md) draws the line at appdata and makes homepage the
   sole exception. Both new services keep their tuning — language profiles,
-  scoring, provider lists — in a SQLite database a rebuild loses. Tautulli is
-  now on the box and splits it: a text `config.ini` beside `tautulli.db`, and
-  only the first is the shape homepage's exception was carved for [35]. Sharp
-  only once there is tuning worth losing.
+  scoring, provider lists — in a SQLite database a rebuild loses. Both are now on
+  the box and both split it the same way: a text config beside a `.db`,
+  `config.ini`/`tautulli.db` [35] and `config/config.yaml`/`db/bazarr.db` [36],
+  and only the text half is the shape homepage's exception was carved for. Sharp
+  once there is tuning worth losing — bazarr has none today and will the moment
+  rb sets its language profiles.
 - **Whether `home.rbrb.in` retires in favour of the apex.**
   [37](issues/37-bare-domain-to-homepage.md) makes the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb
