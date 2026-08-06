@@ -257,10 +257,15 @@ endpoints:
   # That third row is why it earns its place: it stops a DERP or WAN blip on
   # this side reading as "home-ops is down".
   #
+  # Same group as the two above, so the status page reads as one site. That
+  # costs the table nothing: a group is display only, and what separates this
+  # from the tailnet probes is its own alert below -- its own threshold and its
+  # own wording, fired independently of theirs.
+  #
   # Longer again than the tailnet probes -- two more third parties in the path,
   # each with legitimate reasons to blip that are nobody's fault. 2m x 10.
   - name: home-ops via cloudflare
-    group: home-ops-external
+    group: home-ops
     url: https://status.xgy.im/health
     interval: 2m
     client:
