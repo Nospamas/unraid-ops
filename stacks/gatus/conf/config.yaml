@@ -148,6 +148,24 @@ endpoints:
     alerts:
       - type: ntfy
 
+  - name: bazarr
+    group: services
+    # Not `/`, for tautulli's reason [35]: bazarr's root is a 200 only while its
+    # UI auth is off, and that switch lives in appdata. `/api/system/ping` is the
+    # one API route that takes no key -- 200 either side of the setting -- while
+    # /api/system/status next to it answers 401. `/health` and `/ping` look like
+    # candidates and are not: both fall through to the SPA catch-all, so they
+    # answer 200 with the app's HTML shell whatever the backend is doing.
+    url: https://bazarr.rbrb.in/api/system/ping
+    interval: 60s
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].status == OK'
+    alerts:
+      - type: ntfy
+
   - name: qbittorrent
     group: services
     url: https://qbittorrent.rbrb.in/
