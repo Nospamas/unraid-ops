@@ -1,7 +1,9 @@
 # 30 — Move the *arr's in-app URLs onto `shared`, and drop the host ports
 
 Type: task
-Status: open
+Status: closed
+Assignee: Nospamas
+Resolved: 2026-08-05
 Blocked by: 24
 
 ## Question
@@ -50,3 +52,43 @@ Two things 24 hands over:
   the same pass that drops the port, leaving `172.20.0.0/16` and — decide —
   whether `192.168.1.0/24` is still earning its place once nothing on the LAN
   addresses qbittorrent directly.
+
+## Resolution (2026-08-05)
+
+Every in-app URL is a container name. `just lint` counts four Services with a
+host port, down from eight.
+
+**Two of this ticket's premises were wrong, and both were `x-host-port` prose
+written by the ticket that opened the port:**
+
+- **lazylibrarian's `5299` had a reader.** Prowlarr carries *three* Application
+  rows, not two — LazyLibrarian among them. "No reader at all" was false.
+- **`30024`'s second reader is gatus**, not an *arr: it probes
+  `http://127.0.0.1:30024/api/v2/transfer/info`, the one check that catches
+  [06](06-qbittorrent-vpn-topology.md)'s hazard. Deleting the port on that key's
+  word would have taken the probe with it. **It narrows to `127.0.0.1` instead**
+  — the prize was LAN reachability, not the publish.
+
+Neither entry was wrong when written. **Check who dials the port, not what the
+key claims** — handed to [31](31-plex-own-internet-exposure.md).
+
+**`syncLevel: fullSync` did most of the work**: one `prowlarrUrl` edit plus an
+`ApplicationIndexerSync` rewrote every downstream Torznab URL, lazylibrarian's
+`config.ini` included. Only three edits were not prowlarr's — sonarr's and
+radarr's download client `host`, and lazylibrarian's `qbittorrent_host`, which
+needed a stop/edit/start because it rewrites `config.ini` on exit.
+
+**Verified against a baseline taken first**: searches return the same counts (7
+sonarr, 3 radarr), all tests 200. Lazylibrarian proved both legs unprompted in
+its log — searched via prowlarr, pushed a torrent to qbittorrent at the new
+address, removed it. The only `192.168.1.195` left in appdata is in its logs.
+
+**`AuthSubnetWhitelist` is `172.20.0.0/16` alone.** `172.18.0.0/16` was 24's
+rollback subnet — one line, held in `qBittorrent.conf.bak-30`, unlike Portainer
+itself ([25](25-retire-portainer.md)). `192.168.1.0/24` admitted nothing: Caddy
+is host-networked, so a LAN browser arrives from `172.20.0.1`. Gatus and
+homepage's credential-free widget both re-verified after. **The auth fog is
+narrowed, not closed.**
+
+Not caused here: qbittorrent holds **10** torrents against 24's 23. `BT_backup`
+agrees, and both *arr have `removeCompletedDownloads=true`.

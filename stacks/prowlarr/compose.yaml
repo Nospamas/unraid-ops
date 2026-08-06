@@ -12,12 +12,6 @@ services:
     volumes:
       # Indexer proxy only -- no media binds, as found.
       - ${APPDATA}/prowlarr:/config
-    # Breaks the rule knowingly; ticket 30 is the repair. The indexer URLs
-    # prowlarr writes into sonarr and radarr point back here, and they live in
-    # sonarr's and radarr's appdata. This key and the port go together.
-    x-host-port: sonarr and radarr, until [30] repoints them at prowlarr on `shared`
-    ports:
-      - "9696:9696"
     networks:
       - shared
     labels:

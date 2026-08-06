@@ -409,6 +409,14 @@ markdown.
   `-C resolv.conf`), so the box still resolves nothing and must be handed
   CoreDNS. Corrected [05](issues/05-remote-access.md) on the record.
 
+- [30 — Move the *arr's in-app URLs onto `shared`, and drop the host ports](issues/30-arr-urls-on-shared.md)
+  — **every in-app URL is a container name, and `just lint` counts four host
+  ports where it counted eight.** Two `x-host-port` values were false, each
+  written by the ticket that opened the port: `5299` had a reader after all, and
+  `30024`'s is **gatus**, so it narrowed to loopback rather than going. **Check
+  who dials the port, not what the key claims.** `AuthSubnetWhitelist` is
+  `172.20.0.0/16` alone.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -436,6 +444,8 @@ markdown.
   everything the `(internal)` guard admits. Deliberate, and only sound while that
   guard is — and [32](issues/32-lan-resolver.md) is what makes the guard's LAN
   half something real devices exercise rather than a theoretical admission.
+  [30](issues/30-arr-urls-on-shared.md) made the guard the *only* admission,
+  which narrows who that is without changing the shape.
 - **What a moved DHCP lease costs.** [26](issues/26-host-state-scope.md) found
   that `192.168.1.195` is a lease, not configuration, and after 30 the Cloudflare
   record is the last thing betting on it. [32](issues/32-lan-resolver.md) made

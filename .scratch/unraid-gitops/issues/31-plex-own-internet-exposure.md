@@ -51,3 +51,16 @@ What has to be decided:
   than quietly relying on plex being the exception.
 
 Not a lockout risk: nothing here touches 80/443, the GUI, or tailscale.
+
+## Added by [30](30-arr-urls-on-shared.md)
+
+**Evidence for the third bullet.** 30 found *two* false `x-host-port` values —
+both written by the ticket that opened the port, both true then. Acting on one
+would have silently deleted [06](06-qbittorrent-vpn-topology.md)'s
+tunnel-binding probe. So the comment convention is not the weaker version of the
+check; it is the thing that decayed. Weigh a check that can **find** the reader
+against one that asserts a sentence exists.
+
+30 also narrows the surface: **plex's `32400` is now the only host port a LAN
+browser could hit.** CoreDNS and ntfy bind explicit addresses, gatus and Komodo
+are the Caddy-repair carve-out, and `30024` went to loopback.

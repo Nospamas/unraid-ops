@@ -13,12 +13,6 @@ services:
       - ${APPDATA}/sonarr:/config
       - ${MEDIA}/tv:/tv
       - ${MEDIA}/downloads:/downloads
-    # Breaks the rule knowingly; ticket 30 is the repair. Prowlarr addresses
-    # sonarr here, and that URL lives in prowlarr's appdata, not in this file.
-    # This key and the port go together.
-    x-host-port: prowlarr, until [30] repoints it at sonarr on `shared`
-    ports:
-      - "8989:8989"
     networks:
       - shared
     labels:

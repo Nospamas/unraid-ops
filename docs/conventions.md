@@ -383,6 +383,11 @@ Three reasons qualify. `just lint` checks only that one is stated:
 Nothing else. A host port for a browser is the rule being broken, not a fourth
 reason.
 
+**Bind `127.0.0.1` when every reader is on the box** [30]. Both binds pass the
+same lint, so a LAN-reachable port is a claim that something on the LAN reads
+it. If the answer is nobody, narrow the bind rather than deleting the port —
+gatus is host-networked, which is why the download Stack's `30024` stayed.
+
 **A service's advertised identity is not the address tooling dials** [29].
 `KOMODO_HOST` is the hostname, because it ends up in alert links and generated
 webhook URLs that a human follows — and split-horizon then resolves it correctly

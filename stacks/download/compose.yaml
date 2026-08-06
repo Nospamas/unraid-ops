@@ -40,18 +40,19 @@ services:
         required: false
     volumes:
       - ${APPDATA}/gluetun:/gluetun
-    # Breaks the rule knowingly, and ticket 30 is the repair: the four *arr
-    # still address qbittorrent here rather than at gluetun:30024 on `shared`,
-    # and that URL lives in their appdata. This key and the port go together.
+    # All three are gatus, which is host-networked and cannot see into this
+    # namespace otherwise. 30024 stopped being LAN-open at [30], when the four
+    # *arr moved to gluetun:30024 on `shared`.
     x-host-port: |
-      30024 the four *arr until [30] repoints them; 30025 and 30026 gatus,
-      which is host-networked and cannot see into this namespace otherwise.
+      gatus: 30024 the tunnel-binding probe, 30025 gluetun's health server,
+      30026 its control server.
     ports:
       # 6881, the torrent port, is not published: peers arrive through the
       # tunnel, and rb's router forwards nothing to it (ticket 24).
-      - "30024:30024"
+      #
       # Loopback only -- 30026 can stop the tunnel -- and 3002x rather than
       # 9999/8000 because PortainerCE holds host 8000 until [25].
+      - "127.0.0.1:30024:30024"
       - "127.0.0.1:30025:9999"
       - "127.0.0.1:30026:8000"
     networks:
