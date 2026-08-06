@@ -51,6 +51,15 @@ scoped". That over-priced it. Cloudflare's public `*.rbrb.in` → `192.168.1.195
 *tailnet* half needs overriding. So this costs **one resolver container serving
 one domain**, not a DNS overhaul — and no router or DHCP change whatsoever.
 
+> **Corrected by [32](32-lan-resolver.md).** The last clause was false and
+> untested. The public record is the LAN view only for a device that can *hear*
+> it, and rb's router at `192.168.1.254` strips every answer in
+> `192.168.0.0/16` — so no device using it resolved any `rbrb.in` name for the
+> life of this map. Every verification came from the tailnet, which routes
+> around that router. It did take a DHCP change: the router now hands out
+> `1.1.1.1, 8.8.8.8`. The rest of this section stands — the tailnet half is
+> still the only one CoreDNS serves.
+
 The subnet-router option was put and **declined**. It would have kept a single
 answer everywhere, but it depends on the remote network not also being
 `192.168.1.0/24` — an extremely common home and hotel range — and a shadowed

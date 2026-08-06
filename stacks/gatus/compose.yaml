@@ -19,9 +19,10 @@ services:
     # Not a linuxserver image; see the note in stacks/ntfy/compose.yaml.
     user: "${PUID}:${PGID}"
     # The box cannot resolve its own hostnames. tower's resolver is rb's router,
-    # which applies DNS rebind protection and returns an empty answer for every
-    # `rbrb.in` name because the public record is 192.168.1.195 -- a private
-    # address. `example.com` resolves there fine; `sonarr.rbrb.in` does not.
+    # whose forwarder strips answers in its own 192.168.0.0/16 range and returns
+    # an empty one for every `rbrb.in` name. It is not rebind protection: 10/8,
+    # 172.16/12 and 127/8 all pass [32]. rb's other LAN devices are pointed at
+    # public resolvers and are fine; tower keeps the router by `network.cfg`.
     #
     # So point gatus at CoreDNS, which answers 100.126.56.26 for every name.
     # Docker accepts --dns alongside host networking, verified on the box.

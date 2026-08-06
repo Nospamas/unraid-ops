@@ -1,7 +1,7 @@
 # 32 — Decide how rb's LAN resolves `rbrb.in`
 
 Type: grilling
-Status: open
+Status: closed
 
 ## Question
 
@@ -37,6 +37,75 @@ The human has stated the requirement: **non-tower devices must resolve via the
 `192.168.1.254` route.** So "use the tailnet" is not an answer here, though it
 remains the answer for roaming.
 
+## Resolution (2026-08-05)
+
+**One router field, and no repo change.** DHCP Settings → DNS server =
+`1.1.1.1, 8.8.8.8` on the NH20T, applied by rb. Devices ask past the router
+instead of through it, so 04's public record finally *is* the LAN view. CoreDNS
+stays exactly as [17](17-deploy-coredns.md) built it, tower never becomes rb's
+resolver, and the single point of failure every option below traded against
+never gets created.
+
+It works because **the router does not intercept outbound port 53** — only its
+own forwarder strips the answer. Measured from tower on rb's LAN, 2026-08-04
+and re-measured 2026-08-05:
+
+| name | via `192.168.1.254` | via `1.1.1.1` / `8.8.8.8` |
+|---|---|---|
+| `192-168-1-1.nip.io` | empty | 192.168.1.1 |
+| `sonarr.rbrb.in` | empty | **192.168.1.195** |
+| `example.com` | resolves | resolves |
+
+**The LAN path is verified end to end**, not just the DNS half: resolved at
+`192.168.1.195`, `https://sonarr.rbrb.in` and `https://komodo.rbrb.in` both
+answer **200**, so the `(internal)` guard admits a LAN source and
+[29](29-alerting-on-failed-reconcile.md)'s unpaid half — `KOMODO_HOST` links
+that did not resolve on rb's LAN — is paid.
+
+Cost: the router's `lan` domain stops resolving for every device, since none of
+them ask the router any more. mDNS discovery is unaffected. Rollback is
+restoring `192.168.1.254` in the same field, bounded by DHCP lease renewal, and
+no worse than today's state meanwhile.
+
+**tower is exempt by construction, and stays exempt.** `network.cfg` carries
+`DHCP_KEEPRESOLV="yes"` and `DNS_SERVER1="192.168.1.254"`, and `rc.inet1` starts
+dhcpcd with `-C resolv.conf`, so the box ignores the DHCP DNS option entirely —
+`/etc/resolv.conf` still reads `nameserver 192.168.1.254` and **the box still
+resolves no `rbrb.in` name**. That is a standing property rather than a
+leftover: anything running on the box that needs one must be handed CoreDNS
+explicitly, as gatus is. Now a rule in
+[docs/conventions.md](../../../docs/conventions.md), Addressing.
+
+**Not verified here**: the DNS option the router actually offers. tower is the
+only LAN device this session can reach and it ignores that option by
+construction, so confirmation is one lookup on a non-tower LAN device.
+
+### The other questions
+
+- **Which mechanism.** None of the three. Each moved the *answer*; this moves
+  *who is asked*, which none of them considered. Conditional forwarding was
+  ruled out on 2026-08-04 (fixed DNS Set dropdown), and the rebind-toggle
+  option was never needed — it is not rebind protection.
+- **Whether CoreDNS should serve rb's LAN.** **No.** 17's answer-one-domain,
+  REFUSE-the-rest design stands untouched. Box down means no `rbrb.in` on rb's
+  LAN, never no internet.
+- **What [05](05-remote-access.md) should have said.** Corrected on 05 and in
+  the map's two-networks table: rb's router is not merely "none of ours", it
+  strips `192.168.0.0/16` answers, so the public record was never the LAN view
+  while devices asked that router.
+- **Whether this changes the destination.** No. In scope, and delivered.
+
+### Do not probe DHCP from tower
+
+`dhcpcd -T eth0` **segfaulted** — eth0 is enslaved to `br0`, which holds the
+real lease — and left three orphan proxies whose kill took `/var/db/dhcpcd/`
+with it. Directory recreated; br0 kept its address, route, gateway and WAN
+throughout, and `192.168.1.195` is a reservation, so a renewal returns the same
+address. The offered DNS option is not readable from the box anyway: dhcpcd runs
+`-q -C resolv.conf` and logs nothing about it.
+
+The options below are kept for the record; all are now moot.
+
 ### What has to be decided
 
 - **Which mechanism.** Three are known, and they trade differently:
@@ -47,10 +116,30 @@ remains the answer for roaming.
   | the router's static-hostname table, if it has one | no single point of failure, no CoreDNS change. A row per service, no wildcard, and it is host state git cannot own [26](26-host-state-scope.md). |
   | per-device DNS override | no SPOF. Manual per device, and no help for a TV, printer or guest. |
 
-  The router is the newer TELUS gateway, not the Actiontec T3200M — generic
-  nginx login page, model not identified. Whether it exposes a static-hostname
-  table is **unknown and must be checked before this is decided**; it changes
-  which options are live.
+  The router is the newer TELUS gateway, not the Actiontec T3200M:
+  **Technicolor NH20T**, software `20.3.i.0565.7`. Whether it exposes a
+  static-hostname table is **unknown and must be checked before this is
+  decided**; it changes which options are live. Public material puts DNS in the
+  gateway's DHCP widget rather than a separate WAN DNS page, and says nothing
+  about static hostnames.
+
+  **Conditional forwarding looked live and is not.** *WAN services → DNS &
+  DynDNS → DNS rules* is a Domain/DNS Set table, but DNS Set is a fixed
+  dropdown — `default`, `wan`, `wan6`, `wwan`, `lanwan`, `loopback_managed` —
+  with no field for an arbitrary server. A rule can only steer a domain between
+  the ISP's own resolvers, never at CoreDNS. Ruled out 2026-08-04.
+
+  One thread left: *Local Network → DNS* shows the `lan` interface with **no
+  dns server** while `lanwan` is selectable. If the LAN interface can be given
+  a DNS server, `rbrb.in` → `lanwan` revives the approach. Unverified, and a
+  long shot.
+
+  A fourth option opens if the NH20T has a **rebind or DNS-security toggle**:
+  disabling it makes the existing public record correct on rb's LAN with no
+  repo change and no single point of failure. Check this before the other three.
+
+  `192.168.1.195` is now a **DHCP reservation**, so every option below has a
+  stable address to bet on.
 
 - **Whether CoreDNS should serve rb's LAN at all.** This is the real question
   behind the first. [17](17-deploy-coredns.md) built a resolver that answers

@@ -342,6 +342,18 @@ by container name on `shared` [26]. **Neither is ever the box's address.**
 `192.168.1.195` is a DHCP lease, so an in-app URL pointing at it is a setting
 with an expiry date, and it lives in appdata where git cannot fix it [30].
 
+**The box resolves no `rbrb.in` name, and a container on it inherits that** [32].
+rb's LAN reaches these hostnames because the router hands out public resolvers,
+but tower keeps `192.168.1.254` — whose forwarder strips every `192.168/16`
+answer — by `DHCP_KEEPRESOLV` in its own `network.cfg`. So a container that must
+resolve one takes CoreDNS explicitly, and every other address in that Stack must
+then be a literal IP, because CoreDNS REFUSEs everything outside `rbrb.in` [17]:
+
+```yaml
+dns:
+  - 100.126.56.26
+```
+
 A host port is for traffic that is neither, and the Service must say which with
 `x-host-port` — checked by `check-exposure.sh`, which fails a `ports:` block
 without one:

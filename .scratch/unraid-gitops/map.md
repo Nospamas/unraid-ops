@@ -33,7 +33,7 @@ thing will get it wrong:
 |---|---|---|
 | holds | `tower`, `192.168.1.0/24` | the human, this clone, `~/home-ops` |
 | addressing | `192.168.1.0/24` | **`192.168.0.0/16`**, local domain `xgy.im`, IPv6 ULA present |
-| resolver | `192.168.1.254`, rb's router — **none of ours, and it strips `192.168/16` answers** ([32](issues/32-lan-resolver.md)) | **pihole** at `192.168.2.254`, and we can change it |
+| resolver | **`1.1.1.1` / `8.8.8.8`, handed out by rb's router** ([32](issues/32-lan-resolver.md)) — the router's own forwarder strips `192.168/16` answers, so devices are pointed past it. **tower excepted: still `192.168.1.254`** | **pihole** at `192.168.2.254`, and we can change it |
 | means "LAN" in tickets | yes, and in the `(internal)` guard | no |
 
 **Separate physical networks, joined only over the internet by tailscale.**
@@ -55,17 +55,20 @@ So [04](issues/04-reverse-proxy-and-domain.md)'s public
 `*.rbrb.in` → `192.168.1.195` is the correct answer **only on rb's network**.
 Everywhere else that record is unroutable, which
 [17](issues/17-deploy-coredns.md) and [18](issues/18-tailnet-split-dns.md) — both
-now closed — fix. **Split-horizon is delivered on the tailnet, and has never
-worked on rb's LAN.**
+now closed — fix. **Split-horizon is delivered on both halves**, the LAN one
+only since [32](issues/32-lan-resolver.md).
 
 The "conveniently, no resolver to configure" claim this map carried until
-[29](issues/29-alerting-on-failed-reconcile.md) was **false, and untested**.
-rb's router strips answers in `192.168.0.0/16` and returns `NOERROR` with no
-answer, so nothing using it resolves any `rbrb.in` name. It is not rebind
-protection in the usual sense — `10/8`, `172.16/12` and `127/8` all pass; only
-its own LAN range is filtered. Every verification this map ever ran came from
-the tailnet, where `--accept-dns` routes around the router entirely. **This is
-[32](issues/32-lan-resolver.md).**
+[29](issues/29-alerting-on-failed-reconcile.md) was **false, and untested** —
+rb's router returns `NOERROR` with no answer for its own LAN range, so nothing
+using it resolved any `rbrb.in` name, and every verification this map ran came
+from the tailnet where `--accept-dns` routes around it.
+[32](issues/32-lan-resolver.md) fixed it by pointing devices *past* the router
+rather than changing what answers: DHCP hands out public resolvers, CoreDNS is
+untouched, and the box never became rb's resolver. **tower is the one device
+still asking `192.168.1.254`**, by its own `network.cfg`, so **the box resolves
+no `rbrb.in` name** and anything on it that needs one takes CoreDNS explicitly —
+the rule is in [docs/conventions.md](../../docs/conventions.md).
 
 **Pihole is a real option, reopened, and ruled against on the record.** It could
 answer `rbrb.in` → `100.126.56.26` for the whole home network in one edit, and
@@ -395,6 +398,17 @@ markdown.
   gatus following redirects into a 200. **Box-down is not closed** and now
   depends on home-ops.
 
+- [32 — Decide how rb's LAN resolves `rbrb.in`](issues/32-lan-resolver.md)
+  — **one router field, no repo change**: DHCP hands out `1.1.1.1, 8.8.8.8`, so
+  devices ask *past* the router and 04's public record finally is the LAN view.
+  The router never intercepted port 53 — only its own forwarder strips
+  `192.168/16` — so all three known options, each of which would have made the
+  box rb's resolver, are moot and 17's REFUSE-everything CoreDNS stands. Verified
+  end to end: `sonarr` and `komodo` answer **200** on the LAN path, paying 29's
+  unpaid half. **tower is exempt by construction** (`DHCP_KEEPRESOLV`,
+  `-C resolv.conf`), so the box still resolves nothing and must be handed
+  CoreDNS. Corrected [05](issues/05-remote-access.md) on the record.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -420,15 +434,16 @@ markdown.
   qbittorrent is the sharpest case: [24](issues/24-migrate-download-stack.md)
   left its API unauthenticated to everything on `shared` and, through Caddy, to
   everything the `(internal)` guard admits. Deliberate, and only sound while that
-  guard is.
+  guard is — and [32](issues/32-lan-resolver.md) is what makes the guard's LAN
+  half something real devices exercise rather than a theoretical admission.
 - **What a moved DHCP lease costs.** [26](issues/26-host-state-scope.md) found
   that `192.168.1.195` is a lease, not configuration, and after 30 the Cloudflare
-  record is the last thing betting on it. This shrank when
-  [29](issues/29-alerting-on-failed-reconcile.md) showed rb's router never served
-  that record anyway: a moved lease breaks nothing that currently works, and the
-  tailnet resolves via CoreDNS regardless. A reservation on rb's router is still
-  the mitigation, and still a hand-off rather than a ticket — but see
-  [32](issues/32-lan-resolver.md), which may make the lease matter again.
+  record is the last thing betting on it. [32](issues/32-lan-resolver.md) made
+  the bet live again — rb's LAN now follows that record — and settled the
+  mitigation in the same move: the address is a **DHCP reservation**. What is
+  left is that the reservation and the Cloudflare record are two pieces of
+  off-git state that have to move together, and only a human can move either.
+  Sharp if the box is ever re-addressed; not a ticket before then.
 - **Home-network devices that are not on the tailnet.** They have no route to
   tower at all, and no DNS answer can give them one — it would take a subnet
   router, which [05](issues/05-remote-access.md) declined on shadowed-route
