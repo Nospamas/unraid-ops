@@ -1,0 +1,14 @@
+[[stack]]
+name = "tautulli"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/tautulli"
+project_name = "tautulli"
+additional_env_files = ["../../common.env"]
+
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+"""

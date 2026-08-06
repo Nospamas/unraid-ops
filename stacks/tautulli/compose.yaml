@@ -1,0 +1,25 @@
+# Ticket 35. New service. Reads plex at http://plex:32400 -- a container name on
+# `shared`, not the box's address. Its plex token is not a Stack secret: the
+# first-run wizard writes it into appdata, which is where service settings live.
+
+services:
+  tautulli:
+    image: lscr.io/linuxserver/tautulli:v2.17.2-ls238@sha256:f0c3e7228c84ad0539f9d5aa9f56c79ef19f6c8d0ad61199d803d32a7b0e080b
+    restart: unless-stopped
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      UMASK: ${UMASK}
+      TZ: ${TZ}
+    volumes:
+      - ${APPDATA}/tautulli:/config
+    networks:
+      - shared
+    labels:
+      caddy: tautulli.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 8181}}"
+
+networks:
+  shared:
+    external: true
