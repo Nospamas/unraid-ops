@@ -240,3 +240,36 @@ Also found: Renovate's bootstrap instructions told a human to `git pull` in
 `/mnt/user/appdata/komodo/bootstrap`, which is a hand-copied snapshot and not a
 repository. Corrected to copy from a Stack clone, every one of which is a full
 clone of the repo.
+
+### Box-down is closed, 2026-08-06
+
+home-ops landed its half and handed tower a brief. Both halves now exist: three
+probes in `stacks/gatus/conf/config.yaml` — home-ops's ntfy and gatus over the
+tailnet, and the same gatus again through Cloudflare — alerting to **tower's**
+ntfy, with no cross-site credential in either direction. The Renovate carve-out
+this ticket added for `stacks/ntfy/**` and `stacks/gatus/**` retired with it, on
+the condition it was written with.
+
+**The hand-off's premise about names was wrong, and it is this repo's fault
+rather than home-ops's.** tower runs `--accept-dns=false`, so MagicDNS resolves
+nowhere on the box, and gatus is pinned to CoreDNS alone [32], which REFUSEs
+every name outside `rbrb.in` [17]. All three targets were REFUSED. Connectivity
+was never the issue — every endpoint answered 200 by address on the first try,
+and the suspected tailnet ACL was fine.
+
+Fixed in the Corefile with two narrow zones, `gute-morpho.ts.net` →
+`100.100.100.100` and `xgy.im` → `1.1.1.1`, rather than a blanket forward:
+`.` must keep answering REFUSED, because an `rbrb.in` name reaching a public
+resolver gets `192.168.1.195` — the LAN path, where the *arr skip auth and
+answer 200 where these probes assert 302.
+
+Rejected: literal IPs, the convention everywhere else in that Stack. These
+devices are Tailscale Kubernetes operator devices and are recreated with fresh
+addresses, and `status.xgy.im` is Cloudflare anycast, which cannot be an
+address at all.
+
+Two of the brief's steps could not run as written, worth knowing before the next
+hand-off: the gatus image is distroless, so `docker exec … wget` has no shell to
+find, and the ICMP probe it suggested is impossible — `net.ipv4.ping_group_range`
+is `1 0`, an empty range, so gatus at 99:100 cannot open a ping socket. Dropped
+rather than widened; it was redundant with the two HTTP probes.

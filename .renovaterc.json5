@@ -68,17 +68,10 @@
       ],
       automerge: false,
     },
-    {
-      // Nothing on tower watches the watcher. Until home-ops probes tower from
-      // off-box (ticket 29's hand-off), a bad bump here fails silently and
-      // takes every other alert with it.
-      description: "ntfy, gatus — human merge until home-ops watches tower",
-      matchFileNames: [
-        "stacks/ntfy/**",
-        "stacks/gatus/**",
-      ],
-      automerge: false,
-    },
+    // ntfy and gatus were human-merge because nothing on tower watched the
+    // watcher. Retired as ticket 29 said it would be: home-ops now probes both
+    // from off-box, so a bad bump here is seen by something that does not share
+    // their failure.
 
     // --- Bootstrap (ticket 12) ----------------------------------------------
     // Komodo cannot deploy itself, so bootstrap has no komodo.toml and nothing

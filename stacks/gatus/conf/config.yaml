@@ -205,6 +205,85 @@ endpoints:
     alerts:
       - type: ntfy
 
+  # Ticket 29's box-down half, mirroring what home-ops already runs against
+  # tower. Each site alerts to its **own** ntfy and only ever *reads* the
+  # other's, so there is no cross-site credential here and must never be one --
+  # an alert about home-ops being down would otherwise be published to the
+  # server that is down.
+  #
+  # Longer thresholds than everything above: these cross the open internet,
+  # where a transient WAN blip is not home-ops dying. 2m x 5 (~10 min) matches
+  # what home-ops uses probing tower.
+  #
+  # Names, not literal IPs, unlike every other non-rbrb.in address in this file
+  # -- these devices are created by the Tailscale Kubernetes operator and are
+  # recreated with fresh addresses. The Corefile forwards the zone for them.
+  - name: home-ops ntfy
+    group: home-ops
+    # HTTP on port 80, not HTTPS -- nothing listens on 443. Deliberate on that
+    # side: tailscale is the trust boundary and there is no auth.
+    url: http://ntfy.gute-morpho.ts.net/v1/health
+    interval: 2m
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].healthy == true'
+    alerts: &home-ops-alert
+      - type: ntfy
+        failure-threshold: 5
+        success-threshold: 3
+        send-on-resolved: true
+
+  - name: home-ops gatus
+    group: home-ops
+    url: http://home-ops-gatus.gute-morpho.ts.net/health
+    interval: 2m
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].status == UP'
+    alerts: *home-ops-alert
+
+  # The same gatus as above, reached the long way round -- Cloudflare, the
+  # Tunnel, envoy. Deliberately a *different question*, and the pair localises
+  # the fault in a way neither does alone:
+  #
+  #   both fail          home-ops or its WAN link is down
+  #   this alone fails   the cluster is fine; Cloudflare or the Tunnel is broken
+  #   this alone passes  home-ops is fine; *tower's* tailnet path is broken
+  #
+  # That third row is why it earns its place: it stops a DERP or WAN blip on
+  # this side reading as "home-ops is down".
+  #
+  # Longer again than the tailnet probes -- two more third parties in the path,
+  # each with legitimate reasons to blip that are nobody's fault. 2m x 10.
+  - name: home-ops via cloudflare
+    group: home-ops-external
+    url: https://status.xgy.im/health
+    interval: 2m
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].status == UP'
+    alerts:
+      - type: ntfy
+        # Worded away from "home-ops is down" on purpose: the tailnet probes
+        # answer that question, and these two need different responses.
+        description: home-ops is not reachable from the internet -- suspect Cloudflare or the Tunnel, not the cluster
+        failure-threshold: 10
+        success-threshold: 3
+        send-on-resolved: true
+
+  # No ICMP probe, though the hand-off suggested one -- home-ops cannot do it in
+  # its direction and tower can, in principle, since tailscale runs on the host.
+  # It does not: `net.ipv4.ping_group_range` is `1 0` on this box, an empty
+  # range, so 99:100 cannot open an unprivileged ICMP socket. Widening it is
+  # host state for one redundant signal [26]; the two probes above already fail
+  # together if the path is down.
+
   - name: coredns
     group: infrastructure
     # The only end-to-end test of the split horizon [17, 18]. Asking CoreDNS

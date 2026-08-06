@@ -15,6 +15,31 @@ rbrb.in {
     log
 }
 
+# Ticket 29's cross-site half. gatus is pinned to this resolver and nothing
+# else, so a name it cannot answer is a probe that cannot exist -- and the three
+# home-ops targets are the first addresses in that Stack that are not literals.
+#
+# Two narrow zones rather than a blanket forward: the REFUSED default below is
+# what makes a misconfiguration loud, and forwarding `.` would also let an
+# rbrb.in name fall through to a public resolver, which answers 192.168.1.195 --
+# the LAN path, where the *arr skip auth and answer 200 where the probes assert
+# 302 [29, 32].
+#
+# tower runs --accept-dns=false (`CorpDNS: false`), so MagicDNS resolves nowhere
+# on this box unless 100.100.100.100 is asked by address. CoreDNS is on the
+# `shared` bridge and reaches it fine; verified before this was written.
+gute-morpho.ts.net {
+    forward . 100.100.100.100
+    errors
+}
+
+# status.xgy.im only -- home-ops's gatus reached the long way round, through
+# Cloudflare and the Tunnel. Public names have no other route in from here.
+xgy.im {
+    forward . 1.1.1.1
+    errors
+}
+
 . {
     # Tailscale Split DNS is restricted to rbrb.in, so no other name is ever
     # sent here -- each client keeps its own resolver for everything else.

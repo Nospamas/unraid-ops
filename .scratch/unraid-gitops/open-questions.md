@@ -70,19 +70,3 @@ printer, a guest — actually needs a service.
 
 *Raised by map 01.*
 
-## Knowing the box itself is gone
-
-ntfy and gatus both die with tower, so silence stays indistinguishable from
-health — self-hosting made this *worse* than a third party would have.
-[29](issues/29-alerting-on-failed-reconcile.md) settled the shape rather than
-leaving it fogged: **each site runs its own ntfy, alerts to its own, and probes
-the other**, needing no cross-site credential. tower's half is built and
-tailnet-reachable by construction.
-
-**Sharp when** `~/home-ops` has tailscale in the cluster and addresses to probe —
-that work happens in that repo, specified in
-[assets/29-home-ops-alerting-brief.md](assets/29-home-ops-alerting-brief.md).
-This repo's remaining piece is the mirror-image probes in
-`stacks/gatus/conf/config.yaml`, unwritable until then.
-
-*Raised by map 01.*
