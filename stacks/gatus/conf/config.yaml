@@ -131,6 +131,23 @@ endpoints:
     alerts:
       - type: ntfy
 
+  - name: tautulli
+    group: services
+    # The one probe not on `/`, deliberately [35]. Tautulli's root answers 303
+    # to /welcome until its setup wizard is done, then 200 or a 302 to
+    # /auth/login depending on whether a password is set -- a status that moves
+    # under a setting in appdata is not something to assert. `/status` is its
+    # healthcheck endpoint: unauthenticated, 200 either side of the wizard.
+    url: https://tautulli.rbrb.in/status
+    interval: 60s
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].result == success'
+    alerts:
+      - type: ntfy
+
   - name: qbittorrent
     group: services
     url: https://qbittorrent.rbrb.in/
