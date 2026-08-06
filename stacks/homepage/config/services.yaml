@@ -21,6 +21,18 @@
           url: http://plex:32400
           key: '{{HOMEPAGE_VAR_PLEX_TOKEN}}'
           enableNowPlaying: true
+    - Tautulli:
+        icon: tautulli.svg
+        href: https://tautulli.rbrb.in
+        description: Plex activity and history
+        server: tower
+        container: tautulli-tautulli-1
+        widget:
+          type: tautulli
+          url: http://tautulli:8181
+          key: '{{HOMEPAGE_VAR_TAUTULLI_KEY}}'
+          enableUser: true
+          showEpisodeNumber: true
     - Sonarr:
         icon: sonarr.svg
         href: https://sonarr.rbrb.in
@@ -43,6 +55,16 @@
           url: http://radarr:7878
           key: '{{HOMEPAGE_VAR_RADARR_KEY}}'
           enableQueue: true
+    - Bazarr:
+        icon: bazarr.svg
+        href: https://bazarr.rbrb.in
+        description: Subtitles
+        server: tower
+        container: bazarr-bazarr-1
+        widget:
+          type: bazarr
+          url: http://bazarr:6767
+          key: '{{HOMEPAGE_VAR_BAZARR_KEY}}'
     - Prowlarr:
         icon: prowlarr.svg
         href: https://prowlarr.rbrb.in
@@ -106,6 +128,37 @@
         description: What deploys everything here
         server: tower
         container: komodo-core
+    - Gatus:
+        icon: gatus.svg
+        # status.rbrb.in, not gatus.rbrb.in: gatus is host-networked, so it
+        # carries no discoverable caddy label and is served from the Caddyfile
+        # (ticket 29).
+        href: https://status.rbrb.in
+        description: Whether every probe passes
+        server: tower
+        container: gatus-gatus-1
+        widget:
+          type: gatus
+          # The one widget not on `shared` -- host networking means gatus has no
+          # container name to dial. host.docker.internal is docker's own name
+          # for the box, declared in compose; the box's LAN IP is a DHCP lease
+          # git cannot own (ticket 26).
+          url: http://host.docker.internal:8090
+    - ntfy:
+        icon: ntfy.svg
+        # The browser door. :8095 is the alert path for publishers and the
+        # phone, and must not be dialled through anything (ticket 29).
+        href: https://ntfy.rbrb.in
+        description: Where alerts land
+        server: tower
+        container: ntfy-ntfy-1
+        widget:
+          type: ntfy
+          url: http://ntfy:80
+          # The topic gatus and Komodo publish to.
+          topic: tower
+          # No credentials: no ntfy accounts exist, and the tailnet is the
+          # trust boundary (ticket 29).
     - Unraid:
         icon: unraid.svg
         href: https://unraid.rbrb.in

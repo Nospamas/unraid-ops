@@ -20,6 +20,11 @@ services:
       # HTTP 500 if it cannot write here.
       - ./config:/app/config
       - ${APPDATA}/homepage/logs:/app/config/logs
+    # Ticket 38, for the gatus widget alone. gatus is host-networked, so it has
+    # no name on `shared` to dial. Docker resolves this to the bridge gateway at
+    # create time -- unlike the subnet address, nothing here is a literal.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - shared
       - dockerproxy
