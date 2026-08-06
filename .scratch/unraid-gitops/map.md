@@ -81,6 +81,12 @@ discussion.
   outstanding: the Cloudflare A record the ticket expected to hand off was
   already there.
 
+- [38 — Close the homepage tile gaps](issues/38-homepage-tile-gaps.md) — all four
+  tiles are on the dashboard. Only gatus held a decision: it is host-networked,
+  so it has no name on `shared`, and it dials `host.docker.internal` — the box's
+  LAN IP is a DHCP lease git cannot own, and `status.rbrb.in` would be 403'd by
+  the guard for arriving from a bridge.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.**
@@ -91,7 +97,8 @@ discussion.
   `config.ini`/`tautulli.db` [35] and `config/config.yaml`/`db/bazarr.db` [36],
   and only the text half is the shape homepage's exception was carved for. Sharp
   once there is tuning worth losing — bazarr has none today and will the moment
-  rb sets its language profiles.
+  rb sets its language profiles. [38] adds a first concrete cost: homepage now
+  holds a sops copy of each service's API key, and a rebuild rotates both.
 - **Whether `home.rbrb.in` retires in favour of the apex.**
   [37](issues/37-bare-domain-to-homepage.md) made the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb

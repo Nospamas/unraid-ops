@@ -364,6 +364,13 @@ by container name on `shared` [26]. **Neither is ever the box's address.**
 `192.168.1.195` is a DHCP lease, so an in-app URL pointing at it is a setting
 with an expiry date, and it lives in appdata where git cannot fix it [30].
 
+**A host-networked service has no name to reach it by**, so a container that must
+dial one declares `extra_hosts: - "host.docker.internal:host-gateway"` and uses
+that [38]. Not the LAN IP, per above; not the bridge gateway's literal address,
+which is docker's default-pool allocation and moves when the network is
+recreated; and **not its `rbrb.in` hostname** — a request from a bridge reaches
+host-networked Caddy as `172.20.x.x` and the `internal` guard 403s it [29].
+
 **The box resolves no `rbrb.in` name, and a container on it inherits that** [32].
 rb's LAN reaches these hostnames because the router hands out public resolvers,
 but tower keeps `192.168.1.254` — whose forwarder strips every `192.168/16`
