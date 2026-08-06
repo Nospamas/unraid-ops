@@ -51,6 +51,13 @@ Unraid Web UI on **port 8008**, and there is no out-of-band console — a lockou
 is a multi-day outage. **State the rollback before any change touching port
 80/443, docker networking, or tailscale.**
 
+## Ending a session
+
+Most work here ends owing the human something only they can do. **Put those in
+their own block at the very end, one line each, starting with the verb and saying
+what stays broken until it is done** — never as a closing prose paragraph, which
+is how 13's Renovate config sat inert waiting on one click.
+
 ## Commands
 
 `mise install` once, then `just` to list the recipes. `just lint` is the gate

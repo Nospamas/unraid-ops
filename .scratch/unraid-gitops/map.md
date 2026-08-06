@@ -10,41 +10,28 @@ of the rules.
 
 ## Notes
 
+**How this tracker works** is [README.md](README.md) — what a map may hold, the
+issue frontmatter, and **claim a ticket before working it**, which matters
+because the frontier is wide and sessions run in parallel. Read it before editing
+this file.
+
 **The standing rules are not here.** [CLAUDE.md](../../CLAUDE.md) is auto-loaded
 and points at [CONTEXT.md](../../CONTEXT.md) for vocabulary,
 [docs/conventions.md](../../docs/conventions.md) for the rules and
 [docs/adding-a-service.md](../../docs/adding-a-service.md) for the routine. Read
-the section, not the file. This map indexes decisions; it does not restate them,
-and it does not become a fifth doc.
+the section, not the file.
 
 **Execution override**: this map carries execution, not just decisions. The
 destination is running services, not a spec.
 
-**Map 01 is archived** at [map-01-foundation.md](map-01-foundation.md), its
-destination reached. Until [33](issues/33-migrate-map-01-standing-content.md)
-closes it is still the fullest account of the two networks, box access and
-Komodo's quirks — read it rather than re-deriving them.
+**Map 01 is archived** at [map-01-foundation.md](map-01-foundation.md), in place
+rather than gutted ([33](issues/33-migrate-map-01-standing-content.md)) — so it
+is still the fullest account of the two networks, box access, and the questions
+this repo has ruled against. Read it rather than re-deriving them.
 
 **Questions that outlive a map** go to [open-questions.md](open-questions.md),
-stood up by [33](issues/33-migrate-map-01-standing-content.md). Fog belonging to
-a future effort is deferred there rather than carried into the next map's fog,
-where it would rot.
-
-**Issues carry frontmatter** — `id`, `title`, `type`, `status`, `description`,
-`touches` ([34](issues/34-issue-frontmatter.md)). `description` is the gist, so
-an issue can be triaged without opening it; `touches` inverts the index, so a
-path greps back to the ticket that explains it.
-
-**Claim a ticket before working it.** Sessions run in parallel — the frontier is
-six wide — and this tracker has no assignee field, so add one to the issue and
-**commit it first**, before any other work:
-
-```
-Claimed by: <session or human>, <date>
-```
-
-An open ticket with no `Claimed by:` line is unclaimed. Clear the line if the
-session ends without resolving it, or the ticket looks taken and is not.
+deferred rather than declined. Fog belonging to a future effort is parked there
+rather than carried into the next map's fog, where it would rot.
 
 **Skills**: `/grilling` and `/domain-modeling` for decisions, `/research` for AFK
 reading, `/prototype` where a rough artifact settles an argument faster than
@@ -54,6 +41,12 @@ discussion.
 
 <!-- one line per closed ticket — the ticket holds the detail -->
 
+- [33 — Migrate map 01's standing content, and stand up the open-questions
+  register](issues/33-migrate-map-01-standing-content.md) — **an archive is
+  cheaper than a migration**: map 01 stays readable, only the two things a
+  session would get wrong unprompted moved into the docs, and the four rules
+  about the tracker itself that had been squatting in map Notes now live in
+  [README.md](README.md).
 - [25 — Retire Portainer](issues/25-retire-portainer.md) — gone entirely, appdata
   included: the rollback it was held for was already dead, and the WireGuard key
   now has exactly one plaintext copy on the box, the one the Stack needs.

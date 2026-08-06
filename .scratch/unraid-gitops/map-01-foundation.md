@@ -1,13 +1,18 @@
 # Map 01: Unraid GitOps — the foundation
 
-> **Archived.** The destination below is reached. The live map is
-> [map.md](map.md); this file stays as the fullest account of the box's
-> networking, Komodo's quirks and the box-access rules until
-> [33](issues/33-migrate-map-01-standing-content.md) has moved what is vital
-> into [CLAUDE.md](../../CLAUDE.md), [CONTEXT.md](../../CONTEXT.md) and
-> [docs/conventions.md](../../docs/conventions.md). Its **Not yet specified**
-> section is being migrated to [open-questions.md](open-questions.md) by the
-> same ticket. Do not add to this file.
+> **Archived, and still read.** The destination below is reached; the live map is
+> [map.md](map.md). [33](issues/33-migrate-map-01-standing-content.md) settled
+> that this file is archived **in place rather than gutted**, so it remains the
+> fullest account of the two networks, the box's access rules, and the questions
+> this repo has ruled against — pihole, rotating the low-value secrets, the
+> repo's visibility. None of that was copied into the standing docs, because a
+> session only needs it when it is already reading about that ground.
+>
+> What did move: its **Not yet specified** section is now
+> [open-questions.md](open-questions.md), and two things that would have been got
+> wrong unprompted went to [docs/conventions.md](../../docs/conventions.md) (do
+> not verify a hostname from the tailnet) and [CLAUDE.md](../../CLAUDE.md)
+> (surface the hand-offs). Do not add to this file.
 
 ## Destination
 

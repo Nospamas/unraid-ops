@@ -366,6 +366,11 @@ dns:
   - 100.126.56.26
 ```
 
+**Verify a hostname from the LAN path, not from the tailnet** [32]. A node with
+`--accept-dns` resolves via CoreDNS and never asks rb's router, so an `rbrb.in`
+check run from `ubuntu-dev` passes whether the LAN half works or not. It did not
+work, and nothing had exercised it, for the whole of the foundation map.
+
 A host port is for traffic that is neither, and the Service must say which with
 `x-host-port` — checked by `check-exposure.sh`, which fails a `ports:` block
 without one:

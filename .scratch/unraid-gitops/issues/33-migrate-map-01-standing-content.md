@@ -1,9 +1,9 @@
 # 33 — Migrate map 01's standing content, and stand up the open-questions register
 
 Type: grilling
-Status: open
+Status: closed
 Blocked by: —
-Claimed by: Claude session, 2026-08-05
+Resolved: 2026-08-06
 
 ## Question
 
@@ -73,6 +73,93 @@ record: **destination, notes that are pointers rather than content, a one-line
 index of closed tickets, fog, and scope boundaries — nothing else.** Where that
 rule belongs is itself part of the decision.
 
+## Resolution (2026-08-06)
+
+**The ticket asked the wrong question.** It assumed map 01's Notes had to be
+*relocated* before the file stopped being read. But nothing forces the file to
+stop being read — it is in the repo, it is linked from the live map, and an
+archive costs nothing until someone opens it. So the ruling is: **map 01 is
+archived in place, not gutted**, and the migration is only what a session would
+get wrong *without ever having reason to open it*.
+
+That test is the reusable part. Applied to the five blocks, four of them
+collapsed:
+
+| block | outcome |
+|---|---|
+| Komodo is live | **already migrated.** [bootstrap/README.md](../../../bootstrap/README.md) carries the credentials, `create-if-absent`, the do-not-change-it-in-the-UI trap and the rate limit, in more detail than the map did; `files_on_host` and pre-created bind targets are in [conventions.md](../../../docs/conventions.md)'s `pre_deploy` section. |
+| Standing rulings | permissions, the green-reconcile trap, plex's publication, adoption-splits-by-manager and container scope are all in conventions.md via [28](28-navigable-standing-docs.md). "Add one Stack at a time" was adoption-era and nothing is left to adopt. |
+| Box access | CLAUDE.md already has SSH, port 8008, no out-of-band console and the state-the-rollback rule. The residue is the key path and "no live lockout risk remains"; Portainer-as-second-lifeline died with [25](25-retire-portainer.md). Archived. |
+| Settled while charting | already in [CONTEXT.md](../../../CONTEXT.md) and CLAUDE.md. |
+| Two networks + the LAN resolver | the *rule* is in conventions.md's **Addressing** [32]. The **trap** was not. |
+
+### What actually moved, and why each earned it
+
+- **Verify a hostname from the LAN path, not the tailnet** →
+  [conventions.md](../../../docs/conventions.md), Addressing. A node with
+  `--accept-dns` never asks rb's router, so an `rbrb.in` check from `ubuntu-dev`
+  passes whether the LAN half works or not. This has a track record: it is how
+  "conveniently, there is no resolver to configure" survived unchallenged for a
+  whole map. A session verifies without being told to; it will not be told to
+  read the archive first.
+- **Surface the hand-offs** → [CLAUDE.md](../../../CLAUDE.md), a new
+  *Ending a session* block. Session behaviour, stated nowhere in the repo, and
+  the failure is silent — [13](13-local-tooling.md)'s Renovate config sat inert
+  waiting on one click.
+
+### Ruled against stays with the map that ruled it
+
+pihole, rotating the low-value secrets, and the repo's visibility are **not
+carried**. They are not hard rules and nothing re-raises them except a session
+already working that ground, which is a session already reading map 01. This is
+the same shape as the one ruled-against entry that *did* survive into the docs —
+hardlinks, at [09](09-unify-uid-gid.md) — which survives by being attached to
+the media binds it governs, not by living in a register. A register of closed
+questions was considered and declined: it is a fourth kind of thing
+conventions.md would hold, and a reader deciding about DNS has to already know
+the register exists to find the pihole line.
+
+### The register
+
+[open-questions.md](../open-questions.md) is live with map 01's six entries.
+Each is the question, the **trigger** that would make it sharp, and its
+citations — not the accumulated reasoning, which is in the tickets it cites. The
+trigger is the load-bearing part: five of the six already ended in some form of
+"not a ticket before then", and that sentence is the only part *not* recoverable
+from the cited tickets, since those tickets argued the question was out of scope
+rather than what would bring it back.
+
+### The rule, and why not ADRs
+
+The rule lives in **[.scratch/unraid-gitops/README.md](../README.md)** — a
+README for the directory it governs, following
+[bootstrap/README.md](../../../bootstrap/README.md)'s precedent. It holds four
+things that had no home: what a map may contain, the index-and-`description`
+overlap, the claim convention and frontmatter schema (both **moved out of** the
+live map's Notes rather than duplicated), and where a question goes when it
+outlives a map.
+
+**ADRs were raised and declined for now.** This repo already has them — every
+issue in this directory is context, decision, rationale and consequences, dated
+and closed, cited as `[NN]` from the docs, and [34](34-issue-frontmatter.md) is
+about to give them ADR metadata. The test for minting a *separate* series is
+whether a decision has **no ticket and no thing to attach to**. Exactly four
+qualify, all settled in passing while charting, and four items do not justify a
+second numbered series with its own lifecycle — two places to file a decision is
+worse than one place plus a gap. **The trigger that would flip this**: if
+`.scratch/` is ever cleaned up or the maps end, these issues become the repo's
+only record of why the box looks the way it does, and a series living outside a
+scratch directory starts earning its keep. The README is the thing that becomes
+`docs/decisions/` if that day comes, and nothing else has to move.
+
+### Map 01's Decisions so far
+
+Not copied forward, as the ticket asked. Every entry is a restatement of an
+answer the issue itself will carry in its `description` once
+[34](34-issue-frontmatter.md) lands. The README states the rule that keeps the
+two from diverging: they are **one sentence**, written once and copied, and
+where they disagree the issue wins.
+
 ## Hand-offs
 
-None expected — this ticket edits files in the repo only.
+None — this ticket edited files in the repo only.
