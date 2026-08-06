@@ -77,8 +77,9 @@ discussion.
   homepage](issues/37-bare-domain-to-homepage.md) — `rbrb.in` 308s to
   `home.rbrb.in` from its own block and its own cert, guard imported **inside a
   `route`**: Caddy sorts `redir` ahead of `respond`, so the obvious spelling
-  would have 308'd the whole internet while reading as guarded. One Cloudflare A
-  record outstanding — the apex works over the tailnet, not on the LAN.
+  would have 308'd the whole internet while reading as guarded. Nothing
+  outstanding: the Cloudflare A record the ticket expected to hand off was
+  already there.
 
 ## Not yet specified
 

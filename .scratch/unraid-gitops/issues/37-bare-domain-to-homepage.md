@@ -139,8 +139,11 @@ including the apex, confirmed by asking it, and gatus is pinned to CoreDNS.
 
 ## Hand-offs
 
-- **Create an A record for `rbrb.in` → `192.168.1.195`** at Cloudflare, DNS-only
-  (not proxied), matching the wildcard [14]. Left to a human because every other
-  record in that zone was [14], not because it is hard — a DNS record made by
-  API call is one git cannot see. Until it exists the apex works over the
-  tailnet and **resolves nowhere on rb's LAN**.
+None left. The A record `rbrb.in` → `192.168.1.195` **already exists** — rb had
+set it before this ticket ran, and 1.1.1.1 and 8.8.8.8 both return it. Grey
+cloud, which the answer itself proves: Cloudflare will not proxy a private
+address [14]. No AAAA beside it.
+
+The LAN leg is the one link not tested end to end — it is unreachable from the
+tailnet, where this session ran. It is the same address and the same Caddy that
+already serve every `*.rbrb.in` name on that network.
