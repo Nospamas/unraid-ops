@@ -2,6 +2,7 @@
 
 Type: task
 Status: open
+Claimed by: agent session, 2026-08-05
 Blocked by: 23, 24
 
 ## Question
