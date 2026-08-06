@@ -324,6 +324,23 @@ endpoints:
   # host state for one redundant signal [26]; the two probes above already fail
   # together if the path is down.
 
+  # A route, not a service, so it sits with the infrastructure rather than the
+  # things it points at. It has a failure nothing else here would see: the apex
+  # is outside the wildcard cert [37], so its own issuance can fail while every
+  # `*.rbrb.in` probe above stays green. `ignore-redirect` is what makes the
+  # 308 assertable -- following it would report homepage's 200 and the front
+  # door could break without this noticing.
+  - name: bare domain
+    group: infrastructure
+    url: https://rbrb.in/
+    interval: 60s
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 308'
+    alerts:
+      - type: ntfy
+
   - name: coredns
     group: infrastructure
     # The only end-to-end test of the split horizon [17, 18]. Asking CoreDNS

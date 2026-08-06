@@ -38,3 +38,17 @@ status.rbrb.in {
 	import internal
 	respond "no service by that name" 404
 }
+
+# Ticket 37. The wildcard covers one label, so the apex matches neither this
+# file's `*.rbrb.in` block nor its certificate -- hence its own block and its own
+# cert, issued over the same `acme_dns cloudflare`.
+#
+# `route` is load-bearing: Caddy sorts `redir` *before* `respond`, so the guard
+# imported outside one is emitted after the redirect and never runs. Verified by
+# `caddy adapt`, not assumed.
+rbrb.in {
+	route {
+		import internal
+		redir https://home.rbrb.in{uri} 308
+	}
+}
