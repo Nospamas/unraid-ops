@@ -322,14 +322,26 @@ a container in another container's namespace has no network identity of its own.
 
 ## Default-deny
 
-Every fronted Service is `internal` unless it declares `x-published: true`.
+Every fronted Service is `internal` unless it declares `x-published`.
 `scripts/check-exposure.sh` asserts that every Service with a `caddy:` hostname
-carries **exactly one** of `caddy.import: internal` or `x-published: true`. It
-runs from `just lint` and from CI [13]. Both compose label forms are read, and
-a compose file the script cannot parse **fails** rather than passing silently.
+carries **at least one** of `caddy.import: internal` or `x-published`. It runs
+from `just lint` and from CI [13]. Both compose label forms are read, and a
+compose file the script cannot parse **fails** rather than passing silently.
 
-`x-published` is the one grep that says what faces the internet. Nothing is
-published today [05].
+**The two keys answer different questions** [31]. `caddy.import` governs the
+Caddy route and is the label that does the work; `x-published` says the Service
+is on the internet by whatever path, and its value is prose naming that path. A
+Service can need both — one does.
+
+`grep -rn x-published stacks/` is the one grep that says what faces the
+internet. Until [31] it described only the Caddy path, which is how plex's
+`32400` stayed invisible for the whole map.
+
+**One Service is published: plex, by rb's router forwarding `32400`** [31].
+That is deliberate — remote clients get a direct connection instead of Plex
+Relay. Its Caddy route is still guarded, and plex's own account auth defends
+the port; `allowedNetworks` exempts `192.168.1.0/24` only, which is narrower
+than the `(internal)` guard already is.
 
 The guard is verified, not assumed [16]: LAN and tailnet clients get 200, and
 127.0.0.1 and a container on `shared` both get 403. It depends on Caddy seeing
@@ -370,9 +382,8 @@ Three reasons qualify. `just lint` checks only that one is stated:
 - **a client configured by address, not by name** — CoreDNS, because tailscale's
   Split DNS row takes an IP [17].
 - **plex's `32400`** [23], which is its own case and not a general licence.
-  plex.tv advertises that address to clients and rb's router forwards it, so the
-  port is a published path Caddy does not carry and `x-published` does not
-  describe — see [31] before touching it.
+  plex.tv advertises that address to clients and rb's router forwards it, so
+  this port is on the internet and the Service says so with `x-published` [31].
 - **a backup path to whatever detects or repairs a Caddy outage** [26] [29].
   Komodo (`:9120`) and the Unraid GUI (`:8008`) answer at `*.rbrb.in` *and* keep
   their host port, because the tooling that fixes the proxy must not sit behind
@@ -387,6 +398,15 @@ reason.
 same lint, so a LAN-reachable port is a claim that something on the LAN reads
 it. If the answer is nobody, narrow the bind rather than deleting the port —
 gatus is host-networked, which is why the download Stack's `30024` stayed.
+
+**`x-host-port` is a sentence, and `just lint` only checks that it exists.** Two
+were false by [30], each true when written, and acting on one would have deleted
+[06]'s tunnel-binding probe. `just ports-audit` asks the box instead [31]:
+cumulative DNAT packets per port — so "nothing has ever dialled this" is
+answerable — plus who is connected now. It is **blind to a `127.0.0.1` bind** by
+construction, because `nat OUTPUT` jumps to `DOCKER` only for `! 127.0.0.0/8`
+and docker-proxy serves loopback in userland. It says so rather than printing a
+zero.
 
 **A service's advertised identity is not the address tooling dials** [29].
 `KOMODO_HOST` is the hostname, because it ends up in alert links and generated
@@ -452,7 +472,8 @@ to do this? [27]
 
 | recipe | reaches | gated |
 |---|---|---|
-| `default`, `lint`, `verify-secrets`, `host-check` | local / read-only | no |
+| `default`, `lint`, `verify-secrets` | local / read-only | no |
+| `host-check`, `permissions-audit`, `ports-audit` | the box, read-only | no |
 | `secret <stack>` | a repo file, via `$EDITOR` | no — the repo is not the box |
 | `reconcile` | Komodo API | no — the cron does this anyway |
 | `bootstrap` | Komodo API | **`--apply`** |

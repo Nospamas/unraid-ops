@@ -199,15 +199,15 @@ every fronted service end to end, because Komodo cannot see it — all three
 sightings were containers that stayed `Up`, and `StackStateChange` fires on a
 *mix* of container states.
 
-**"Nothing is published" is no longer true, and the grep that says so is blind.**
-[23](issues/23-migrate-plex.md) verified plex answering on
-`75.155.182.130:32400` from outside both networks, through a router forward that
-predates this repo. `x-published` and `check-exposure.sh` reason about the
-**Caddy** path only, so a host port plus a router is invisible to both.
-[31](issues/31-plex-own-internet-exposure.md) rules on it; until then, say "the
-repo publishes nothing", which is the claim that is actually true. The forward is
-**plex's alone**: [24](issues/24-migrate-download-stack.md) probed 6881 and 30024
-from outside and both time out, so 32400 is the one hole in rb's router.
+**One Service is published — plex — and the repo now says so**
+([31](issues/31-plex-own-internet-exposure.md)). `x-published` describes the
+*Service*, not its Caddy route, so plex carries it alongside
+`caddy.import: internal` and `grep -rn x-published stacks/` is true for the
+first time. The forward is **plex's alone**:
+[24](issues/24-migrate-download-stack.md) probed 6881 and 30024 from outside and
+both time out, so 32400 is the one hole in rb's router. **Do not say "the repo
+publishes nothing"** — the accurate claim is *nothing is published through
+Caddy*.
 
 **Add one Stack to the deploy pattern at a time** when adopting. All four at
 once is what caused the above: the three not yet freed deployed into ports
@@ -417,6 +417,18 @@ markdown.
   who dials the port, not what the key claims.** `AuthSubnetWhitelist` is
   `172.20.0.0/16` alone.
 
+- [31 — Decide what the repo says about plex's own internet exposure](issues/31-plex-own-internet-exposure.md)
+  — **the two keys were never asking the same question.** `caddy.import` governs
+  the Caddy route; `x-published` says the *Service* is on the internet and now
+  carries prose naming the path, so plex holds both and the mutual-exclusion FAIL
+  is gone. Dropping the guard to satisfy the old lint would have **published
+  plex.rbrb.in** — `x-published` is inert, `caddy.import` does the work. Auth's
+  premise corrected, ruling stands: `allowedNetworks` is `192.168.1.0/24` alone,
+  so the internet path is authenticated and the exemption is narrower than the
+  `(internal)` guard. Built `just ports-audit` for 30's decay problem — DNAT
+  counters answer "has anything *ever* dialled this", and are **structurally
+  blind to a `127.0.0.1` bind**, which it reports rather than printing a 0.
+
 ## Not yet specified
 
 - **Reconciling on push rather than on a timer.** Komodo supports git webhooks
@@ -430,16 +442,18 @@ markdown.
   database is new off-git state holding the resource records. [24](issues/24-migrate-download-stack.md)
   found the NordVPN key in that database in plaintext, left by 11's adoption, so
   a backup of it is a backup of a secret.
-- **Authentication in front of the services.** 04 and 05 both declined it,
-  correctly: the repo publishes nothing, so there is nothing to defend. 05 built
-  the *gate*, deliberately not the defence — and [16](issues/16-deploy-caddy.md)
-  has now proved the gate works in both directions. Sharp the moment a service is
-  actually published, or the LAN stops being trusted (guest wifi, IoT). **No
-  ticket should be opened for it before then.** Plex is not the exception it
-  looks like: it is reachable from the internet, but by its own port forward and
-  behind its own account auth, which is
-  [31](issues/31-plex-own-internet-exposure.md)'s question, not this one's.
-  qbittorrent is the sharpest case: [24](issues/24-migrate-download-stack.md)
+- **Authentication in front of the services.** 04 and 05 both declined it on the
+  grounds that nothing is published; [31](issues/31-plex-own-internet-exposure.md)
+  corrected the premise and left the ruling standing. The trigger is not "a
+  service is published" — one already is — but **a *second* service with an
+  external route**, or the LAN ceasing to be trusted (guest wifi, IoT). **No
+  ticket before then.** Plex measured out as no exception: `allowedNetworks` is
+  `192.168.1.0/24` alone, so the internet path takes plex's own account auth, and
+  that exemption is *narrower* than the `(internal)` guard, which admits the
+  whole LAN to every service unauthenticated. Plex would not join a shared scheme
+  anyway — it sits behind neither forward-auth nor OAuth. 05 built the *gate*,
+  deliberately not the defence, and [16](issues/16-deploy-caddy.md) proved the
+  gate works in both directions. qbittorrent is the sharpest case: [24](issues/24-migrate-download-stack.md)
   left its API unauthenticated to everything on `shared` and, through Caddy, to
   everything the `(internal)` guard admits. Deliberate, and only sound while that
   guard is — and [32](issues/32-lan-resolver.md) is what makes the guard's LAN

@@ -46,6 +46,10 @@ reconcile:
 redeploy stack *args:
     bash scripts/komodo.sh redeploy {{ stack }} {{ args }}
 
+# Ask the box who actually dials each declared host port -- ticket 31
+ports-audit:
+    bash scripts/ports.sh
+
 # Report ownership and modes across the shared trees
 permissions-audit:
     bash scripts/permissions.sh audit

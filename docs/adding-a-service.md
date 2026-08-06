@@ -48,8 +48,9 @@ networks:
 
 - **The tag carries a version *and* a digest.**
 - **`caddy.import: internal` is not optional** — `scripts/check-exposure.sh`
-  fails without it. A service meant to face the internet says `x-published: true`
-  on the Service instead.
+  fails without it, and it is the label that imports the guard. A service that is
+  on the internet by *any* path adds `x-published: <how>` on the Service; that is
+  a second statement, not a replacement for the guard.
 - **Only declare a host port if something must reach the container without going
   through Caddy.** Otherwise the label is the entire access story.
 

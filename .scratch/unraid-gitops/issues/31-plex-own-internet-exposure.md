@@ -1,7 +1,9 @@
 # 31 — Decide what the repo says about plex's own internet exposure
 
 Type: grilling
-Status: open
+Status: closed
+Assignee: Nospamas
+Resolved: 2026-08-05
 
 ## Question
 
@@ -64,3 +66,75 @@ against one that asserts a sentence exists.
 30 also narrows the surface: **plex's `32400` is now the only host port a LAN
 browser could hit.** CoreDNS and ntfy bind explicit addresses, gatus and Komodo
 are the Caddy-repair carve-out, and `30024` went to loopback.
+
+## Resolution (2026-08-05)
+
+**The two keys were never asking the same question, and forcing them to was the
+bug.** `caddy.import` governs the Caddy route and is the label that does the
+work; `x-published` says the Service is on the internet, by whatever path, and
+now carries prose naming that path. `check-exposure.sh` drops the
+mutual-exclusion FAIL — it asserts a fronted Service carries **at least one** —
+and walks every Service rather than only the fronted ones, because being
+published is a property of the Service. Plex carries both, is the repo's one
+published Service, and `grep -rn x-published stacks/` is finally true.
+
+The value could not stay `true`: the check tested that literal, and `true` says
+nothing about the mechanism — which for plex is a router this repo does not own,
+the exact fact that hid the exposure.
+
+**Dropping `caddy.import: internal` was never an option, and the ticket did not
+say why.** `x-published` is inert, a marker key only. `caddy.import` is what
+imports the guard snippet, so satisfying the old lint by deleting it would have
+opened `plex.rbrb.in` to the world — a lint fix that published a service.
+
+### The auth bullet: premise corrected, ruling stands
+
+Measured rather than assumed: plex's Preferences carry
+`allowedNetworks="192.168.1.0/24"`, so **the internet path is authenticated** —
+a WAN client is outside that range and gets plex's account auth. `/identity`
+answering unauthenticated is by design and carries no library data.
+
+The exemption grants **strictly less than the repo already does**. [30]
+established that a LAN browser arrives at a Caddy-fronted service from
+`172.20.0.1`, so the `(internal)` guard admits all of `192.168.1.0/24` to every
+service with no auth at all. Plex matches the existing posture rather than
+widening it.
+
+So the fog's trigger is not "a service is published" but **a *second* service
+with an external route** — and plex would not join that scheme anyway, since it
+does not sit behind forward-auth or OAuth.
+
+### The third bullet: `just ports-audit`
+
+Built, because 30's evidence is that the prose is what decayed. Lint keeps
+asserting the sentence exists; `scripts/ports.sh` asks the box who dials each
+declared port. Two sources, neither sufficient alone:
+
+- **`nat DOCKER` packet counters** — cumulative since the container started, so
+  "nothing has *ever* dialled this" is answerable. This is the one 30 needed.
+- **`ss` established** — says who, but only right now.
+
+**The counter is structurally blind to a `127.0.0.1` bind**, found while
+building it: `nat OUTPUT` jumps to `DOCKER` only for `! 127.0.0.0/8`, so
+docker-proxy serves loopback in userland and `30024`'s counter reads **0** while
+gatus probes it every 60s. Printing that 0 would have shipped exactly this
+ticket's own failure — a check blind without saying so. It reports the blind
+spot instead.
+
+First run: `32400` 972 packets, CoreDNS `53/udp` 47373, ntfy `8095` 235, the
+three loopback ports blind. No claim looks decayed.
+
+### Checked, not changed
+
+Raised mid-session: should gatus probe through Caddy rather than at containers?
+**It already does** — every `services` probe is `https://<name>.rbrb.in/` and
+[stacks/gatus/conf/config.yaml](../../../stacks/gatus/conf/config.yaml) says so
+in its header. The three direct probes are `127.0.0.1:30024/30025/30026`, which
+assert body values Caddy never surfaces (exit IP, bound address) and are the
+only thing that sees a dead tunnel — `https://qbittorrent.rbrb.in/` answered 200
+throughout a real VPN outage, served from inside the namespace. No ticket.
+
+### Not reopened
+
+**The forward stays**, per this ticket's own first bullet. Nothing here touches
+80/443, the GUI or tailscale.

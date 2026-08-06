@@ -23,8 +23,10 @@ Every rule's reasoning is in the ticket it links, under
 - **Every image is `version@digest`.** No exceptions.
 - **Nothing is built on the box.** If something must be built, GitHub Actions →
   GHCR.
-- **Nothing faces the internet without `x-published: true`.** `caddy.import:
-  internal` is the default and `just lint` enforces the choice.
+- **Nothing faces the internet without `x-published`.** It describes the
+  Service, not its Caddy route, so the two keys coexist — plex holds both.
+  `caddy.import: internal` is the default, is what imports the guard, and is
+  never dropped to satisfy the lint.
 - **`--apply` gates any recipe that changes the box in a way the reconcile loop
   would not.** `reconcile` is deliberately ungated.
 - **Never bind `/etc/localtime`** — runc under Docker 29.5.3 refuses it and the

@@ -94,10 +94,11 @@ a snippet in Caddy's base Caddyfile.
 _Avoid_: private, LAN-only (the tailnet is not the LAN), restricted
 
 **Published**:
-Deliberately reachable from the internet. Marked by an `x-published: true` key on
-the Service, which the repo check requires as the only alternative to `internal`.
-Nothing is published today; the word exists so that publishing can never be an
-accident.
+Deliberately reachable from the internet, **by any path**. Marked by an
+`x-published` key on the Service whose value names that path. It describes the
+Service, not its Caddy route, so a Service can be `internal` and published at
+once — plex is, by a host port and a router forward. One Service is published
+today; the word exists so that publishing can never be an accident.
 _Avoid_: public, exposed, open
 
 **The shared network**:

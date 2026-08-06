@@ -1,14 +1,21 @@
 #!/usr/bin/env bash
 # Every fronted Service declares its exposure. Decided by ticket 07.
 #
-# A Service carrying a `caddy:` hostname label is reachable through the proxy.
-# It must say which kind of reachable:
+# The two keys answer different questions, and a Service can need both [31].
 #
-#   caddy.import: internal   -> LAN + tailnet only. The default.
-#   x-published: true        -> deliberately internet-facing.
+#   caddy.import: internal   -> governs the Caddy route: LAN + tailnet only.
+#                               The default, and the label that does the work.
+#   x-published: <prose>      -> the Service is on the internet, by whatever
+#                               path. The value names the path.
 #
-# Neither is a failure. Both is a failure, because the intent is unreadable.
+# A fronted Service must carry at least one, because a `caddy:` hostname with
+# neither is a naked vhost nobody meant to leave naked. Both together is plex:
+# the Caddy route is guarded and the service is still on the internet, by a
+# host port and a router this repo does not own [31].
+#
 # `grep -rn x-published stacks/` is the answer to "what faces the internet".
+# It was wrong for the whole map before 31, because it described the Caddy path
+# and plex is exposed by another one.
 #
 # A Service that publishes a host port must also say who reaches it that way,
 # because humans go through Caddy and containers go by name on `shared` --
@@ -42,6 +49,7 @@ YQ
 failed=0
 fronted=0
 ports=0
+published_count=0
 
 shopt -s nullglob
 for compose in "$root"/stacks/*/compose.yaml; do
@@ -75,21 +83,23 @@ for compose in "$root"/stacks/*/compose.yaml; do
         fi
     done
 
+    # Published is a property of the Service, not of its Caddy route, so this
+    # walks every Service rather than the fronted ones [31].
+    for service in "${!portcount[@]}"; do
+        [[ -z "${published[$service]:-}" ]] && continue
+        published_count=$((published_count + 1))
+        hostname="${host[$service]:-}"
+        guarded=""
+        [[ "${internal[$service]:-}" == "internal" ]] && guarded=", Caddy route guarded"
+        echo "PUBLISHED ${stack}/${service}${hostname:+ (${hostname}${guarded})} -- ${published[$service]}"
+    done
+
     for service in "${!host[@]}"; do
         [[ -z "${host[$service]}" ]] && continue
         fronted=$((fronted + 1))
 
-        local_host="${host[$service]}"
-        is_internal=$([[ "${internal[$service]:-}" == "internal" ]] && echo yes || echo no)
-        is_published=$([[ "${published[$service]:-}" == "true" ]] && echo yes || echo no)
-
-        if [[ "$is_internal" == yes && "$is_published" == yes ]]; then
-            echo "FAIL      ${stack}/${service} (${local_host}) declares both caddy.import: internal and x-published: true"
-            failed=1
-        elif [[ "$is_published" == yes ]]; then
-            echo "PUBLISHED ${stack}/${service} (${local_host}) -- internet-facing, deliberately"
-        elif [[ "$is_internal" == no ]]; then
-            echo "FAIL      ${stack}/${service} (${local_host}) is fronted but declares neither caddy.import: internal nor x-published: true"
+        if [[ "${internal[$service]:-}" != "internal" && -z "${published[$service]:-}" ]]; then
+            echo "FAIL      ${stack}/${service} (${host[$service]}) is fronted but declares neither caddy.import: internal nor x-published"
             failed=1
         fi
     done
@@ -102,4 +112,4 @@ if ((failed)); then
     exit 1
 fi
 
-echo "exposure ok -- ${fronted} fronted service(s), ${ports} with a host port"
+echo "exposure ok -- ${fronted} fronted service(s), ${ports} with a host port, ${published_count} published"
