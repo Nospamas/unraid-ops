@@ -56,23 +56,27 @@ discussion.
   without reading and a repo path greps back to the issue that explains it. The
   body header keeps only what the schema deliberately refuses — the blocking
   edge, the claim, the date and the asset.
+- [35 — Add tautulli, and backfill plex's watch
+  history](issues/35-add-tautulli.md) — tautulli runs from git, probed on
+  `/status` rather than `/`, with no plex appdata bind of any kind: **the
+  backfill does not exist**. Tautulli cannot read plex's database, upstream
+  closed that `wont-fix`, so the question's three-way choice was moot, and rb
+  declined the one route left: a converter that invents the watch durations plex
+  never recorded.
 
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.**
   [CONTEXT.md](../../CONTEXT.md) draws the line at appdata and makes homepage the
   sole exception. Both new services keep their tuning — language profiles,
-  scoring, provider lists — in a SQLite database a rebuild loses. Sharp only once
-  there is tuning worth losing.
+  scoring, provider lists — in a SQLite database a rebuild loses. Tautulli is
+  now on the box and splits it: a text `config.ini` beside `tautulli.db`, and
+  only the first is the shape homepage's exception was carved for [35]. Sharp
+  only once there is tuning worth losing.
 - **Whether `home.rbrb.in` retires in favour of the apex.**
   [37](issues/37-bare-domain-to-homepage.md) makes the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb
   actually types, the redirect points the wrong way.
-- **Whether [adding-a-service.md](../../docs/adding-a-service.md) gains a
-  gatus-probe step.** The routine never says to add one — only the Traps section
-  mentions it, which is how a new service lands unmonitored.
-  [35](issues/35-add-tautulli.md) or [36](issues/36-add-bazarr.md) may settle it
-  in passing.
 
 ## Out of scope
 
