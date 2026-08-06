@@ -320,6 +320,16 @@ things that are not Stacks — `komodo.rbrb.in` and `unraid.rbrb.in` [26].
 **qbittorrent is the exception**: its labels sit on the gluetun Service, because
 a container in another container's namespace has no network identity of its own.
 
+**`rbrb.in` 308s to `home.rbrb.in`** [37]. The wildcard covers one label, so the
+apex matches neither the `*.rbrb.in` block nor its certificate and has its own
+of each.
+
+**A guard next to `redir` needs a `route`** [37]. Caddy sorts `redir` *ahead* of
+`respond`, so `import internal` beside one is emitted after the redirect and
+never runs — the block reads as guarded and 308s the whole internet. `route`
+keeps the written order. Only `reverse_proxy` blocks are safe without it, which
+is every other block in the file.
+
 ## Default-deny
 
 Every fronted Service is `internal` unless it declares `x-published`.

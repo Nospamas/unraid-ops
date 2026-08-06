@@ -2,19 +2,19 @@
 id: "37"
 title: Point the bare domain at homepage
 type: task
-status: open
+status: closed
 description: >
-  `rbrb.in` 308s to `home.rbrb.in`, so there is one canonical hostname. The
-  apex needs its own site block and its own cert — the wildcard covers neither
-  — plus a new Cloudflare A record, and a ruling on whether the redirect
-  imports the guard.
-touches: [stacks/caddy/conf/Caddyfile]
+  `rbrb.in` 308s to `home.rbrb.in` from its own block and its own cert. The
+  guard is imported inside a `route`, which is load-bearing: Caddy sorts
+  `redir` ahead of `respond`, so the obvious spelling would have 308'd the
+  whole internet while reading as guarded.
+touches: [stacks/caddy/conf/Caddyfile, stacks/gatus/conf/config.yaml, docs/conventions.md]
 ---
 
 # 37 — Point the bare domain at homepage
 
+Resolved: 2026-08-06
 Blocked by: —
-Claimed by: Claude session, 2026-08-06
 
 ## Question
 
@@ -69,8 +69,78 @@ precisely so the tooling that repairs Caddy does not sit behind Caddy
 ([26](26-host-state-scope.md)). Deploy and confirm `home.rbrb.in` still answers
 **before** confirming the apex does.
 
+## Answer
+
+`rbrb.in` 308s to `https://home.rbrb.in{uri}`, from its own site block and its
+own cert. Four of the five facts above held exactly as charted; the fifth is
+below.
+
+### The guard is imported, and `route` is what makes that true
+
+Recommended and taken: the apex imports `internal` like every other block. A 308
+leaks only the name's existence, but a redirect that stays reachable when the
+thing it points at is not is a door left ajar for no gain, and departing
+silently from the file's one default is how a default erodes.
+
+**But the obvious spelling does not work.** Caddy's directive order puts `redir`
+*ahead* of `respond`, so this:
+
+```
+rbrb.in {
+	import internal
+	redir https://home.rbrb.in{uri} 308
+}
+```
+
+adapts to the 308 handler first and the guard's 403 second — unreachable. The
+block would have read as guarded in review, passed the lint, and 308'd every
+client on the internet. `route` restores the written order:
+
+```
+rbrb.in {
+	route {
+		import internal
+		redir https://home.rbrb.in{uri} 308
+	}
+}
+```
+
+Both spellings were run through `caddy adapt` in the running container and the
+JSON compared, rather than trusting the docs' order table. The Caddyfile's
+existing note — "`respond` sorts before `reverse_proxy`, so this ends the chain
+first" — is true and does not generalise: it holds for every other block in the
+file precisely because they all end in `reverse_proxy`.
+
+The rule is in [conventions.md](../../../docs/conventions.md), *Routing*.
+
+### Verified, not assumed
+
+From a tailnet client, and from the box for the guard:
+
+| check | result |
+|---|---|
+| `home.rbrb.in` still answers, checked **before** the apex | 200 |
+| `https://rbrb.in/` | 308 → `https://home.rbrb.in/` |
+| `https://rbrb.in/foo?bar=1` | 308 → `https://home.rbrb.in/foo?bar=1` — `{uri}` carries path and query |
+| apex certificate | issued, `CN=rbrb.in`, verifies |
+| `http://rbrb.in/` | 308 → `https://rbrb.in/`, Caddy's own — nothing built [16] |
+| the apex from `127.0.0.1` on the box | **403** — the guard runs, which is the `route` fix proved end to end |
+
+### It gets a probe
+
+`bare domain`, in gatus's `infrastructure` group — it is a route, not a service.
+It asserts 308 with `ignore-redirect: true`; following the redirect would report
+homepage's 200 and the front door could break unseen. It earns its place on a
+failure nothing else covers: **the apex is outside the wildcard cert, so its
+issuance can fail while every `*.rbrb.in` probe stays green.** Green on the box.
+
+The probe does not wait on the hand-off below: CoreDNS templates the whole zone
+including the apex, confirmed by asking it, and gatus is pinned to CoreDNS.
+
 ## Hand-offs
 
 - **Create an A record for `rbrb.in` → `192.168.1.195`** at Cloudflare, DNS-only
-  (not proxied), matching the existing wildcard. The apex resolves nowhere on
-  rb's LAN until this exists.
+  (not proxied), matching the wildcard [14]. Left to a human because every other
+  record in that zone was [14], not because it is hard — a DNS record made by
+  API call is one git cannot see. Until it exists the apex works over the
+  tailnet and **resolves nowhere on rb's LAN**.

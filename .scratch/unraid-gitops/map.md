@@ -56,6 +56,11 @@ discussion.
   without reading and a repo path greps back to the issue that explains it. The
   body header keeps only what the schema deliberately refuses — the blocking
   edge, the claim, the date and the asset.
+- [43 — Probe home-ops from tower, closing the box-down
+  gap](issues/43-cross-site-probes-to-home-ops.md) — three probes at home-ops
+  alerting to tower's own ntfy, with no cross-site credential. The names needed
+  two narrow CoreDNS zones rather than a blanket forward, because `.` must keep
+  answering REFUSED. Closes the last half of [29].
 - [35 — Add tautulli, and backfill plex's watch
   history](issues/35-add-tautulli.md) — tautulli runs from git, probed on
   `/status` rather than `/`, with no plex appdata bind of any kind: **the
@@ -68,6 +73,12 @@ discussion.
   decision was the probe endpoint, and `/` failed 35's test — it is a 200 only
   while bazarr's UI auth is off. `/api/system/ping` is the API's one keyless
   route and does not move.
+- [37 — Point the bare domain at
+  homepage](issues/37-bare-domain-to-homepage.md) — `rbrb.in` 308s to
+  `home.rbrb.in` from its own block and its own cert, guard imported **inside a
+  `route`**: Caddy sorts `redir` ahead of `respond`, so the obvious spelling
+  would have 308'd the whole internet while reading as guarded. One Cloudflare A
+  record outstanding — the apex works over the tailnet, not on the LAN.
 
 ## Not yet specified
 
@@ -81,7 +92,7 @@ discussion.
   once there is tuning worth losing — bazarr has none today and will the moment
   rb sets its language profiles.
 - **Whether `home.rbrb.in` retires in favour of the apex.**
-  [37](issues/37-bare-domain-to-homepage.md) makes the apex a redirect on purpose,
+  [37](issues/37-bare-domain-to-homepage.md) made the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb
   actually types, the redirect points the wrong way.
 
