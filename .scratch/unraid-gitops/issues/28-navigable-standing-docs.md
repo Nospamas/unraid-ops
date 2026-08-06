@@ -1,8 +1,18 @@
+---
+id: "28"
+title: Make the repo's standing docs navigable, and auto-loaded
+type: task
+status: closed
+description: >
+  `repo-layout.md` is now docs/conventions.md, indexed and cut 434 → 280
+  lines, with CLAUDE.md finally giving the repo something auto-loaded. The
+  reusable part is the division: rationale lives in the ticket, the doc holds
+  the rule plus a `[NN]` citation.
+touches: [CLAUDE.md, docs/conventions.md]
+---
+
 # 28 — Make the repo's standing docs navigable, and auto-loaded
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 
 ## Question

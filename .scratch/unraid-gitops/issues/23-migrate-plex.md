@@ -1,8 +1,19 @@
+---
+id: "23"
+title: Migrate plex
+type: task
+status: closed
+description: >
+  plex is a Stack, on `shared`, five libraries intact, and adoption in place
+  recreates rather than no-ops — under a new container name, keeping the
+  network alias. `VERSION` must be `docker` or the container installs an 84MB
+  Plex build over the image at every start, so the digest pins nothing.
+  Spawned 31.
+touches: [stacks/plex/]
+---
+
 # 23 — Migrate plex
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 Blocked by: 20
 

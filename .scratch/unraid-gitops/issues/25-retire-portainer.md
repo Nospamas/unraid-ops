@@ -1,8 +1,17 @@
+---
+id: "25"
+title: Retire Portainer
+type: task
+status: closed
+description: >
+  Gone entirely, appdata included: the rollback it was held for was already
+  dead, and the WireGuard key now has exactly one plaintext copy on the box,
+  the one the Stack needs.
+touches: [bootstrap/README.md, stacks/download/compose.yaml, stacks/homepage/]
+---
+
 # 25 — Retire Portainer
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-05
 Blocked by: 23, 24
 

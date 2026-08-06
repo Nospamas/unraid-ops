@@ -1,8 +1,19 @@
+---
+id: "21"
+title: Migrate sonarr, radarr, prowlarr and lazylibrarian
+type: task
+status: closed
+description: >
+  All four are Stacks, on `shared`, behind Caddy, with their libraries intact.
+  The framing was wrong: these came from unraid's Docker tab, carry no compose
+  labels and so cannot be adopted at all — `just adopt` removes them and the
+  Stack rebinds the same appdata. Adding all four at once left three `Up` with
+  no networks, which `Execution ok` reported as success.
+touches: [stacks/sonarr/, stacks/radarr/, stacks/prowlarr/, stacks/lazylibrarian/, scripts/adopt.sh]
+---
+
 # 21 — Migrate sonarr, radarr, prowlarr and lazylibrarian
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 
 ## Question

@@ -1,8 +1,19 @@
+---
+id: "16"
+title: Stand the Caddy proxy up
+type: task
+status: closed
+description: >
+  `https://home.rbrb.in` serves a trusted `*.rbrb.in` wildcard, staging first
+  and issued on the first attempt. Three quiet failures found: Tailscale's
+  masquerade makes 05's guard 403 the tailnet behind published ports, so Caddy
+  is host-networked; a single-file bind goes ESTALE on the next git pull; and
+  a Procedure cannot update itself. Spawned 29.
+touches: [stacks/caddy/]
+---
+
 # 16 — Stand the Caddy proxy up
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 Blocked by: 07, 11, 14, 15
 

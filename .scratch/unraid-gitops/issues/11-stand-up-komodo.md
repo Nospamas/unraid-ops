@@ -1,8 +1,20 @@
+---
+id: "11"
+title: Stand Komodo up on the box
+type: task
+status: closed
+description: >
+  Komodo v2.3.1 live and reconciling nothing, as intended — four containers,
+  not three, since the database is FerretDB-on-Postgres. Adoption by
+  `project_name` works and an empty `git_account` clones the public repo;
+  Periphery only sees what is bind-mounted into it, and a path outside its
+  binds fails silently.
+touches: [bootstrap/, komodo/sync.toml, scripts/bootstrap.sh]
+---
+
 # 11 — Stand Komodo up on the box
 
-Type: task (HITL)
-Status: closed
-Assignee: Nospamas
+Resolved: 2026-08-02
 Blocked by: 10
 
 ## Question

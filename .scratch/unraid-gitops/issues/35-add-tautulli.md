@@ -1,7 +1,18 @@
+---
+id: "35"
+title: Add tautulli, and backfill plex's watch history
+type: task
+status: open
+description: >
+  Add tautulli wired to plex, with plex's existing watch history imported. The
+  decision is how tautulli reads plex's database: no Stack has ever bound
+  another Stack's appdata, and a `pre_deploy` copy from a path outside
+  Periphery's binds is a no-op that reports success.
+touches: []
+---
+
 # 35 — Add tautulli, and backfill plex's watch history
 
-Type: task
-Status: open
 Blocked by: —
 
 ## Question

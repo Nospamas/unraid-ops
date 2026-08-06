@@ -1,8 +1,19 @@
+---
+id: "12"
+title: Decide the image update strategy
+type: grilling
+status: closed
+description: >
+  Renovate, and only Renovate, with four human-merge carve-outs — a
+  `version@digest` pin cannot drift, so Komodo's own update polling has
+  nothing to find. Nothing is built at all: a maintained upstream image
+  replaced 04's planned Caddy build, deleting 07's bare-tag exception.
+touches: [.renovaterc.json5]
+---
+
 # 12 — Decide the image update strategy
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
+Resolved: 2026-08-02
 Blocked by: 07
 
 ## Question

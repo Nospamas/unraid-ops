@@ -1,7 +1,19 @@
+---
+id: "32"
+title: Decide how rb's LAN resolves `rbrb.in`
+type: grilling
+status: closed
+description: >
+  One router field, no repo change: DHCP hands out `1.1.1.1, 8.8.8.8`, so
+  devices ask past the router and 04's public record finally is the LAN view.
+  tower is exempt by construction and must be handed CoreDNS. Verify a
+  hostname from the LAN path, not the tailnet.
+touches: [docs/conventions.md, stacks/gatus/compose.yaml]
+---
+
 # 32 — Decide how rb's LAN resolves `rbrb.in`
 
-Type: grilling
-Status: closed
+Resolved: 2026-08-05
 
 ## Question
 

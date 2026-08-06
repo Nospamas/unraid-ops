@@ -1,7 +1,18 @@
+---
+id: "36"
+title: Add bazarr
+type: task
+status: open
+description: >
+  Add bazarr for sonarr's and radarr's subtitles — the routine with no
+  decision in it. Its media binds must mirror the *arr's exactly so no path
+  mapping is needed, and it ships inert because the provider accounts are
+  rb's.
+touches: []
+---
+
 # 36 — Add bazarr
 
-Type: task
-Status: open
 Blocked by: —
 
 ## Question

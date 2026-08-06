@@ -1,8 +1,18 @@
+---
+id: "03"
+title: Decide how secrets live in the repo
+type: grilling
+status: closed
+description: >
+  SOPS + age, ciphertext committed and decrypted on the box by `pre_deploy`
+  into `secrets.env`. The sops binary is bind-mounted into Periphery rather
+  than baked into a custom image; fresh keypair, never on `/boot`, so a
+  rebuild is clone plus restore one key.
+touches: [.sops.yaml, justfile, "stacks/*/secrets.sops.env"]
+---
+
 # 03 — Decide how secrets live in the repo
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 Blocked by: 02
 

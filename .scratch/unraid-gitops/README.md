@@ -50,6 +50,11 @@ Frontmatter per [34](issues/34-issue-frontmatter.md) — `id`, `title`, `type`,
 `description` is the gist, so an issue can be triaged without opening it;
 `touches` inverts the index, so a path greps back to the issue that explains it.
 
+**Frontmatter and the body header never state the same fact.** The header under
+the title holds only what the schema refuses: `Blocked by:`, `Resolved:`,
+`Asset:`, and the claim below. `Type:` and `Status:` there are the frontmatter's
+job now [34].
+
 **Claim one before working it.** Sessions run in parallel and this tracker has no
 assignee field, so add a line to the issue and **commit it first**, before any
 other work:

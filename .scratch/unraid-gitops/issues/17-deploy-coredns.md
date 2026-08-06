@@ -1,8 +1,18 @@
+---
+id: "17"
+title: Deploy CoreDNS for the tailnet view
+type: task
+status: closed
+description: >
+  CoreDNS is live on `100.126.56.26:53` and every `rbrb.in` name answers
+  tower's tailnet address, verified from off both networks. The question was
+  reopened before it was built and roaming was ruled in scope, which is the
+  whole justification for the Stack. `.` REFUSEs rather than forwarding.
+touches: [stacks/coredns/]
+---
+
 # 17 — Deploy CoreDNS for the tailnet view
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 Blocked by: 07, 11
 

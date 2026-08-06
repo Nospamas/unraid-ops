@@ -1,8 +1,19 @@
+---
+id: "18"
+title: Point Tailscale Split DNS at CoreDNS
+type: task
+status: closed
+description: >
+  One restricted-nameserver row delivers split-horizon, and 05's answer is
+  complete. Two traps recorded — the console has no "Split DNS" section, and
+  the mis-click that makes CoreDNS global (killing all DNS everywhere) is the
+  same dialog; and on Windows `nslookup` bypasses the NRPT and reports a false
+  failure.
+touches: []
+---
+
 # 18 — Point Tailscale Split DNS at CoreDNS
 
-Type: task (HITL)
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 Blocked by: 17
 

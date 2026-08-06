@@ -1,8 +1,19 @@
+---
+id: "31"
+title: Decide what the repo says about plex's own internet exposure
+type: grilling
+status: closed
+description: >
+  The two keys were never asking the same question: `caddy.import` governs the
+  Caddy route, `x-published` says the Service is on the internet, so plex
+  holds both. Dropping the guard to satisfy the old mutual-exclusion lint
+  would have published `plex.rbrb.in`. Built `just ports-audit` for 30's decay
+  problem.
+touches: [scripts/check-exposure.sh, scripts/ports.sh, stacks/plex/compose.yaml]
+---
+
 # 31 — Decide what the repo says about plex's own internet exposure
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-05
 
 ## Question

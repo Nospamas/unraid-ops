@@ -1,8 +1,18 @@
+---
+id: "15"
+title: Move the Unraid Web GUI off ports 80/443
+type: task
+status: closed
+description: >
+  The GUI is on 8008/8443 and a container has been shown to take 80 and 443,
+  so 16's blocker is proven gone rather than inferred. Landed as `just host-
+  ports` against a snapshot of `ident.cfg`; only the ports are owned, and the
+  rest went to 26.
+touches: [bootstrap/host/ident.cfg, scripts/host.sh]
+---
+
 # 15 — Move the Unraid Web GUI off ports 80/443
 
-Type: task (HITL)
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 
 ## Question

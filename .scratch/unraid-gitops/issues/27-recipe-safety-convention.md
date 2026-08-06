@@ -1,8 +1,17 @@
+---
+id: "27"
+title: Make every mutating `just` recipe dry-run by default
+type: grilling
+status: closed
+description: >
+  The rule is provenance, not blast radius: `--apply` guards a recipe that
+  changes the box in a way the reconcile loop would not, so `reconcile` stays
+  knowingly ungated.
+touches: [justfile, docs/conventions.md]
+---
+
 # 27 — Make every mutating `just` recipe dry-run by default
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 
 ## Question

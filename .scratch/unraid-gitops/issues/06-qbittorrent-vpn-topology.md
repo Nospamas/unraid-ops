@@ -1,8 +1,17 @@
+---
+id: "06"
+title: Decide the qbittorrent VPN topology
+type: research
+status: closed
+description: >
+  The gluetun sidecar is adopted unchanged; only torrent traffic is tunnelled,
+  NordVPN stays and qbittorrent is knowingly leech-only. New hazard:
+  recreating gluetun orphans qbittorrent in a dead namespace, silently.
+touches: [stacks/download/]
+---
+
 # 06 — Decide the qbittorrent VPN topology
 
-Type: research
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 Asset: [assets/06-vpn-topology.md](../assets/06-vpn-topology.md)
 

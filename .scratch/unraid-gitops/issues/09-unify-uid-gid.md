@@ -1,8 +1,17 @@
+---
+id: "09"
+title: Unify PUID/PGID/UMASK, and decide what happens to files already written
+type: grilling
+status: closed
+description: >
+  99:100 everywhere, no exceptions, `UMASK=002`, in `common.env`. The media
+  binds do not move: single-mount was decided then reversed on evidence, so
+  hardlinks are out of scope. Spawned 20.
+touches: [common.env, scripts/permissions.sh]
+---
+
 # 09 — Unify PUID/PGID/UMASK, and decide what happens to files already written
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 
 ## Question

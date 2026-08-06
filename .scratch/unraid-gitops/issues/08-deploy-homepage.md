@@ -1,8 +1,20 @@
+---
+id: "08"
+title: Deploy homepage from the repo
+type: task
+status: closed
+description: >
+  The loop is real: a push changed the box in 8m34s, unattended. The Procedure
+  is two stages because a ResourceSync applies nothing by itself, and its
+  deploy pattern is an explicit list of Stack names, never `*`. A Stack's
+  config files must be listed in `komodo.toml` or a config push deploys
+  nothing, silently.
+touches: [stacks/homepage/, stacks/dockerproxy/, komodo/procedures.toml, scripts/komodo.sh]
+---
+
 # 08 — Deploy homepage from the repo
 
-Type: task
-Status: closed
-Assignee: Nospamas
+Resolved: 2026-08-02
 Blocked by: 03, 07, 10, 11
 
 ## Question

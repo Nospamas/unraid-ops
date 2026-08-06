@@ -1,8 +1,17 @@
+---
+id: "04"
+title: Choose the reverse proxy and the domain
+type: grilling
+status: closed
+description: >
+  Caddy (`caddy-docker-proxy`) on `rbrb.in`, DNS at Cloudflare, certificates
+  by DNS-01 wildcard. Traefik was reopened mid-grill and declined on purpose;
+  the custom Caddy build this ticket accepted was later dropped by 12.
+touches: [stacks/caddy/]
+---
+
 # 04 — Choose the reverse proxy and the domain
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 
 ## Question

@@ -1,8 +1,18 @@
+---
+id: "30"
+title: Move the *arr's in-app URLs onto `shared`, and drop the host ports
+type: task
+status: closed
+description: >
+  Every in-app URL is a container name, and `just lint` counts four host ports
+  where it counted eight. Two `x-host-port` values were false, each written by
+  the ticket that opened the port — so check who dials the port, not what the
+  key claims.
+touches: [stacks/sonarr/, stacks/radarr/, stacks/prowlarr/, stacks/lazylibrarian/, stacks/download/compose.yaml]
+---
+
 # 30 — Move the *arr's in-app URLs onto `shared`, and drop the host ports
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-05
 Blocked by: 24
 

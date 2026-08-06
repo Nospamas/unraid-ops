@@ -1,8 +1,18 @@
+---
+id: "07"
+title: Decide the repo layout and per-service conventions
+type: grilling
+status: closed
+description: >
+  The atom is a Stack: one directory under `stacks/` holding both its compose
+  file and its Komodo TOML. Flat tree, one `shared` network, `common.env` at
+  the root, `bootstrap/` the one deliberate exception git does not reconcile,
+  and default-deny enforced by a script rather than a checklist.
+touches: [CONTEXT.md, docs/conventions.md, docs/adding-a-service.md, common.env, scripts/check-exposure.sh]
+---
+
 # 07 — Decide the repo layout and per-service conventions
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 Blocked by: 02, 03
 Assets: [CONTEXT.md](../../../CONTEXT.md),

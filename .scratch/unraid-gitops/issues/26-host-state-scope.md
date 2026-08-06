@@ -1,8 +1,19 @@
+---
+id: "26"
+title: Decide how much of the box's host state git owns
+type: grilling
+status: closed
+description: >
+  Ports only, and the ticket was asking the wrong question. Every flash
+  candidate was tested on the box and every one failed; the one that passes —
+  `192.168.1.195` — is a DHCP lease in rb's router, so git cannot have it. The
+  fix is to stop addressing the box by IP, which is now the Addressing rule,
+  enforced by `x-host-port`.
+touches: [bootstrap/host/ident.cfg, scripts/host.sh, docs/conventions.md]
+---
+
 # 26 — Decide how much of the box's host state git owns
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 
 ## Question

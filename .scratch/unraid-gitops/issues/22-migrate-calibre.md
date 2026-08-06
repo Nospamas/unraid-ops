@@ -1,8 +1,18 @@
+---
+id: "22"
+title: Migrate calibre
+type: task
+status: closed
+description: >
+  calibre is a Stack and `https://calibre.rbrb.in` is its only door. All three
+  host ports went: 8081's content server had nothing listening behind it, 8181
+  is the same GUI over a self-signed cert, and nothing but a browser addresses
+  calibre. Eighteen of the unraid template's env vars were cargo.
+touches: [stacks/calibre/]
+---
+
 # 22 — Migrate calibre
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 
 ## Question

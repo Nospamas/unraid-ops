@@ -1,7 +1,20 @@
+---
+id: "29"
+title: Give `failure_alert` somewhere to go
+type: grilling
+status: closed
+description: >
+  Two Stacks, one Alerter, and no seventh secret: a self-hosted `ntfy` the
+  phone reaches over the tailnet, and a `gatus` that probes every fronted
+  service plus a DNS query end to end. The rule it produced is that the alert
+  path must not traverse the thing it reports on. Box-down closed cross-site
+  with home-ops, 2026-08-06.
+touches: [stacks/ntfy/, stacks/gatus/, komodo/alerters.toml]
+---
+
 # 29 — Give `failure_alert` somewhere to go
 
-Type: grilling
-Status: resolved
+Resolved: 2026-08-06
 
 ## Question
 

@@ -1,8 +1,17 @@
+---
+id: "02"
+title: Choose the reconcile mechanism
+type: research
+status: closed
+description: >
+  Komodo, in containers on the box, beating Portainer because ResourceSync
+  puts Komodo's own config in git and a Stack's `pre_deploy` hook is what SOPS
+  needs. Reconcile is poll, not webhook.
+touches: [bootstrap/, komodo/]
+---
+
 # 02 — Choose the reconcile mechanism
 
-Type: research
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 Asset: [assets/02-reconcile-mechanism.md](../assets/02-reconcile-mechanism.md)
 

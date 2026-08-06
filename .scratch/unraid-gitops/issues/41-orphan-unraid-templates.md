@@ -1,7 +1,18 @@
+---
+id: "41"
+title: Dispose of the five orphan Unraid templates
+type: task
+status: open
+description: >
+  Five orphan Unraid templates on `/boot` still name the *arr by their bare
+  container names, so recreating one from the Docker tab starts a second
+  container competing over the same appdata. Decide whether that pre-migration
+  record is worth keeping.
+touches: []
+---
+
 # 41 — Dispose of the five orphan Unraid templates
 
-Type: task
-Status: open
 Blocked by: —
 
 ## Question

@@ -1,8 +1,18 @@
+---
+id: "01"
+title: Inventory the containers already running on the box
+type: task
+status: closed
+description: >
+  The box as found, in assets/01-inventory.md: no compose on the host, already
+  two-tier under Portainer and the Docker tab, the gluetun sidecar already in
+  place, every image `latest`, PUID/PGID diverging three ways, and no homepage
+  at all.
+touches: []
+---
+
 # 01 — Inventory the containers already running on the box
 
-Type: task (HITL)
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 Asset: [assets/01-inventory.md](../assets/01-inventory.md)
 

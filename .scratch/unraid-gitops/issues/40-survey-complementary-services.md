@@ -1,7 +1,17 @@
+---
+id: "40"
+title: Survey what else commonly runs alongside this stack
+type: research
+status: open
+description: >
+  Survey what commonly runs alongside this shape of stack and record, per
+  candidate, the real gap it fills, its image, what it would need from the
+  box, and whether homepage ships a widget. Recommends; does not install.
+touches: []
+---
+
 # 40 — Survey what else commonly runs alongside this stack
 
-Type: research
-Status: open
 Blocked by: —
 
 ## Question

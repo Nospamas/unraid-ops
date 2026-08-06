@@ -1,8 +1,19 @@
+---
+id: "24"
+title: Migrate the download Stack (gluetun + qbittorrent)
+type: task
+status: closed
+description: >
+  The pair is one Stack on `shared`, and the tunnel held across the recreate —
+  verified by `docker inspect` and an egress check rather than the dashboard.
+  gluetun landed on v3.41.3 deliberately, since the build it had been running
+  was an untagged master build. Four env vars gluetun never read were dropped
+  rather than carried.
+touches: [stacks/download/]
+---
+
 # 24 — Migrate the download Stack (gluetun + qbittorrent)
 
-Type: task
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 Blocked by: 20
 

@@ -1,7 +1,17 @@
+---
+id: "38"
+title: Close the homepage tile gaps
+type: task
+status: open
+description: >
+  Four services have no homepage tile — gatus, ntfy, and the tautulli and
+  bazarr this map adds — so 39 opens on a complete set rather than spending
+  its session on data entry. Nothing here is a taste decision.
+touches: [stacks/homepage/config/services.yaml]
+---
+
 # 38 — Close the homepage tile gaps
 
-Type: task
-Status: open
 Blocked by: 35, 36
 
 ## Question

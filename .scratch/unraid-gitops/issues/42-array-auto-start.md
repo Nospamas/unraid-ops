@@ -1,7 +1,18 @@
+---
+id: "42"
+title: Make the array come back on its own after a reboot
+type: task
+status: open
+description: >
+  The array now starts itself — the checkbox is done, verified in both
+  `disk.cfg` and emhttpd's `var.ini`. What remains is how `startArray` is
+  recorded so a rebuilt flash gets it back, answered for the class of box
+  settings rather than this one key.
+touches: []
+---
+
 # 42 — Make the array come back on its own after a reboot
 
-Type: task
-Status: open
 Blocked by: —
 
 ## Question

@@ -1,8 +1,17 @@
+---
+id: "10"
+title: Publish the repo to a remote the box can reach
+type: task
+status: closed
+description: >
+  Public GitHub, cloned anonymously, no credential — which dissolves the
+  bootstrap-secret question entirely. History was published as-is after a
+  sweep found no key material. Do not re-raise visibility.
+touches: []
+---
+
 # 10 — Publish the repo to a remote the box can reach
 
-Type: task (HITL)
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 
 ## Question

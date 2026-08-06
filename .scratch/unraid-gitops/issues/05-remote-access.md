@@ -1,8 +1,18 @@
+---
+id: "05"
+title: Decide the remote access approach
+type: grilling
+status: closed
+description: >
+  Split-horizon, built now: CoreDNS bound to the tailnet IP, with Tailscale
+  Split DNS pointing `rbrb.in` at it. Nothing is published, and everything is
+  built default-deny to LAN + tailnet as if it will be. The claim that no LAN-
+  side change was needed was false — corrected by 32.
+touches: [stacks/caddy/conf/Caddyfile, stacks/coredns/]
+---
+
 # 05 — Decide the remote access approach
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-01
 
 ## Question

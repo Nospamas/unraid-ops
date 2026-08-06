@@ -1,7 +1,18 @@
+---
+id: "37"
+title: Point the bare domain at homepage
+type: task
+status: open
+description: >
+  `rbrb.in` 308s to `home.rbrb.in`, so there is one canonical hostname. The
+  apex needs its own site block and its own cert — the wildcard covers neither
+  — plus a new Cloudflare A record, and a ruling on whether the redirect
+  imports the guard.
+touches: [stacks/caddy/conf/Caddyfile]
+---
+
 # 37 — Point the bare domain at homepage
 
-Type: task
-Status: open
 Blocked by: —
 
 ## Question

@@ -1,7 +1,18 @@
+---
+id: "33"
+title: Migrate map 01's standing content, and stand up the open-questions register
+type: grilling
+status: closed
+description: >
+  An archive is cheaper than a migration: map 01 stays readable, only the two
+  things a session would get wrong unprompted moved into the docs, and the
+  four rules about the tracker itself that had been squatting in map Notes now
+  live in the tracker's README.
+touches: [CLAUDE.md, docs/conventions.md]
+---
+
 # 33 — Migrate map 01's standing content, and stand up the open-questions register
 
-Type: grilling
-Status: closed
 Blocked by: —
 Resolved: 2026-08-06
 

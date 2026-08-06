@@ -1,8 +1,18 @@
+---
+id: "14"
+title: Set up the rbrb.in zone on Cloudflare and mint the DNS token
+type: task
+status: closed
+description: >
+  The zone is live and the sixth secret exists, scoped to `rbrb.in` alone. The
+  ticket's own instructions were wrong twice: `Zone / Zone / Read` is required
+  alongside `Zone / DNS / Edit`, and the zone was not blank —
+  `webmail.rbrb.in` is a reserved hostname Caddy can never own.
+touches: [stacks/caddy/secrets.sops.env]
+---
+
 # 14 — Set up the rbrb.in zone on Cloudflare and mint the DNS token
 
-Type: task (HITL)
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-03
 
 ## Question

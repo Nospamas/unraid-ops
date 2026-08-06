@@ -1,8 +1,18 @@
+---
+id: "13"
+title: Decide the local tooling and task runner
+type: grilling
+status: closed
+description: >
+  `just`, not go-task — the human's call against the recommendation, so there
+  is no second runner. Landed the whole local toolchain: `.mise.toml`, the
+  justfile, `.sops.yaml`, `.renovaterc.json5` and CI. Biggest find: 03's age
+  keypair had never been generated, silently blocking three tickets.
+touches: [justfile, .mise.toml, .renovaterc.json5, .github/workflows/lint.yaml]
+---
+
 # 13 — Decide the local tooling and task runner
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
 Resolved: 2026-08-02
 Blocked by: 03
 

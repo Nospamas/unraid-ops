@@ -1,7 +1,17 @@
+---
+id: "39"
+title: Rework the homepage dashboard
+type: prototype
+status: open
+description: >
+  Make `home.rbrb.in` the page rb opens by choice: grouping, what deserves a
+  widget, bookmarks and theme. The destination's only subjective clause —
+  worked with the human, back and forth, and it cannot be closed alone.
+touches: [stacks/homepage/config/]
+---
+
 # 39 — Rework the homepage dashboard
 
-Type: prototype
-Status: open
 Blocked by: 38, 40
 
 ## Question

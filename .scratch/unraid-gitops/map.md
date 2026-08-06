@@ -41,15 +41,21 @@ discussion.
 
 <!-- one line per closed ticket — the ticket holds the detail -->
 
+- [25 — Retire Portainer](issues/25-retire-portainer.md) — gone entirely, appdata
+  included: the rollback it was held for was already dead, and the WireGuard key
+  now has exactly one plaintext copy on the box, the one the Stack needs.
 - [33 — Migrate map 01's standing content, and stand up the open-questions
   register](issues/33-migrate-map-01-standing-content.md) — **an archive is
   cheaper than a migration**: map 01 stays readable, only the two things a
   session would get wrong unprompted moved into the docs, and the four rules
   about the tracker itself that had been squatting in map Notes now live in
   [README.md](README.md).
-- [25 — Retire Portainer](issues/25-retire-portainer.md) — gone entirely, appdata
-  included: the rollback it was held for was already dead, and the WireGuard key
-  now has exactly one plaintext copy on the box, the one the Stack needs.
+- [34 — Retrofit frontmatter onto the closed
+  issues](issues/34-issue-frontmatter.md) — all 42 issues carry
+  `id`/`title`/`type`/`status`/`description`/`touches`, so a set can be filtered
+  without reading and a repo path greps back to the issue that explains it. The
+  body header keeps only what the schema deliberately refuses — the blocking
+  edge, the claim, the date and the asset.
 
 ## Not yet specified
 

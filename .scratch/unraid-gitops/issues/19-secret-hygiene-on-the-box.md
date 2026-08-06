@@ -1,8 +1,20 @@
+---
+id: "19"
+title: "Settle secret hygiene on the box: appdata permissions and the old plaintext copies"
+type: grilling
+status: closed
+description: >
+  Periphery's umask is 0022, so every decrypted `secrets.env` was 0644;
+  `(umask 077; sops -d …)` fixes it and `just lint` enforces it. The boundary
+  is not directory perms — appdata is exported over neither SMB nor NFS.
+  `/boot` holds no WireGuard key (01 was wrong); the calibre password is the
+  asset there.
+touches: [scripts/check-secrets-mode.sh, scripts/permissions.sh, docs/conventions.md]
+---
+
 # 19 — Settle secret hygiene on the box: appdata permissions and the old plaintext copies
 
-Type: grilling
-Status: closed
-Assignee: Nospamas
+Resolved: 2026-08-03
 Blocked by: 11
 
 ## Question
