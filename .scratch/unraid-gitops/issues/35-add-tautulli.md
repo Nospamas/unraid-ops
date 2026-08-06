@@ -14,6 +14,7 @@ touches: []
 # 35 — Add tautulli, and backfill plex's watch history
 
 Blocked by: —
+Claimed by: claude session, 2026-08-06
 
 ## Question
 
