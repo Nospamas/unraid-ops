@@ -108,7 +108,7 @@ division: the ticket holds the argument, the doc holds the rule plus a `[NN]`
 citation, and where a convention invites tidying it keeps **one line** saying not to
 — the media binds, `pre_deploy`'s eleven-fold repetition, the absent
 `bootstrap/komodo.toml`. The `[NN]` shorthand is what made the density possible:
-`[ticket 07](../.scratch/unraid-gitops/issues/07-repo-layout-and-conventions.md)`
+`[ticket 07](07-repo-layout-and-conventions.md)`
 inline, twenty-odd times, was itself a meaningful share of the line count.
 
 **`[NN]` is a plain citation, not a link**, and the human caught the first
@@ -156,7 +156,7 @@ Factual drift, not conventions reopened — the ticket's carve-out holds.
 
 ### Addendum: the map itself (same session)
 
-The human extended the pass to [map.md](../map.md), which had the same disease
+The human extended the pass to [map 01](../map-01-foundation.md), which had the same disease
 and worse: **614 → 217 lines.** Decisions-so-far had grown into seventeen
 15-to-30-line essays restating what the tickets already hold — a direct
 violation of wayfinder's own rule that the map is an *index*, not a store. Each

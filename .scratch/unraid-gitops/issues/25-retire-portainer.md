@@ -50,3 +50,22 @@ ticket should say so rather than claim the leak is closed.
 
 Portainer's compose is also the **rollback** for 24 until roughly 2026-08-10.
 Retiring it before then trades a live rollback for tidiness.
+
+## Carried into [map 02](../map.md)
+
+Map 01 is archived with this ticket still open, and it comes forward unchanged
+because it now **blocks** [38](38-homepage-tile-gaps.md): the Portainer tile is
+the last reader of `HOMEPAGE_VAR_HOST`, the box's raw LAN IP that
+[26](26-host-state-scope.md) ruled git cannot own. The dashboard cannot be
+finished until Portainer's fate is settled.
+
+**The lifeline condition is spent, on the record.** Komodo has run several
+deploys end to end and is a second browser door to container control at `:9120`,
+which keeps its host port precisely so the tooling that repairs Caddy is not
+behind Caddy. Line 21 above says "the Unraid GUI on port 80" — stale;
+[15](15-move-unraid-gui-ports.md) moved it to **8008**.
+
+**Mind the date.** The rollback window above runs to roughly **2026-08-10**.
+Taking this ticket before then knowingly gives up [24](24-migrate-download-stack.md)'s
+rollback for the gluetun/qbittorrent pair. Either wait it out or say on
+resolution that the trade was made deliberately.

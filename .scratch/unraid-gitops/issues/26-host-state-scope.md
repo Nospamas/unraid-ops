@@ -80,7 +80,7 @@ Not waved off — each was checked on the box first, and each shrank:
 **`192.168.1.195` is a DHCP lease.** `network.cfg` says `USE_DHCP[0]="yes"`, `ip
 addr` says `dynamic`, and `grep -rn 192.168.1.195 /boot/config/` returns
 **nothing**. The address the whole map leans on is not on the box at all — it is
-in rb's router, which [the map](../map.md) is explicit is "none of ours".
+in rb's router, which [map 01](../map-01-foundation.md) is explicit is "none of ours".
 
 So the fix cannot be ownership. It is either a reservation (off-box, handed to
 the human) or removing the dependency — and after [30](30-arr-urls-on-shared.md)
