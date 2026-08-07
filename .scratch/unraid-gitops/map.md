@@ -103,6 +103,13 @@ discussion.
   corrected three of the survey's claims**: there are no audiobooks, there is
   550G of music, and a rar'd release is sitting unimported in the download share.
 
+- [49 — Renovate has never offered a linuxserver
+  update](issues/49-renovate-never-saw-linuxserver.md) — not the 429s: Renovate's
+  default `docker` versioning requires a candidate's suffix be identical, and
+  `-lsNNN` increments every build, so the only compatible tag was the one already
+  pinned. Fixed with `regex:` versioning and a `registryAliases` to ghcr.io, the
+  name Renovate recognises; lazylibrarian cannot be versioned at all and is off.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -127,6 +134,18 @@ discussion.
   [37](issues/37-bare-domain-to-homepage.md) made the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb
   actually types, the redirect points the wrong way.
+
+- **Whether a watchdog sits beside Renovate.**
+  [49](issues/49-renovate-never-saw-linuxserver.md) went undetected for months
+  because Renovate going quiet looks exactly like nothing being released — no
+  error, no PR, no dashboard entry. Diun notifies on new build tags and speaks
+  ntfy natively, so the plumbing from [29] is already there. It cannot replace
+  Renovate — it resolves no digest and writes no file, which is [12]'s declined
+  `poll_for_updates` — but beside it, it catches the silence. Three things it
+  would have to settle: where it gets its image list (`dockerproxy` rather than
+  the raw socket), how `watchRepo` avoids the rate limit the box already hit at
+  [35], and that its `includeTags` regex mirrors Renovate's versioning rule
+  without drifting from it.
 
 ## Out of scope
 

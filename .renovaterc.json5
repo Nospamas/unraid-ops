@@ -13,6 +13,28 @@
   schedule: ["every weekend"],
   // Ciphertext has no versions in it, and Renovate cannot read it anyway.
   ignorePaths: ["**/*.sops.*"],
+  // Look the linuxserver images up under the name Renovate recognises. `lscr.io`
+  // is ghcr.io wearing a different name -- same auth realm, same digests -- but
+  // Renovate has never heard of the alias, and that costs two things it gives
+  // `ghcr.io` for free:
+  //
+  //   - GHCR returns tags *oldest-first*, so the tag that matters is on the last
+  //     page. Renovate hardcodes ghcr.io in `hostsNeedingAllPages` and fetches
+  //     1000 pages for it; an unrecognised host instead gets `dockerMaxPages`,
+  //     default 20. radarr is 15.5k tags over 16 pages and climbing.
+  //   - Renovate provisions a ghcr.io credential from its own GitHub token.
+  //     Under the alias the request went out anonymous into a shared bucket,
+  //     which is what was returning 429.
+  //
+  // Not fixable at the registry: GHCR implements only the OCI spec, which has no
+  // ordering parameter -- `ordering`, `sort`, `order`, `reverse` are all ignored,
+  // and `n` caps at 1000. Authenticating fixes the 429, not the order.
+  //
+  // `registryAliases` rewrites only the lookup. `replaceString` keeps the
+  // original line, so the images stay `lscr.io` and only the tag and digest move.
+  registryAliases: {
+    "lscr.io": "ghcr.io",
+  },
   packageRules: [
     {
       description: "Auto-merge mise tools",
@@ -46,6 +68,69 @@
       minimumReleaseAge: "3 days",
       ignoreTests: true,
     },
+
+    // --- linuxserver versioning ---------------------------------------------
+    // Without these, Renovate offers *nothing* for any linuxserver image. Its
+    // default `docker` versioning splits a tag on `-`, treats everything after
+    // the first piece as a "suffix", and will only consider a candidate whose
+    // suffix is identical. The `-lsNNN` build counter lives in that suffix and
+    // increments on every build, so the only compatible tag is the one already
+    // pinned. Simulated against the real tag lists: 1 compatible, 0 newer, for
+    // all nine. That -- not the registry 429s -- is why calibre sat a major
+    // version behind.
+    //
+    // `loose` was tried and is worse than nothing: it accepts `6.4.2-nightly`,
+    // `20.04.1` (an Ubuntu tag) and bare git hashes. The `-ls(?<build>\d+)$`
+    // anchor is what restricts this to the static build tags linuxserver tells
+    // you to pin.
+    //
+    // Two traps. `revision` is only counted when `build` is also captured, so
+    // the ls counter must be `build`, never `revision`. And `matchPackageNames`
+    // matches packageName, which `registryAliases` above has already rewritten
+    // to `ghcr.io/*` -- spelling these `lscr.io/**` silently matches nothing.
+    {
+      description: "linuxserver build tags — upstream version, then -lsNNN",
+      matchPackageNames: [
+        "ghcr.io/linuxserver/**",
+        "!ghcr.io/linuxserver/qbittorrent",
+        "!ghcr.io/linuxserver/lazylibrarian",
+      ],
+      versioning: "regex:^v?(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+).*-ls(?<build>\\d+)$",
+    },
+    {
+      // Its tag has carried three shapes -- `4.4.02020…-7112-…ubuntu18.04.1-ls105`,
+      // `5.1.2-r4-ls426`, now `5.2.3_v2.0.13-ls469`. The looser pattern above
+      // reads the 2021 ubuntu tags as version 14 and offers a five-year rollback
+      // as a major bump, so this one anchors the separator instead.
+      description: "qbittorrent — tighter anchor, three tag shapes in its history",
+      matchPackageNames: ["ghcr.io/linuxserver/qbittorrent"],
+      versioning: "regex:^(?<major>\\d+)\\.(?<minor>\\d+)\\.(?<patch>\\d+)[-_][^-]*-ls(?<build>\\d+)$",
+    },
+    {
+      // `ef1f6e73-ls222` — an upstream git hash and a build counter, no version
+      // anywhere. Ordering on the counter alone does not work either: four
+      // different images ship as `-ls328`, so it cannot name a newest. Left off
+      // deliberately rather than pinned to a lie; bump it by hand.
+      description: "lazylibrarian — no version in the tag to order by",
+      matchPackageNames: ["ghcr.io/linuxserver/lazylibrarian"],
+      enabled: false,
+    },
+    {
+      // TEMPORARY — delete once the backlog is drained.
+      //
+      // The versioning rules above unblock updates that have never once been
+      // offered, so the first run does not raise a bump, it raises a year of
+      // them: radarr and prowlarr jump a minor, calibre a major, and qbittorrent
+      // takes the download stack -- gluetun included -- with it. Left alone,
+      // most of that automerges and redeploys unattended in one pass.
+      //
+      // This holds every one of them behind a tick on the dashboard, so the
+      // backlog arrives as a list to work through rather than as a deploy.
+      description: "linuxserver — first pass lands on the dashboard, not the box",
+      matchPackageNames: ["ghcr.io/linuxserver/**"],
+      dependencyDashboardApproval: true,
+    },
+
     {
       // Still one PR — gluetun and qbittorrent must never bump apart, since
       // qbittorrent lives in gluetun's netns (ticket 06). But no longer human

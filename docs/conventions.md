@@ -464,6 +464,13 @@ human reads. Both are maintained by Renovate, so the readable part cannot drift.
 drift. Minor and patch bumps automerge; `download`, `plex`, `caddy` and `coredns`
 are human-merged, and `bootstrap/` is human-merged *and* hand-applied.
 
+**A linuxserver image needs its versioning declared, or Renovate offers nothing**
+[49]. The default `docker` versioning only considers candidates whose suffix is
+identical, and `-lsNNN` increments every build — so a new one is added with a
+`regex:` rule matching it, or it silently never updates. Adding an image to
+`.renovaterc.json5`'s `ghcr.io/linuxserver/**` rule is part of adding the
+service, not a follow-up.
+
 **An image that updates itself at runtime is not pinned** [23]. plex's `VERSION`
 names a Plex Media Server build to fetch and install at every container start;
 set to anything but `docker` it makes the digest describe a container that no
