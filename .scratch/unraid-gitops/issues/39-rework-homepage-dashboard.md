@@ -12,7 +12,7 @@ touches: [stacks/homepage/config/]
 
 # 39 — Rework the homepage dashboard
 
-Blocked by: 38, 40
+Blocked by: 38, 40, 45
 
 ## Question
 
@@ -22,9 +22,10 @@ around. This is the destination's only subjective clause, and it is deliberate:
 alone.**
 
 By the time it starts, [38](38-homepage-tile-gaps.md) has every service on the
-page with a working widget and [40](40-survey-complementary-services.md) has
-settled whether anything is still missing. So this session spends its time on
-judgment, not data entry.
+page with a working widget and [45](45-pick-from-the-survey.md) has settled
+whether anything is still missing — [40](40-survey-complementary-services.md)
+only surveyed, and deliberately left the picking to a conversation. So this
+session spends its time on judgment, not data entry.
 
 ### What is open
 

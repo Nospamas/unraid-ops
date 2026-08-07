@@ -87,6 +87,14 @@ discussion.
   LAN IP is a DHCP lease git cannot own, and `status.rbrb.in` would be 403'd by
   the guard for arriving from a bridge.
 
+- [40 — Survey what else commonly runs alongside this
+  stack](issues/40-survey-complementary-services.md) — five candidates clear the
+  gap bar — cleanuparr, maintainerr, recyclarr, seerr and audiobookshelf — and
+  each carries a decision rather than an install: seerr drags the auth question
+  forward, maintainerr wants delete rights on the media share, recyclarr
+  reconciles the service settings this repo says it does not. The picking is
+  rb's, in [45](issues/45-pick-from-the-survey.md).
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.**
@@ -99,6 +107,13 @@ discussion.
   once there is tuning worth losing — bazarr has none today and will the moment
   rb sets its language profiles. [38] adds a first concrete cost: homepage now
   holds a sops copy of each service's API key, and a rebuild rotates both.
+- **How this repo knows a headless Stack is alive.**
+  [40](issues/40-survey-complementary-services.md) found the routine assumes a
+  web UI: [docs/adding-a-service.md](../../docs/adding-a-service.md) ends every
+  service at a caddy label, a gatus probe and a homepage tile, and all sixteen
+  probes are HTTP. Recyclarr and Kometa are scheduled jobs with no listener.
+  Sharp the moment [45](issues/45-pick-from-the-survey.md) picks one of them, and
+  not before — the other three candidates all have UIs.
 - **Whether `home.rbrb.in` retires in favour of the apex.**
   [37](issues/37-bare-domain-to-homepage.md) made the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb
