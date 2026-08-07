@@ -13,6 +13,7 @@ touches: []
 # 40 — Survey what else commonly runs alongside this stack
 
 Blocked by: —
+Claimed by: claude session, 2026-08-07
 
 ## Question
 
