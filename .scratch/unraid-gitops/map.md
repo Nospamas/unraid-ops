@@ -91,9 +91,10 @@ discussion.
   stack](issues/40-survey-complementary-services.md) — five candidates clear the
   gap bar — cleanuparr, maintainerr, recyclarr, seerr and audiobookshelf — and
   each carries a decision rather than an install: seerr drags the auth question
-  forward, maintainerr wants delete rights on the media share, recyclarr
-  reconciles the service settings this repo says it does not. The picking is
-  rb's, in [45](issues/45-pick-from-the-survey.md).
+  forward, maintainerr wants delete rights on the media share, recyclarr claims a
+  named slice of the *arr's settings. The picking is rb's, in
+  [45](issues/45-pick-from-the-survey.md). **`revisitable`, due 2026-09-07** —
+  the reading holds, the specifics rot.
 
 - [45 — Pick what the survey found, if
   anything](issues/45-pick-from-the-survey.md) — recyclarr and audiobookshelf,

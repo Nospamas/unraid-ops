@@ -70,6 +70,10 @@ host-ports *args:
 adopt container *args:
     bash scripts/adopt.sh {{ container }} {{ args }}
 
+# List tracker answers whose shelf life has run out -- ticket 40
+revisits:
+    bash scripts/check-revisits.sh
+
 # Check exposure, compose files, shell scripts and Dockerfiles
 lint:
     #!/usr/bin/env bash
@@ -78,6 +82,9 @@ lint:
 
     bash scripts/check-exposure.sh
     bash scripts/check-secrets-mode.sh
+    # Advisory -- see the script. Needs no tooling, so it runs before the slow
+    # checks and its line is not buried under docker's warnings.
+    bash scripts/check-revisits.sh
 
     for compose in stacks/*/compose.yaml; do
         docker compose --env-file common.env --file "$compose" config --quiet

@@ -2,7 +2,8 @@
 id: "40"
 title: Survey what else commonly runs alongside this stack
 type: research
-status: closed
+status: revisitable
+revisit: 2026-09-07
 description: >
   Five candidates clear the gap bar — cleanuparr, maintainerr, recyclarr,
   seerr and audiobookshelf — and each carries a decision rather than an
@@ -15,8 +16,14 @@ touches: [.scratch/unraid-gitops/assets/40-complementary-services.md]
 # 40 — Survey what else commonly runs alongside this stack
 
 Resolved: 2026-08-07
+Revisit: 2026-09-07
 Blocked by: —
 Asset: [assets/40-complementary-services.md](../assets/40-complementary-services.md)
+
+**This one has a shelf life.** It is answered and acted on — three Stacks came out
+of it — but the answer is a snapshot of a moving field, and it was already wrong
+three times within hours of being written. `just revisits` says when it is due.
+What the revisit is for is at the bottom.
 
 ## Question
 
@@ -121,6 +128,24 @@ Recyclarr and Kometa are scheduled jobs with no listener — no hostname, nothin
 to probe, nothing for a tile to show. Adopting either means first deciding how
 this repo knows a headless Stack is alive. Carried as fog on the map, triggered
 by picking one.
+
+## What the revisit is for
+
+**Not a re-survey.** The reading holds; what decays is the specifics, and a month
+is roughly how long it took the last three to go stale:
+
+- **Are the recommended images still what they say they are?** Overseerr was
+  archived, Jellyseerr merged into Seerr, Readarr's metadata backend went offline,
+  Decluttarr was superseded — four of this survey's candidates moved before it
+  was written. Assume more have.
+- **Did the three unpicked ones — cleanuparr, maintainerr, seerr — get picked
+  up by events?** [45](45-pick-from-the-survey.md) closed around them, not
+  against them.
+- **Do the corrections still hold?** They came from reading the share once. The
+  audiobook count and the rar set in particular are facts with a date on them.
+
+Set a fresh `revisit:` or drop to `closed` — do not leave it due, which is the
+one state the check cannot tell from neglect.
 
 ## Hand-offs
 

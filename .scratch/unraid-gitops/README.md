@@ -55,6 +55,29 @@ the title holds only what the schema refuses: `Blocked by:`, `Resolved:`,
 `Asset:`, and the claim below. `Type:` and `Status:` there are the frontmatter's
 job now [34].
 
+### `revisitable` — answered, but with a shelf life
+
+A third `status`, beside `open` and `closed`, for an issue whose **answer decays
+rather than being incomplete**. It takes a `revisit: YYYY-MM-DD` field, and
+[40](issues/40-survey-complementary-services.md) is the first: a survey of a
+moving field, correct on the day and stale within months.
+
+- **It counts as resolved for blocking.** A ticket blocked by a revisitable one
+  is unblocked — the answer exists. This is the whole difference from reopening.
+- **It is not on the frontier**, because it is not open. Nobody claims it; the
+  date is what brings it back.
+- **The issue says what the revisit is for**, or the next reader re-does the
+  whole thing instead of checking the handful of facts that move.
+- On revisit, set a fresh date or drop it to `closed`. **Leaving it due is the
+  one state the check cannot tell from neglect.**
+
+`just revisits` reports what is due, and `just lint` prints the same line. It is
+**advisory and never fails** — an aging answer is not a broken repo, and blocking
+every push on one only teaches people to ignore it.
+
+Reach for it sparingly. Most answers do not decay, and a date on every issue is a
+date on none.
+
 **Claim one before working it.** Sessions run in parallel and this tracker has no
 assignee field, so add a line to the issue and **commit it first**, before any
 other work:
