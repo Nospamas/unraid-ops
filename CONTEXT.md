@@ -42,16 +42,17 @@ A value that must not sit in git in the clear. Encrypted per Stack as
 _Avoid_: credential, env var (a secret is a kind of env var, not a synonym)
 
 **Appdata**:
-The per-service state directory on the box, under `/mnt/user/appdata`. Git never
-owns it — it is the boundary between what this repo reconciles and what a
-service's own UI edits. Homepage is the sole exception, because its config is
-files rather than a database.
+The per-service state directory on the box, under `/mnt/user/appdata`. Where a
+service's own state lives when git does not own it — which is the default,
+because most of it is a database git cannot usefully diff [07].
 _Avoid_: config volume, data dir, state
 
 **Service settings**:
-What lives in appdata and is edited in a service's own web UI — sonarr's
-indexers, quality profiles, root folders. Explicitly not reconciled. A change
-here is not a `git push`.
+What a service's own web UI edits — sonarr's indexers, quality profiles, root
+folders. **Reconciled or in appdata is a per-service choice, not a rule**: the
+default is appdata, homepage is git-owned outright, and a service may be either.
+What is fixed is that the choice is *stated* — if git owns a settings file, it is
+listed in `config_files` [07], and if it does not, a change is not a `git push`.
 _Avoid_: config (which in this repo means the git-owned definition)
 
 ## Reconciliation

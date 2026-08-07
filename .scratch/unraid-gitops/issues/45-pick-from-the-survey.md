@@ -84,6 +84,24 @@ is *there*.
   builds it as **a podcast server that is ready for audiobooks** and says so
   rather than pretending the tile will have books on it.
 
+### And once more, about a rule that was never a rule
+
+[40](40-survey-complementary-services.md) called recyclarr a contradiction of
+[CONTEXT.md](../../../CONTEXT.md)'s line that service settings are not
+reconciled, and this ticket's own question repeated it. **rb's correction: that
+was never a prohibition** — it was a glossary entry from
+[07](07-repo-layout-and-conventions.md) describing where settings live by
+default, and either home is fine. Homepage was not an exception to a rule, it was
+the first service to take the other option.
+
+CONTEXT.md now says so: reconciled-or-appdata is a per-service choice, and what
+is fixed is only that the choice is stated. [46](46-add-recyclarr.md) lost a
+decision because of it, and the fog about tautulli's and bazarr's settings
+stopped being a permission question.
+
+**Both of this session's errors are the same error** — treating the repo's
+description of what *is* as a ruling about what *may be*.
+
 ### One more thing the box said
 
 `downloads/` and its contents are owned by `rseaforthb:1001`, not `99:100`

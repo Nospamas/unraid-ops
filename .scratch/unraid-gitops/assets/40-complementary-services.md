@@ -53,11 +53,13 @@ No homepage widget.
 
 `recyclarr/recyclarr:8.7.1`. Syncs TRaSH-guides custom formats and quality
 profiles into sonarr and radarr on a schedule. The gap is real — those profiles
-are hand-set today and drift — but this one **argues with the repo's own line**:
-[CONTEXT.md](../../../CONTEXT.md) says service settings are explicitly not
-reconciled, and recyclarr's whole job is reconciling a subset of them from a
-config file that would sit in git. That tension is the ticket, not an obstacle to
-it.
+are hand-set today and drift — ~~but this one **argues with the repo's own line**: CONTEXT.md says service
+settings are explicitly not reconciled, and recyclarr's whole job is reconciling
+a subset of them from a config file that would sit in git.~~ **Wrong — that was a
+glossary entry, not a prohibition, and
+[CONTEXT.md](../../../CONTEXT.md) has been corrected**: reconciled-or-appdata is
+a per-service choice. What is left is saying *which* settings recyclarr owns, so
+a profile tuned in the UI is not silently reverted.
 
 Needs both API keys and a config directory bind — a **directory**, since a git
 pull replaces a bound file. No web UI at all: no caddy label, no homepage widget,

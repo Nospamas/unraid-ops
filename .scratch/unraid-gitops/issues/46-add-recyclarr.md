@@ -4,10 +4,10 @@ title: Add recyclarr
 type: task
 status: open
 description: >
-  Add recyclarr, whose job is reconciling a slice of the service settings
-  CONTEXT.md says are never reconciled — so the ticket settles that line
-  before it writes the Stack. It is also the repo's first headless Stack:
-  no caddy label, no tile, and nothing for gatus to probe.
+  Add recyclarr, which owns a named slice of sonarr's and radarr's settings
+  from git — allowed, but it has to say which slice, or the next person to
+  edit a quality profile in the UI loses it without warning. It is also the
+  repo's first headless Stack: no caddy label, no tile, nothing to probe.
 touches: []
 ---
 
@@ -24,19 +24,23 @@ schedule, because those profiles are hand-set today and drift.
 
 **Two decisions come before the routine**, and neither is a taste call.
 
-### It contradicts the line about service settings
+### Say which settings it owns
 
-[CONTEXT.md](../../../CONTEXT.md) says service settings — sonarr's indexers,
-quality profiles, root folders — are explicitly not reconciled, and that a change
-to one is not a `git push`. Recyclarr's entire product is reconciling a subset of
-exactly those, from a config file that would live in git.
+This ticket was first written claiming recyclarr contradicts
+[CONTEXT.md](../../../CONTEXT.md). **It does not, and the doc has been corrected**
+— reconciled or in appdata is a per-service choice, the default is appdata, and
+homepage was never an exception to a rule. So there is no permission to seek.
 
-Settle it as a **rule with a citation**, in
-[docs/conventions.md](../../../docs/conventions.md), not as a shrug in a compose
-comment. The obvious shape is that the boundary was never appdata-versus-git but
-*who owns each setting* — and recyclarr claims a named, bounded set. Say which
-set, so the next reader knows whether editing a quality profile in sonarr's UI
-will survive.
+What is left is the real question and it is narrower: **which settings recyclarr
+owns.** It writes custom formats, their scores and the quality profiles that
+carry them; it does not touch indexers, root folders or download clients. Write
+that boundary down where a person hunting for it will find it, because the
+failure mode is silent — someone tunes a quality profile in sonarr's UI and the
+next sync reverts it with no error anywhere.
+
+Which also settles whether the `recyclarr.yml` is a `config_files` entry: it is
+git-owned settings, so it is listed, or a push that edits it is invisible to the
+loop.
 
 ### It is the first Stack with nothing to probe
 

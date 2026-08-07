@@ -80,10 +80,12 @@ free win** — each arrives holding a decision this repo has already made once:
   answerable question in the first place. The decision is that it is a rule
   engine holding the delete button on `/mnt/user/Media`, with its rules in its
   own SQLite rather than git.
-- **Recyclarr** — quality profiles drift because they are hand-set. It
+- **Recyclarr** — quality profiles drift because they are hand-set. ~~It
   **contradicts [CONTEXT.md](../../../CONTEXT.md)'s own line** that service
-  settings are not reconciled: reconciling a subset of them from a git-owned
-  config is the entire product. That argument is the ticket.
+  settings are not reconciled.~~ **Corrected in
+  [45](45-pick-from-the-survey.md)**: that line was a glossary entry, not a
+  prohibition, and the doc now says reconciled-or-appdata is a per-service
+  choice. The ticket is narrower — say which settings recyclarr owns.
 - **Seerr** — the February 2026 merge of Overseerr (archived 2024) and
   Jellyseerr, so both names this ticket would have reached for are dead ends.
   Homepage ships the widget. But its point is *other people asking*, which is a

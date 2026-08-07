@@ -104,14 +104,16 @@ discussion.
 
 ## Not yet specified
 
-- **Whether git should own tautulli's and bazarr's own settings.**
-  [CONTEXT.md](../../CONTEXT.md) draws the line at appdata and makes homepage the
-  sole exception. Both new services keep their tuning — language profiles,
+- **Whether git should own tautulli's and bazarr's own settings.** Not a
+  permission question — [CONTEXT.md](../../CONTEXT.md) has been corrected to say
+  reconciled-or-appdata is a per-service choice, and homepage was never an
+  exception to a rule. It is a **worth-it** question. Both services keep their
+  tuning — language profiles,
   scoring, provider lists — in a SQLite database a rebuild loses. Both are now on
   the box and both split it the same way: a text config beside a `.db`,
   `config.ini`/`tautulli.db` [35] and `config/config.yaml`/`db/bazarr.db` [36],
-  and only the text half is the shape homepage's exception was carved for. Sharp
-  once there is tuning worth losing — bazarr has none today and will the moment
+  and only the text half is worth git owning. Sharp once there is tuning worth
+  losing — bazarr has none today and will the moment
   rb sets its language profiles. [38] adds a first concrete cost: homepage now
   holds a sops copy of each service's API key, and a rebuild rotates both.
 - **Whether the 550G of music gets managed or served.**
