@@ -27,6 +27,13 @@ whether anything is still missing — [40](40-survey-complementary-services.md)
 only surveyed, and deliberately left the picking to a conversation. So this
 session spends its time on judgment, not data entry.
 
+**Three tiles are coming and this ticket does not wait for them.** 45 picked
+audiobookshelf ([47](47-add-audiobookshelf.md)) and unpackerr
+([48](48-add-unpackerr.md)), both of which get a widget, and recyclarr
+([46](46-add-recyclarr.md)), which gets **no tile worth having** — it is headless,
+so there is nothing for a widget to show. Lay out for the two, and let 46 decide
+whether a headless Stack appears on this page at all.
+
 ### What is open
 
 - **Grouping and layout.** [settings.yaml](../../../stacks/homepage/config/settings.yaml)

@@ -3,6 +3,12 @@
 Asset of [40](../issues/40-survey-complementary-services.md). Surveyed
 2026-08-07. **Recommends; installs nothing.**
 
+> **Corrected the same day, in [45](../issues/45-pick-from-the-survey.md), by
+> looking at the media share instead of reasoning about it.** Three claims below
+> were wrong and are struck through where they appear: unpackerr was ruled out on
+> a false premise, "no music here at all" was 550G wrong, and audiobookshelf's
+> precondition has an answer. Reading the box first would have caught all three.
+
 Running today: plex, sonarr, radarr, prowlarr, qbittorrent behind gluetun,
 calibre, lazylibrarian, tautulli, bazarr, plus caddy/coredns/gatus/ntfy/homepage/
 komodo/dockerproxy.
@@ -78,8 +84,27 @@ its own apps. Calibre stores ebooks and lazylibrarian acquires them; **nothing o
 this box plays an audiobook.** Homepage widget: yes. Needs its own media bind and
 appdata, no secret, no host port.
 
-Precondition, not a decision: worth a ticket only if rb has audiobooks. An empty
-library is a tile that says zero.
+~~Precondition, not a decision: worth a ticket only if rb has audiobooks. An
+empty library is a tile that says zero.~~ **Answered from the box in
+[45](../issues/45-pick-from-the-survey.md): there are no audiobooks.**
+`/mnt/user/Media/books` is calibre's library — 514M, three epubs, a
+`metadata.db` — with zero `.m4b` and zero `.mp3` in it. What does exist is
+`/mnt/user/Media/podcasts`, 6.2G of one series. So audiobookshelf lands as a
+podcast server that is ready for audiobooks, which is a different service from
+the one this entry described.
+
+### Unpackerr — reinstated
+
+~~Ruled out below on the grounds that nothing here arrives as split archives.~~
+**That premise was wrong**: torrent releases arrive rar'd too, and
+`/mnt/user/Media/downloads` holds a 40-part rar set that radarr could not import
+— the extracted `.mkv` is sitting loose in the movies root, unrenamed, which is
+what a hand extraction looks like. `ghcr.io/unpackerr/unpackerr:0.15.2`, already
+running in home-ops at
+`kubernetes/apps/media/unpackerr/app/helmrelease.yaml` — a working reference for
+the *arr wiring. It has a web server (`UN_WEBSERVER_LISTEN_ADDR`), so unlike
+recyclarr it probes and fronts normally, and homepage ships an `unpackerr`
+widget.
 
 ## Conditional — a trigger, not a plan
 
@@ -91,11 +116,15 @@ library is a tile that says zero.
 - **Kometa** `kometateam/kometa:v2.4.6` — collections, overlays and artwork for
   plex. Real, but cosmetic-adjacent, headless like recyclarr, and its config is a
   large YAML that reopens the same git-owns-settings argument.
-- **Lidarr + Navidrome** — there is no music here at all, so the gap is total,
-  but it is two Stacks and a new media tree, and **Lidarr's metadata server has
-  been unreliable through 2026** — adding artists and imports break on it. Both
-  have homepage widgets. Only worth it if rb wants music, which is a question
-  about rb, not about the box.
+- **Lidarr + Navidrome** — ~~there is no music here at all, so the gap is
+  total~~ **wrong, and wrong in the direction that matters**: the box holds
+  **550G of music** across `music-rb` (440G, 1025 loose files) and `music-reg`
+  (110G, 1104 artist directories). It is unmanaged and unserved — nothing indexes
+  it, nothing plays it, and the two trees are organised differently from each
+  other. That makes Navidrome the stronger half of this pair and Lidarr the
+  optional one, which reverses the entry. **Lidarr's metadata server has still
+  been unreliable through 2026**, so acquisition is the shaky part while serving
+  what already exists is not. Both have homepage widgets.
 
 ## Ruled out, and why
 
@@ -108,7 +137,7 @@ library is a tile that says zero.
 | Decluttarr | superseded by Cleanuparr |
 | Overseerr, Jellyseerr | archived and merged respectively — new installs take Seerr |
 | Readarr | archived June 2025 when its metadata backend went offline; the forks (Librarr, Bindery, Shelfmark) are alpha/beta. lazylibrarian already runs |
-| Unpackerr | nothing here arrives as split archives — no usenet client on the box |
+| ~~Unpackerr~~ | ~~nothing here arrives as split archives — no usenet client on the box~~ — **reinstated above**: rar'd torrents are the case this missed, and one is sitting in the download share right now |
 | cross-seed, autobrr, qbit-manage | the download stack is leech-only [24]; there is no seeding to manage |
 | Scrutiny | disk health is the Unraid GUI's job, and [26](../issues/26-host-state-scope.md) holds host state out of git |
 | Tdarr, FileFlows, Unmanic | transcoding is a CPU commitment and rewrites the library in place; nothing says the library needs it |

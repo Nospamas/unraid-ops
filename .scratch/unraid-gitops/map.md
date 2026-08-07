@@ -95,6 +95,13 @@ discussion.
   reconciles the service settings this repo says it does not. The picking is
   rb's, in [45](issues/45-pick-from-the-survey.md).
 
+- [45 — Pick what the survey found, if
+  anything](issues/45-pick-from-the-survey.md) — recyclarr and audiobookshelf,
+  plus unpackerr, which rb remembered from home-ops and which 40 had ruled out on
+  a false premise. **Checking the media share instead of reasoning about it
+  corrected three of the survey's claims**: there are no audiobooks, there is
+  550G of music, and a rar'd release is sitting unimported in the download share.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.**
@@ -107,13 +114,12 @@ discussion.
   once there is tuning worth losing — bazarr has none today and will the moment
   rb sets its language profiles. [38] adds a first concrete cost: homepage now
   holds a sops copy of each service's API key, and a rebuild rotates both.
-- **How this repo knows a headless Stack is alive.**
-  [40](issues/40-survey-complementary-services.md) found the routine assumes a
-  web UI: [docs/adding-a-service.md](../../docs/adding-a-service.md) ends every
-  service at a caddy label, a gatus probe and a homepage tile, and all sixteen
-  probes are HTTP. Recyclarr and Kometa are scheduled jobs with no listener.
-  Sharp the moment [45](issues/45-pick-from-the-survey.md) picks one of them, and
-  not before — the other three candidates all have UIs.
+- **Whether the 550G of music gets managed or served.**
+  [45](issues/45-pick-from-the-survey.md) found `music-rb` and `music-reg` on the
+  share — unindexed, unplayed, and organised differently from each other.
+  Navidrome would serve what is already there; Lidarr would acquire more against
+  a metadata server that has been unreliable all year. Not picked, and the two
+  halves are not the same decision.
 - **Whether `home.rbrb.in` retires in favour of the apex.**
   [37](issues/37-bare-domain-to-homepage.md) made the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb
