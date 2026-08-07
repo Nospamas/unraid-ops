@@ -13,6 +13,7 @@ touches: [stacks/homepage/config/]
 # 39 — Rework the homepage dashboard
 
 Blocked by: 38, 40, 45
+Claimed by: wayfinder session, 2026-08-07
 
 ## Question
 
