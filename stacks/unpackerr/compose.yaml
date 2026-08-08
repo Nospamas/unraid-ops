@@ -1,0 +1,83 @@
+# Ticket 48. Extracts rar'd releases so a packed download becomes a playable
+# file without a hand extraction.
+#
+# **The watched folder is the point here, not the *arr wiring.** 48 inherited
+# home-ops' shape -- poll sonarr's and radarr's queues -- and that would extract
+# nothing on this box: radarr has 3 grabs in its whole history and sonarr 36,
+# both with zero `downloadFailed` and zero `downloadIgnored`, and neither of the
+# rar'd releases sitting in the share was ever theirs. Acquisition here is rb
+# by hand, straight into qbittorrent with no category. `UN_FOLDER_0_*` is the
+# half that sees those; the *arr blocks below ride along for the rare grab.
+
+services:
+  unpackerr:
+    image: ghcr.io/unpackerr/unpackerr:0.15.2@sha256:89e13608521ece21dd300c39229fd595a55fbf4b8152771af5670a7455b5c747
+    restart: unless-stopped
+    # Not a linuxserver image -- a plain Go binary, so it reads no PUID/PGID and
+    # no UMASK; see stacks/ntfy/compose.yaml [29].
+    user: "${PUID}:${PGID}"
+    environment:
+      TZ: ${TZ}
+      # UMASK being inert is not cosmetic for this one: it writes into a tree rb
+      # also uses, and unpackerr's own defaults are 0644/0755. That is the 022
+      # that docs/conventions.md, 'Ownership and modes' calls a bug -- moving a
+      # file needs write on its parent directory, so 0755 output is output rb
+      # cannot file [09, 19].
+      UN_FILE_MODE: "0664"
+      UN_DIR_MODE: "0775"
+      # Log a line only when there is queue activity. Without it every poll
+      # prints its counts, twice a minute, forever.
+      UN_ACTIVITY: "true"
+
+      # The watched folder.
+      UN_FOLDER_0_PATH: /downloads
+      # Nothing is ever deleted: `delete_after` is the timer and `delete_files`
+      # /`delete_original` are the switches, both off by default. Set to 0 so
+      # the intent is stated rather than inherited -- the archives are what
+      # qbittorrent is still seeding from, and the tree is rb's.
+      UN_FOLDER_0_DELETE_AFTER: "0"
+      # move_back stays off, which is what keeps this Stack out of the
+      # permission trap 48 feared. With it off, output goes to a *sibling*
+      # `<release>_unpackerred/` in the downloads root -- `nobody:users` 775, so
+      # 99:100 can create it -- and nothing is written inside the release
+      # directory. 23 of those predate the uid unification and are owned
+      # `rseaforthb:1001`, a gid with no group entry at all, so 99:100 has r-x
+      # there and would fail on any write. It only ever reads them.
+
+      # Both *arr already mount ${MEDIA}/downloads at /downloads, so the path
+      # unpackerr is told matches the path they report with no translation.
+      UN_SONARR_0_URL: http://sonarr:8989
+      UN_SONARR_0_PATHS_0: /downloads
+      UN_RADARR_0_URL: http://radarr:7878
+      UN_RADARR_0_PATHS_0: /downloads
+
+      # An HTTP listener, so this is probed and tiled like everything else
+      # rather than arguing an `x-watch` sentence [46]. Its default is
+      # 0.0.0.0:5656 already; stated because the label below depends on it.
+      UN_WEBSERVER_LISTEN_ADDR: 0.0.0.0:5656
+    env_file:
+      # UN_SONARR_0_API_KEY, UN_RADARR_0_API_KEY. Written by pre_deploy.
+      - path: secrets.env
+        required: false
+    volumes:
+      # No /config bind: unpackerr is configured entirely by environment and
+      # keeps no state between restarts.
+      #
+      # Long syntax for `create_host_path: false` alone -- pre_deploy cannot
+      # prepare a media path, so a missing tree fails the deploy instead of
+      # arriving root:root and empty [47].
+      - type: bind
+        source: ${MEDIA}/downloads
+        target: /downloads
+        bind:
+          create_host_path: false
+    networks:
+      - shared
+    labels:
+      caddy: unpackerr.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 5656}}"
+
+networks:
+  shared:
+    external: true

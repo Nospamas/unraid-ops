@@ -137,7 +137,16 @@
           # The control server, reachable at last now that gluetun is on
           # `shared` (ticket 24). Unauthenticated by gluetun's own default.
           url: http://gluetun:8000
-    # unpackerr lands here when ticket 48 adds it.
+    - Unpackerr:
+        # .png, not .svg: dashboard-icons has no svg for this one, and the
+        # default when a name does not resolve is a blank tile.
+        icon: unpackerr.png
+        href: https://unpackerr.rbrb.in
+        description: Extracts rar'd releases in the download share
+        server: tower
+        container: unpackerr-unpackerr-1
+        # No widget: 48 expected one, and homepage has no unpackerr type among
+        # its 166 -- the same shape as calibre and lazylibrarian above.
 
 - Infrastructure:
     - Komodo:

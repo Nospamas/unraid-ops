@@ -1,0 +1,22 @@
+[[stack]]
+name = "unpackerr"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/unpackerr"
+project_name = "unpackerr"
+additional_env_files = ["../../common.env"]
+
+config_files = [
+  # `redeploy`, not `restart`: pre_deploy decrypts this to secrets.env, and
+  # env_file is read at container *creation* [50].
+  { path = "secrets.sops.env", requires = "redeploy" },
+]
+
+# No appdata mkdir -- unpackerr binds no /config and keeps no state.
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+(umask 077; sops -d secrets.sops.env > secrets.env)
+"""
