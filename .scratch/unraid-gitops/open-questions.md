@@ -44,6 +44,10 @@ ruling standing, because plex's own account auth defends its port and
 trusted (guest wifi, IoT). qbittorrent is the sharpest case —
 [24](issues/24-migrate-download-stack.md) left its API unauthenticated to
 everything the guard admits, which is sound only while the guard is.
+[52](issues/52-one-password-across-four-services.md) confirmed the mechanism —
+`AuthSubnetWhitelist` is the whole of `shared` — and ruled the one password
+across calibre, lazylibrarian and qbittorrent **deliberate** on the same
+condition. When this fires, it is what has to be unpicked.
 
 *Raised by map 01.*
 

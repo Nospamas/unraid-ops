@@ -125,6 +125,14 @@ discussion.
   is reused. The routine never disposed of a template, which is why five were
   sitting there; step 8b does now.
 
+- [52 — One password guards qbittorrent, calibre and
+  lazylibrarian](issues/52-one-password-across-four-services.md) — the reuse is
+  deliberate, convenience over security for internal-only web interfaces, and
+  [19]'s ruling stands. The blast radius is also narrower than it looked:
+  qbittorrent whitelists the whole of `shared`, so the *arr's copies of the
+  password are never sent, and rotating it would not change qbittorrent's
+  exposure at all.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
