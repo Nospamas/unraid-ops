@@ -110,6 +110,13 @@ discussion.
   pinned. Fixed with `regex:` versioning and a `registryAliases` to ghcr.io, the
   name Renovate recognises; lazylibrarian cannot be versioned at all and is off.
 
+- [39 — Rework the homepage
+  dashboard](issues/39-rework-homepage-dashboard.md) — the page is a launcher,
+  not a status board, so gatus stays a tile rather than a header summary. Groups
+  cut by use vs machinery, three columns, and a header row of
+  resources/search/weather/clock whose disk figure is real for the first time:
+  nothing was ever mounted, so it had been reading the container's own overlay.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -123,7 +130,9 @@ discussion.
   and only the text half is worth git owning. Sharp once there is tuning worth
   losing — bazarr has none today and will the moment
   rb sets its language profiles. [38] adds a first concrete cost: homepage now
-  holds a sops copy of each service's API key, and a rebuild rotates both.
+  holds a sops copy of each service's API key, and a rebuild rotates both —
+  [39](issues/39-rework-homepage-dashboard.md) raised that from four keys to six
+  by keeping every widget rather than culling.
 - **Whether the 550G of music gets managed or served.**
   [45](issues/45-pick-from-the-survey.md) found `music-rb` and `music-reg` on the
   share — unindexed, unplayed, and organised differently from each other.
