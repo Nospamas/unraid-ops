@@ -45,7 +45,19 @@
         container: calibre-calibre-1
         # No widget: homepage ships one for calibre-web, which is a different
         # application from the calibre this box runs.
-    # audiobookshelf lands here when ticket 47 adds it.
+    - Audiobookshelf:
+        icon: audiobookshelf.svg
+        href: https://audiobookshelf.rbrb.in
+        description: Podcasts — and audiobooks, once there are any
+        server: tower
+        container: audiobookshelf-audiobookshelf-1
+        widget:
+          type: audiobookshelf
+          url: http://audiobookshelf:80
+          # Issued from config → users → the admin account, which does not
+          # exist until rb runs the first-boot wizard. Errors until then, and
+          # that is [50]'s list rather than a second bug (ticket 47).
+          key: '{{HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY}}'
 
 - Acquire:
     - Sonarr:

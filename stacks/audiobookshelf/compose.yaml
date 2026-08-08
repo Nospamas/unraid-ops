@@ -1,0 +1,54 @@
+# Ticket 47. A podcast server that is ready for audiobooks -- [45] read the
+# share and found 6.2G of podcasts and zero audiobook files, so /audiobooks is
+# an empty tree waiting for one rather than a library.
+#
+# `${MEDIA}/books` is deliberately not bound. It is calibre's library directory,
+# `metadata.db` and all [22], and two services writing one library is how a
+# library gets corrupted -- audiobookshelf gets its own tree instead [47].
+
+services:
+  audiobookshelf:
+    image: ghcr.io/advplyr/audiobookshelf:2.36.0@sha256:180acad33d69c99ed208676465d8edcb268fa46967735579a7810859885b1a8e
+    restart: unless-stopped
+    # Not a linuxserver image -- plain node:20-alpine with no USER, so without
+    # this it runs as root and writes root-owned files into the media share.
+    # UMASK is inert for the same reason; see stacks/ntfy/compose.yaml [29].
+    user: "${PUID}:${PGID}"
+    environment:
+      TZ: ${TZ}
+    volumes:
+      # Two state paths, not one. CONFIG_PATH holds the sqlite database, users
+      # and progress; METADATA_PATH holds covers, cache, backups and the upload
+      # temp dir. Both are appdata's -- docs/conventions.md, 'Paths'.
+      - ${APPDATA}/audiobookshelf/config:/config
+      - ${APPDATA}/audiobookshelf/metadata:/metadata
+      # Long syntax for `create_host_path: false` alone. `pre_deploy` cannot
+      # prepare a media path -- Periphery binds appdata and not Media, so the
+      # mkdir would succeed inside Periphery and docker would still make the
+      # real target root:root [29]. This makes that case a failed deploy the
+      # alerter reports, instead of an empty root:root directory that reads
+      # exactly like the empty correct one.
+      #
+      # Read-write: subscribing to a feed and downloading its episodes is most
+      # of what audiobookshelf does for podcasts, and 99:100 already has group
+      # write on that 775 tree [47].
+      - type: bind
+        source: ${MEDIA}/podcasts
+        target: /podcasts
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${MEDIA}/audiobooks
+        target: /audiobooks
+        bind:
+          create_host_path: false
+    networks:
+      - shared
+    labels:
+      caddy: audiobookshelf.rbrb.in
+      caddy.import: internal
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+networks:
+  shared:
+    external: true

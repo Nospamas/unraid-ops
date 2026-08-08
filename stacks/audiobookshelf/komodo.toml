@@ -1,0 +1,21 @@
+[[stack]]
+name = "audiobookshelf"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/audiobookshelf"
+project_name = "audiobookshelf"
+additional_env_files = ["../../common.env"]
+
+# audiobookshelf runs as 99:100 from PID 1 and the image creates neither path;
+# docker would otherwise make both bind targets root:root [11, 29]. The media
+# binds are absent here on purpose -- Periphery does not bind /mnt/user/Media,
+# so a mkdir there would report success and change nothing. compose.yaml
+# refuses to start instead.
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+mkdir -p /mnt/user/appdata/audiobookshelf/config /mnt/user/appdata/audiobookshelf/metadata
+chown 99:100 /mnt/user/appdata/audiobookshelf /mnt/user/appdata/audiobookshelf/config /mnt/user/appdata/audiobookshelf/metadata
+"""
