@@ -16,6 +16,14 @@ services:
     # Not a linuxserver image -- a plain Go binary, so it reads no PUID/PGID and
     # no UMASK; see stacks/ntfy/compose.yaml [29].
     user: "${PUID}:${PGID}"
+    # The one place in this repo where UMASK is neither read nor inert, but
+    # actively wrong. unpackerr *reports* the umask at startup and never sets
+    # it, so it inherits docker's 022 -- which masks UN_DIR_MODE 0775 down to
+    # 0755 and UN_FILE_MODE 0664 to 0644 no matter what those are set to. The
+    # first extraction landed a 7.8G mkv rb could not move, which is precisely
+    # the state [19] took the box off `chmod -R 777` to escape. No mode value
+    # can fix it from inside; only the umask can, and the image ships a shell.
+    entrypoint: ["/bin/sh", "-c", "umask 002; exec /unpackerr \"$$@\"", "--"]
     environment:
       TZ: ${TZ}
       # UMASK being inert is not cosmetic for this one: it writes into a tree rb
