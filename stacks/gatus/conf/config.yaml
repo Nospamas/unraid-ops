@@ -240,6 +240,27 @@ endpoints:
     alerts:
       - type: ntfy
 
+  # ntfy's **browser** door, and the only thing watching it [44]. home-ops
+  # probes ntfy at `:8095/v1/health`, which is the other door -- so a Caddy
+  # block discarded for ntfy alone (the 404 of [16]) leaves the phone and the
+  # publishers working and nothing noticing until someone opens a browser.
+  #
+  # This probe can page about itself, unlike most of the alert path: the case it
+  # catches is Caddy losing the route while ntfy is up, so the alert delivers
+  # over `:8095`. The case where it cannot -- ntfy itself down -- is home-ops's,
+  # by design [29].
+  - name: ntfy
+    group: infrastructure
+    url: https://ntfy.rbrb.in/v1/health
+    interval: 60s
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].healthy == true'
+    alerts:
+      - type: ntfy
+
   # Ticket 29's box-down half, mirroring what home-ops already runs against
   # tower. Each site alerts to its **own** ntfy and only ever *reads* the
   # other's, so there is no cross-site credential here and must never be one --

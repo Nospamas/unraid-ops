@@ -183,10 +183,44 @@ Stack missing from it is never deployed. Then commit and push, and run
 `procedures.toml` — only `just reconcile` can, because it syncs before running
 the Procedure. Until it runs, every scheduled reconcile fails.
 
+## 7b. Probe it
+
+Add an endpoint to [stacks/gatus/conf/config.yaml](../stacks/gatus/conf/config.yaml).
+`scripts/check-probes.sh` fails step 8 without one, because a missing probe is
+the one fault with no signature of its own — nothing is down, nothing 404s, the
+service simply never appears on the status page [44].
+
+It lands here, after the deploy, because the status has to be **measured**:
+
+```sh
+ssh root@tower "curl -s -o /dev/null -w '%{http_code}\n' https://<name>.rbrb.in/"
+```
+
+- **Assert that exact status, never `< 400`** [29]. Six of the ten original
+  services answer something other than 200 unauthenticated; 302, 303 and 401 are
+  all healthy. **404** is Caddy having discarded the block [16], **502** is Caddy
+  holding it but unable to reach the container [21] — the two the probe is for.
+- **`/`, unless the root moves under a setting in appdata.** Tautulli's root
+  changes with its wizard and its password [35] and bazarr's with its UI auth
+  [36]; a probe cannot assert a status that appdata governs. Both use a keyless
+  health route instead, and where one returns JSON add a `[BODY]` condition —
+  that is what makes it better than a bare status.
+- **A path answering 200 is not proof it is that route.** Verify the response is
+  the backend and not the app shell: bazarr's `/health` and `/ping` fall through
+  to its SPA catch-all and answer 200 whatever the backend is doing [36].
+- **`ignore-redirect: true`** on every HTTP probe. gatus follows redirects by
+  default and would report the login page's 200 instead of the service's own
+  302; there is no global form, so it is repeated per endpoint [29].
+
+Commit and push. **The cron applies this one** — step 7's warning is about
+`procedures.toml` specifically, not a general rule. `conf/config.yaml` is a
+tracked config file with `requires = "restart"`, so the scheduled reconcile
+picks it up.
+
 ## 8. Check it
 
 ```bash
-just lint             # exposure, compose, shell, Dockerfiles
+just lint             # exposure, probes, compose, shell, Dockerfiles
 just verify-secrets   # every *.sops.env still decrypts
 ```
 

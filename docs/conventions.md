@@ -41,7 +41,7 @@ CONTEXT.md          glossary
 bootstrap/          Komodo's own four containers, run by hand, never reconciled
   host/ident.cfg    the only host state git owns -- the GUI's ports [15, 26]
 komodo/             sync.toml (the ResourceSync + the Server), procedures.toml
-scripts/            check-exposure.sh, komodo.sh, host.sh
+scripts/            check-exposure.sh, check-probes.sh, komodo.sh, host.sh
 
 stacks/<name>/      komodo.toml + compose.yaml, always
   conf/Caddyfile    caddy only — global options + the (internal) snippet
@@ -149,6 +149,15 @@ subscriber whose delivery must outlive the proxy.
 bridge address arrives at host-networked Caddy as `172.20.x.x` and the
 `(internal)` guard 403s it before `reverse_proxy` runs. Every probe would fail
 identically, and a 403 proves the guard works, never that a backend is alive.
+
+**Every fronted Service has a probe, and `scripts/check-probes.sh` fails the
+lint without one** [44]. It compares the `caddy:` hostnames against gatus's
+endpoint URLs and issues no request — a lint that reached the box would fail in
+CI and would report a service being down as the repo being broken. There is no
+opt-out key: every fronted Service passes today, ntfy included, and one that
+should not be probed is a conversation rather than a flag. The check is
+deliberately **one-way** — a stale probe left behind by a removed service fails
+loudly on its own, which is exactly what a missing probe never does.
 
 **Probe an exact status, not `< 400`.** Six of the ten services answer something
 other than 200 when unauthenticated — 302, 303 and 401 are all healthy. The two

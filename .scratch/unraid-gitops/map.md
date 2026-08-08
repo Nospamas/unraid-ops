@@ -141,6 +141,14 @@ discussion.
   it used to recover from alone*. The limb is about silence, not severity:
   `DOCKER_ENABLED` fails it because `just bootstrap` dies loudly without it.
 
+- [44 — Give the routine its gatus-probe
+  step](issues/44-probe-step-in-the-routine.md) — step 7b, plus
+  [check-probes.sh](../../scripts/check-probes.sh): a step alone would have been
+  the same prose that already failed, because **a missing probe is the one fault
+  with no signature**. The step carries the judgement, the check carries the
+  fact; ntfy's browser door turned out to be the gap — home-ops watches the
+  other door — and got probed rather than excepted.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -167,6 +175,17 @@ discussion.
   [37](issues/37-bare-domain-to-homepage.md) made the apex a redirect on purpose,
   keeping one canonical name. If the bare domain turns out to be the one rb
   actually types, the redirect points the wrong way.
+
+- **What watches a service with no web UI.**
+  [44](issues/44-probe-step-in-the-routine.md) closed the gap for *fronted*
+  services, and can only ever cover those — gatus probes HTTP, so a headless
+  container is outside the check by construction.
+  [46](issues/46-add-recyclarr.md) and [48](issues/48-add-unpackerr.md) are both
+  about to add one. The claim that Komodo covers it is untested: `StackStateChange`
+  fires on a **mix** of container states, and a single-container Stack that has
+  exited is not a mix — the same reasoning that made gatus necessary in [29].
+  Sharp once someone checks what Komodo actually sends for an exited
+  single-container Stack.
 
 - **Whether a watchdog sits beside Renovate.**
   [49](issues/49-renovate-never-saw-linuxserver.md) went undetected for months

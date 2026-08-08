@@ -74,13 +74,14 @@ adopt container *args:
 revisits:
     bash scripts/check-revisits.sh
 
-# Check exposure, compose files, shell scripts and Dockerfiles
+# Check exposure, probes, compose files, shell scripts and Dockerfiles
 lint:
     #!/usr/bin/env bash
     set -euo pipefail
     shopt -s nullglob
 
     bash scripts/check-exposure.sh
+    bash scripts/check-probes.sh
     bash scripts/check-secrets-mode.sh
     # Advisory -- see the script. Needs no tooling, so it runs before the slow
     # checks and its line is not buried under docker's warnings.
