@@ -16,6 +16,8 @@ touches:
 # 53 — Make the lint force a headless Stack's x-watch statement
 
 Blocked by: —
+See also: [54](54-media-binds-refuse-to-create.md), the same argument about a
+different convention — read whichever landed first.
 
 ## Question
 

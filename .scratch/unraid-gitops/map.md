@@ -158,6 +158,14 @@ discussion.
   Stack: nothing watches it, `x-watch` says so, and that is argued per Stack
   rather than inherited.
 
+- [47 — Add audiobookshelf](issues/47-add-audiobookshelf.md) — runs from git as a
+  podcast server ready for audiobooks: read-write on `podcasts`, a new empty
+  `audiobooks` tree of its own, and calibre's library untouched. It also found a
+  hole in the routine — **`pre_deploy` cannot prepare a media path**, because
+  Periphery binds appdata and nothing else, so the bind declares
+  `create_host_path: false` and a missing tree fails the deploy instead of
+  arriving `root:root`. Probed on `/ping`; `/` is a 200 that proves nothing.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a

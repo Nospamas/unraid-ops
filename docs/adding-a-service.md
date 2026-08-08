@@ -321,6 +321,13 @@ UI; the file itself is cleartext, and `/boot` is the flash drive.
   one `root:root` and the container then cannot write to it [29]. `UMASK` is
   inert for these — nothing reads it — which is only acceptable because no human
   shares those trees.
+  **That advice covers appdata and nothing else.** Periphery binds
+  `/mnt/user/appdata`, so a `mkdir` under `${MEDIA}` succeeds inside Periphery,
+  changes nothing on the host, and leaves docker to make the real target
+  `root:root` anyway. A media path is created by hand and the bind declares
+  `create_host_path: false`, which turns a missing tree into a failed deploy
+  instead of an empty `root:root` one that reads exactly like the correct one
+  [47].
 - **gatus is host-networked**, so caddy-docker-proxy never sees its labels — it
   reads only containers on `shared`. `status.rbrb.in` lives in the Caddyfile
   instead, alongside `komodo` and `unraid` [29]. Adding a probe means editing

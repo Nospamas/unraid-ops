@@ -1,17 +1,17 @@
 ---
 id: "50"
-title: Land homepage's four secrets and verify the reworked page
+title: Land homepage's five secrets and verify the reworked page
 type: task
 status: open
 description: >
-  Four values only rb can supply — tautulli's and bazarr's API keys, and the
-  latitude/longitude the weather widget reads from sops. A ticket rather than a
-  hand-off note because 38 wrote exactly this requirement as prose and closed
-  anyway, leaving two widgets erroring for a month.
+  Five values only rb can supply — tautulli's, bazarr's and audiobookshelf's
+  API keys, and the latitude/longitude the weather widget reads from sops. A
+  ticket rather than a hand-off note because 38 wrote exactly this requirement
+  as prose and closed anyway, leaving two widgets erroring for a month.
 touches: [stacks/homepage/secrets.sops.env, stacks/homepage/config/widgets.yaml]
 ---
 
-# 50 — Land homepage's four secrets and verify the reworked page
+# 50 — Land homepage's five secrets and verify the reworked page
 
 Blocked by: 39
 
@@ -28,14 +28,19 @@ the tautulli and bazarr widgets have been erroring on the live page ever since �
 found by reading the file during 39, not by anything failing. Prose does not
 block a close; an open issue does.
 
-### The four values
+### The five values
 
 | var | where it comes from |
 |---|---|
 | `HOMEPAGE_VAR_TAUTULLI_KEY` | tautulli → Settings → Web Interface → API key |
 | `HOMEPAGE_VAR_BAZARR_KEY` | bazarr → Settings → General → API key |
+| `HOMEPAGE_VAR_AUDIOBOOKSHELF_KEY` | audiobookshelf → config → users → the admin account |
 | `HOMEPAGE_VAR_LAT` | rb's coordinates, to ~4 decimal places |
 | `HOMEPAGE_VAR_LON` | as above |
+
+The audiobookshelf key arrived with [47](47-add-audiobookshelf.md) and is the
+only one with a prerequisite: **the admin account does not exist until rb runs
+the first-boot wizard**, so there is nothing to issue a key from until then.
 
 `just secret homepage`, **never `sops --encrypt`** — outside a Stack directory it
 finds no creation rule. The age key is at `age.key`, restored from KeePassXC.
