@@ -460,6 +460,27 @@ Access fields are the whole of it, because a fresh flash puts nginx back on
 `plugins/` and the licence and password files were each tested against "would
 losing this break the stack or the rebuild" and each failed it.
 
+**The admission test has a third limb** [42]: *or leave the box needing a human
+to recover from something it used to recover from alone.* `startArray` slipped
+through the first two on a technicality — losing it breaks no service, and a
+rebuild has a human at the GUI starting the array by hand regardless. It is
+felt at the first power cut months later, when the box comes up with SSH
+answering and every container dead.
+
+**The third limb is recorded as an assertion, never a snapshot.** A named key
+and its expected value in `scripts/host.sh`, checked by `host-check` and
+reported beside the `ident.cfg` diff. `disk.cfg` holds the disk slot
+assignments, so snapshotting the file to record one checkbox would bring along
+the machine state 26 ruled out — and every disk change would then read as
+drift. An assertion is **check-only**: it prints the GUI path and applies
+nothing, because an `emcmd` path would put this repo in the business of driving
+array settings.
+
+`DOCKER_ENABLED` is the near miss, and it fails the limb: a rebuilt flash with
+Docker off does not fail silently, `just bootstrap` dies at the `docker run` in
+step 6. Same for the `plugins/*.plg` that bring tailscale back. **The limb is
+about silence, not severity.**
+
 ## Images
 
 Version **and** digest, in one string, **no exceptions** —

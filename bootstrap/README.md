@@ -161,10 +161,28 @@ Caddy then cannot bind — so a rebuild has one step no ResourceSync performs
 ([ticket 15](../.scratch/unraid-gitops/issues/15-move-unraid-gui-ports.md)):
 
 ```sh
-just host-check            # diff the box's ident.cfg against the snapshot here
+just host-check            # diff ident.cfg against the snapshot, and assert 42's keys
 just host-ports            # show what would change -- changes nothing
 just host-ports --apply    # Management Access -> HTTP 8008, HTTPS 8443
 ```
+
+**Run `host-check` first and read all of it**, because it covers two different
+things. The `ident.cfg` diff is the snapshot going stale; the `**` lines below it
+are **assertions** — single flash keys git does not own but will not let a
+rebuild lose quietly
+([ticket 42](../.scratch/unraid-gitops/issues/42-array-auto-start.md)). There is
+one today: `disk.cfg`'s `startArray="yes"`. A fresh flash defaults it to `no`,
+and nothing about that is visible during a rebuild — you are at the GUI starting
+the array by hand anyway. It surfaces at the first power cut afterwards, when the
+box comes back with SSH and `:8008` answering and every container dead.
+
+Assertions **apply nothing**. Each prints the GUI path that fixes it — for this
+one, Settings → Disk Settings → Enable auto start → Yes → Apply, which takes
+effect with the array running and restarts nothing. Driving these through
+`emcmd` the way `host-ports` does would make this repo an owner of array
+settings, which
+[ticket 26](../.scratch/unraid-gitops/issues/26-host-state-scope.md) put out of
+bounds.
 
 **`host-ports` is dry-run by default.** Without `--apply` it prints the fields
 that differ and the exact `emcmd` it would run, and stops. It moves the port the

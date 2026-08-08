@@ -133,6 +133,14 @@ discussion.
   password are never sent, and rotating it would not change qbittorrent's
   exposure at all.
 
+- [42 — Make the array come back on its own after a
+  reboot](issues/42-array-auto-start.md) — the array starts itself, and
+  `startArray` is recorded as an **assertion** — a named flash key `host-check`
+  reads and never applies — not a second snapshot. It also gave [26]'s admission
+  test a third limb: *or leave the box needing a human to recover from something
+  it used to recover from alone*. The limb is about silence, not severity:
+  `DOCKER_ENABLED` fails it because `just bootstrap` dies loudly without it.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a

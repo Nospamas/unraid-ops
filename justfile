@@ -58,7 +58,7 @@ permissions-audit:
 permissions *args:
     bash scripts/permissions.sh apply {{ args }}
 
-# Compare the box's ident.cfg against the snapshot in bootstrap/host
+# Diff the box's ident.cfg against the snapshot, and assert the keys of ticket 42
 host-check:
     bash scripts/host.sh check
 

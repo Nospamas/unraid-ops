@@ -10,6 +10,10 @@
 # the same unix socket the GUI's Apply button posts to, so ident.cfg and
 # emhttpd's var.ini move together and nginx reloads itself -- copying the file
 # into place would update neither.
+#
+# `check` also runs `assertions` -- single flash keys outside ident.cfg whose
+# loss would leave the box needing a human to recover from something it used to
+# recover from alone. Ticket 42.
 
 set -euo pipefail
 
@@ -24,6 +28,18 @@ tower="${TOWER_SSH:-root@tower}"
 fields=(USE_SSL PORT PORTSSL USE_TELNET PORTTELNET USE_SSH PORTSSH)
 pattern="^($(IFS='|'; echo "${fields[*]}"))="
 
+# Box settings git asserts but does not own -- ticket 42. One flash key each,
+# never a whole file: disk.cfg also carries the disk slot assignments, which are
+# the machine's. Check-only, so each entry states the GUI path that fixes it.
+#
+#   file|key|expected|why|GUI path
+assertions=(
+    # A fresh flash defaults this to no, and nothing says so: the box comes back
+    # from a power cut with SSH and :8008 up and every container dead, waiting
+    # on a person. Set with the array running; nothing restarts.
+    "/boot/config/disk.cfg|startArray|yes|a power cut would leave every service down until a human clicks Start|Settings -> Disk Settings -> Enable auto start -> Yes -> Apply"
+)
+
 # Unraid writes ident.cfg CRLF -- rc.nginx runs it through `fromdos` for the
 # same reason. The snapshot keeps the CRLF so `check` can diff it byte-for-byte.
 value() {
@@ -35,8 +51,43 @@ show_live() {
     ssh "$tower" "grep -E '$pattern' $live" | sed 's/^/  /'
 }
 
+# One ssh for the whole list, comparing here rather than on the box. Read-only:
+# a failed assertion prints the GUI path, because emcmd for these would mean
+# this repo drives array settings, which ticket 26 put out of bounds.
+assert() {
+    local entry file key want why gui out k v rc=0 remote=""
+    local -A got=()
+
+    for entry in "${assertions[@]}"; do
+        IFS='|' read -r file key want why gui <<<"$entry"
+        # Some flash configs are CRLF and some are not -- strip either way.
+        remote+="printf '%s=%s\n' '$key' \"\$(tr -d '\r' <'$file' 2>/dev/null"
+        remote+=" | sed -n 's/^$key=\"\\(.*\\)\"\$/\\1/p')\"; "
+    done
+
+    # shellcheck disable=SC2029  # $remote is built here from this file's list
+    if ! out="$(ssh "$tower" "$remote")"; then
+        echo "could not read $tower -- assertions unchecked" >&2
+        return 1
+    fi
+    while IFS='=' read -r k v; do got["$k"]="$v"; done <<<"$out"
+
+    for entry in "${assertions[@]}"; do
+        IFS='|' read -r file key want why gui <<<"$entry"
+        if [[ "${got[$key]:-}" == "$want" ]]; then
+            echo "ok  $file $key=\"$want\""
+        else
+            echo "**  $file $key=\"${got[$key]:-<unset>}\", expected \"$want\""
+            echo "    $why"
+            echo "    fix it in the GUI: $gui"
+            rc=1
+        fi
+    done
+    return $rc
+}
+
 check() {
-    local out
+    local out rc=0
     # shellcheck disable=SC2029  # $live is this script's constant, not the box's
     if out="$(ssh "$tower" "cat $live" | diff -u "$snapshot" -)"; then
         echo "ok  $tower matches bootstrap/host/ident.cfg"
@@ -46,8 +97,12 @@ check() {
         echo "the box has drifted from the snapshot (- snapshot, + box)"
         echo "a setting changed in the GUI is the box's, not a fault; re-snapshot:"
         echo "  ssh $tower 'cat $live' > bootstrap/host/ident.cfg"
-        return 1
+        rc=1
     fi
+
+    # Run regardless -- a drifted snapshot must not hide a failed assertion.
+    assert || rc=1
+    return $rc
 }
 
 # Reads the box's current Management Access fields into `live_vals`.

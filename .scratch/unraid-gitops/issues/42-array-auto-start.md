@@ -2,19 +2,21 @@
 id: "42"
 title: Make the array come back on its own after a reboot
 type: task
-status: open
+status: closed
 description: >
-  The array now starts itself — the checkbox is done, verified in both
-  `disk.cfg` and emhttpd's `var.ini`. What remains is how `startArray` is
-  recorded so a rebuilt flash gets it back, answered for the class of box
-  settings rather than this one key.
-touches: []
+  The array starts itself, and `startArray` is recorded as an **assertion** —
+  a named flash key `host-check` reads and never applies — not a second
+  snapshot. It also gave 26's admission test a third limb: *or leave the box
+  needing a human to recover from something it used to recover from alone*.
+  The limb is about silence, not severity: `DOCKER_ENABLED` fails it because
+  `just bootstrap` dies loudly without it.
+touches: [scripts/host.sh, justfile, docs/conventions.md, bootstrap/README.md]
 ---
 
 # 42 — Make the array come back on its own after a reboot
 
 Blocked by: —
-Claimed by: wayfinder session, 2026-08-07
+Resolved: 2026-08-07
 
 ## Question
 
@@ -80,15 +82,71 @@ Whichever wins, apply it to the **class**, not just this key — the answer deci
 what happens the next time a box setting matters, and stating it once is the
 point.
 
-## The checkbox is done (2026-08-05)
+## Resolution (2026-08-07)
+
+**An assertion, not a snapshot** — and the interesting half is the test that
+admits one.
+
+### The third limb
+
+[26](26-host-state-scope.md) admitted host state on "would losing this break the
+stack or the rebuild", and every candidate it tried failed. `startArray` fails
+it too, on a technicality: losing it breaks no service, because the array comes
+up the moment someone clicks Start, and it does not break a *rebuild*, because a
+rebuild has a human standing at the GUI clicking Start regardless.
+
+What it breaks is what happens **months later**. So the test grows a third limb,
+now in [docs/conventions.md](../../../docs/conventions.md) beside 26's ruling:
+
+> or leave the box needing a human to recover from something it used to recover
+> from alone.
+
+**The limb is about silence, not severity**, which is what keeps it narrow. The
+sweep for other members found one near miss and it fails: `DOCKER_ENABLED="yes"`
+is more catastrophic to lose — nothing runs at all — but a rebuilt flash without
+it does not fail quietly, `just bootstrap` dies at the `docker run` in step 6.
+The `plugins/*.plg` that bring tailscale back are out for the same reason. One
+member today.
+
+### Why not the file
+
+A `disk.cfg` snapshot beside `bootstrap/host/ident.cfg` was the obvious shape and
+it is wrong: `disk.cfg` also carries the disk slot assignments, which are the
+machine's and which 26 ruled out — so every disk change would read as drift, and
+the record for one checkbox would drag the storage layer into git. The assertion
+is a **named key and its expected value**, in `assertions` in
+[scripts/host.sh](../../../scripts/host.sh), each entry carrying the reason and
+the GUI path that fixes it.
+
+### Check-only
+
+An assertion applies nothing. `host-ports` reaches emhttpd over its socket
+because the Management Access page is git's; doing the same for `startArray`
+would make this repo an owner of array settings, which is past 26's boundary. A
+failed assertion prints Settings → Disk Settings → Enable auto start → Yes →
+Apply, and stops.
+
+`check` runs the assertions **after** the `ident.cfg` diff and combines the exit
+codes rather than returning early — a drifted snapshot must not hide a failed
+assertion. One extra ssh, read-only, so `host-check` stays ungated.
+
+Verified by watching it fail, not pass: a deliberately wrong expected value gives
+`** ... expected "NOPE"` and exit 1, and a key that does not exist reports
+`<unset>` rather than matching an empty string.
+
+### What runs it
+
+Nothing scheduled — it stays hand-run, as `host-check` already was. That is
+enough because [bootstrap/README.md](../../../bootstrap/README.md)'s rebuild
+section already calls `host-check` immediately before `host-ports --apply`, which
+is the exact moment a fresh flash is missing the setting. Drift afterwards is a
+human deliberately unticking the box, which is a decision rather than rot.
+
+## The checkbox was done (2026-08-05)
 
 Set through the GUI with the array running; nothing restarted. `disk.cfg` and
 emhttpd's `var.ini` both read `startArray="yes"` — they **agree**, which is the
 evidence a file edit could not have produced.
-
-So the outage is fixed and what remains is only the recording decision above. Do
-not reopen the box side; open the question of whether a rebuilt flash gets this
-back.
 
 ## Hand-offs
 
