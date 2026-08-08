@@ -184,6 +184,24 @@ endpoints:
     alerts:
       - type: ntfy
 
+  - name: unpackerr
+    group: services
+    # `/` is a 200 that proves only that something answers -- the handler
+    # is `fmt.Fprint(w, "Welcome!\n")` and nothing else, a literal that cannot
+    # fail while the process lives [35, 36]. `/metrics` is the same listener
+    # reporting on itself, and the body names both *arr it is polling, so this
+    # catches a broken API key or a renamed container that a status alone would
+    # not. Registered unconditionally with the webserver, so no setting moves it.
+    url: https://unpackerr.rbrb.in/metrics
+    interval: 60s
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY] == pat(*unpackerr_app_queue_fetch_total*)'
+    alerts:
+      - type: ntfy
+
   - name: qbittorrent
     group: services
     url: https://qbittorrent.rbrb.in/
