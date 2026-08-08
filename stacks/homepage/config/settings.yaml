@@ -1,7 +1,7 @@
 ---
 title: Tower
 theme: dark
-color: slate
+color: zinc
 headerStyle: clean
 useEqualHeights: true
 disableCollapse: true
