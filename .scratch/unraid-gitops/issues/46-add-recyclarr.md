@@ -14,6 +14,7 @@ touches: []
 # 46 — Add recyclarr
 
 Blocked by: —
+Claimed by: claude session, 2026-08-07
 
 ## Question
 
