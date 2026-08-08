@@ -166,6 +166,24 @@ endpoints:
     alerts:
       - type: ntfy
 
+  - name: audiobookshelf
+    group: services
+    # `/` is a 200 here whatever the backend is doing -- it is the Nuxt shell,
+    # and it renders the first-boot wizard and a logged-out login form alike, so
+    # it asserts nothing [35, 36]. `/ping` is registered in Server.js above the
+    # static handler and outside the `/api` auth middleware, so it is the
+    # backend answering and it does not move with a setting. `/healthcheck` is
+    # beside it and would do, but it is a bare 200 with no body to check.
+    url: https://audiobookshelf.rbrb.in/ping
+    interval: 60s
+    client:
+      ignore-redirect: true
+    conditions:
+      - '[STATUS] == 200'
+      - '[BODY].success == true'
+    alerts:
+      - type: ntfy
+
   - name: qbittorrent
     group: services
     url: https://qbittorrent.rbrb.in/
