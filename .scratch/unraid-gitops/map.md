@@ -166,6 +166,14 @@ discussion.
   `create_host_path: false` and a missing tree fails the deploy instead of
   arriving `root:root`. Probed on `/ping`; `/` is a 200 that proves nothing.
 
+- [48 — Add unpackerr](issues/48-add-unpackerr.md) — unpackerr runs from git
+  watching `${MEDIA}/downloads`, not the *arr queues: they have **39 grabs and
+  zero failures between them**, and neither rar'd release was ever theirs, so the
+  shape this ticket specified would have done nothing forever. It also found that
+  **docker's `022` umask silently masks any `UN_DIR_MODE`** — the first
+  extraction landed a 7.8G file rb could not move, [19]'s failure reintroduced by
+  a Stack that read as correct.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -199,6 +207,25 @@ discussion.
   free against 1736 movies averaging 14G, so moving them wholesale queues an
   upgrade backlog that does not fit. Sharp once someone decides whether this is
   a policy for **new** acquisitions only or a backfill with a budget.
+
+- **Whether the library comes under the *arr at all.**
+  [48](issues/48-add-unpackerr.md) went looking for a failed import and found
+  there is almost nothing to fail: radarr has **3 grabs ever** against 1736
+  movies, sonarr **36** against 187 series, and 30 loose files sit in the movies
+  root and 28 in the tv root. The *arr are a catalogue rb files things into by
+  hand, not an acquisition pipeline. That is not a defect on its own, but two
+  live entries assume otherwise — the 2160p policy below governs acquisitions
+  that mostly do not happen, and bazarr [36] can only fetch subtitles for what
+  radarr actually tracks. Sharp once someone decides whether that is the intended
+  shape or an unfinished migration.
+
+- **A third convention that nothing enforces.**
+  [48](issues/48-add-unpackerr.md) makes it three: a headless Stack's `x-watch`
+  [53], a media bind's `create_host_path` [54], and now a non-linuxserver Stack's
+  umask, which is a *silent* failure rather than a loud one and cost 8G before it
+  was noticed. Whoever takes 53 or 54 should decide the shape once for all three
+  rather than three times — the third instance is the argument that the meta-
+  question, not the instances, is what wants answering.
 
 - **Whether a watchdog sits beside Renovate.**
   [49](issues/49-renovate-never-saw-linuxserver.md) went undetected for months

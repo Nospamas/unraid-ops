@@ -321,6 +321,15 @@ UI; the file itself is cleartext, and `/boot` is the flash drive.
   one `root:root` and the container then cannot write to it [29]. `UMASK` is
   inert for these — nothing reads it — which is only acceptable because no human
   shares those trees.
+  **The moment one does, inert becomes wrong** [48]. Docker's own umask is
+  `022`, and it masks whatever the image is told to write: unpackerr's
+  `UN_DIR_MODE: 0775` landed 0755 and its 0664 landed 0644, putting an 8G file
+  in a directory rb could not move it out of — [19]'s failure, reintroduced by a
+  Stack that looked correct. No mode setting can escape it; the umask itself has
+  to change, and for an image with a shell that is
+  `entrypoint: ["/bin/sh", "-c", "umask 002; exec /<binary> \"$$@\"", "--"]`.
+  **Read the startup log rather than the config** — unpackerr prints its umask
+  and never sets it, which is the only reason this was caught.
   **That advice covers appdata and nothing else.** Periphery binds
   `/mnt/user/appdata`, so a `mkdir` under `${MEDIA}` succeeds inside Periphery,
   changes nothing on the host, and leaves docker to make the real target
@@ -328,6 +337,13 @@ UI; the file itself is cleartext, and `/boot` is the flash drive.
   `create_host_path: false`, which turns a missing tree into a failed deploy
   instead of an empty `root:root` one that reads exactly like the correct one
   [47].
+- **unpackerr watches a folder; it does not scan one.** Its watcher baselines
+  whatever is already in `${MEDIA}/downloads` at startup, so a release that was
+  sitting there before the Stack existed is never extracted. `touch` the release
+  directory to fire an event. Its webserver also needs **both**
+  `UN_WEBSERVER_METRICS` and `UN_WEBSERVER_LISTEN_ADDR` — `Enabled()` is the two
+  ANDed, so the address alone logs `Webserver Disabled` while the container sits
+  `Up` [48].
 - **gatus is host-networked**, so caddy-docker-proxy never sees its labels — it
   reads only containers on `shared`. `status.rbrb.in` lives in the Caddyfile
   instead, alongside `komodo` and `unraid` [29]. Adding a probe means editing
