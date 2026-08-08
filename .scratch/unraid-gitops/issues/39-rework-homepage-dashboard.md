@@ -87,9 +87,13 @@ Every open item, decided:
   four — `Acquire`'s five tiles wrap 3+2 rather than cramming.
 - **Widgets — all ten kept.** The cull this ticket expected did not happen; rb
   wanted the density. See the defect below, which is what keeping them costs.
-- **Header row — `resources` / `search` / `openmeteo` / `datetime`.** Weather is
-  new. `search` carries Tailwind's `grow`, so at position two it absorbs the
-  slack and pushes weather and the clock right with no width set anywhere.
+- **Header row — `resources` / `openmeteo` / `datetime`, then `search` on a row
+  of its own.** Weather is new. Revised on sight of the rendered page: search
+  first spread across the second row and pushed nothing usefully, so it was
+  demoted to its own line. homepage groups the last three widgets into one
+  right-hand flex container in file order, so search has to be **last** for
+  `custom.css` to wrap it — the order in this file and the rule in that one are
+  a pair, and neither reads as load-bearing alone.
 - **Bookmarks — off-box companions only**, six entries in `Ops` and `Reference`,
   verified with rb before writing. The rule that earns them their place: a
   bookmark holds what a tile cannot, so nothing there runs on this box.

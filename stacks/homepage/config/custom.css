@@ -13,3 +13,12 @@
 #information-widgets .information-widget-resource {
   margin-right: 1.25rem;
 }
+
+/* Search onto a row of its own, below resources/weather/clock (ticket 39).
+   homepage groups those last three into one right-hand flex container, so the
+   split has to happen inside it: full basis makes search wrap. Matched by the
+   widget's own class rather than by position, so reordering widgets.yaml
+   cannot silently move this rule onto the clock. */
+#widgets-wrap > div > div:has(.information-widget-search) {
+  flex-basis: 100%;
+}

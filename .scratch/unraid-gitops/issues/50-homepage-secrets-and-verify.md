@@ -44,6 +44,22 @@ The coordinates are secrets rather than settings because **the repo is public**
 [39]. `common.env` already publishes the metro through `TZ`; these would publish
 the house.
 
+### The coordinates went in swapped, and west lost its sign
+
+Landed 2026-08-07 as `LAT=123.458`, `LON=48.468`, and the weather widget showed
+`API Error`. **Latitude is bounded at ±90**, so Open-Meteo rejected the request
+outright — the pair is transposed, and the longitude is also missing its minus:
+west of Greenwich is negative. `123.458°E` would put the box in the Sea of Japan,
+which `TZ=America/Vancouver` contradicts.
+
+Correct values: `HOMEPAGE_VAR_LAT=48.468`, `HOMEPAGE_VAR_LON=-123.458`.
+
+Diagnosed by decrypting and range-checking rather than by reading the error,
+which says only `API Error` and names neither field. **Worth a validator?** Both
+failures are mechanical — one bound check and one sign check against `TZ` — and
+this is the second time a homepage secret has been wrong in a way nothing caught
+[38]. Not ticketed; noted here in case a third makes the case.
+
 ### Then verify, because a green reconcile is not a running service
 
 `compose.yaml` gained two read-only binds, so this is a **recreate**, not a

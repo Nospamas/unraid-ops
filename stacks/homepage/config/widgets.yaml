@@ -1,7 +1,8 @@
 ---
-# Order is resources, search, weather, clock (ticket 39). `search` carries
-# Tailwind's `grow`, so at position two it absorbs the slack and pushes the
-# weather and the clock right -- no width is set anywhere.
+# Order is resources, weather, clock, search (ticket 39). homepage puts
+# resources in its own container and groups the other three to the right, in
+# this file's order -- so search must come last to be the one custom.css drops
+# onto a row of its own.
 - resources:
     cpu: true
     memory: true
@@ -15,10 +16,6 @@
       - /mnt/user
       - /mnt/cache
     cputemp: false
-- search:
-    provider: duckduckgo
-    focus: false
-    target: _blank
 - openmeteo:
     label: Home
     # Coordinates are a secret, not a setting: this repo is public, and TZ
@@ -34,3 +31,7 @@
       dateStyle: short
       timeStyle: short
       hourCycle: h23
+- search:
+    provider: duckduckgo
+    focus: false
+    target: _blank
