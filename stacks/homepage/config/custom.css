@@ -1,1 +1,15 @@
-/* Tracked so homepage does not seed it. */
+/* Ticket 39. Selectors read off the running page -- homepage's docs say only
+   that "various classes / ids" exist and list none of them, so anything here
+   is verified rather than inferred, and a version bump can still rename it. */
+
+/* `#widgets-wrap` carries Tailwind's `gap-x-2`. An id outranks a class, so
+   this widens the gap between the header widgets without !important. */
+#widgets-wrap {
+  column-gap: 2rem;
+}
+
+/* Five readouts now share the resources block -- cpu, memory, uptime and two
+   disks -- where there were three. */
+#information-widgets .information-widget-resource {
+  margin-right: 1.25rem;
+}

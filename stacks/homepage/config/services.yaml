@@ -6,8 +6,12 @@
 # `container:` reads state through the dockerproxy Stack, not the socket, and
 # names the compose *container* -- Komodo runs each Stack as its own project,
 # so a migrated service is <stack>-<service>-1.
+#
+# Groups are cut by use vs machinery, not by subject (ticket 39): what you open
+# is separated from what feeds it. settings.yaml holds the matching layout, and
+# the two must agree by name or the group renders unstyled.
 
-- Media:
+- Watch & Read:
     - Plex:
         icon: plex.svg
         href: https://plex.rbrb.in
@@ -33,6 +37,17 @@
           key: '{{HOMEPAGE_VAR_TAUTULLI_KEY}}'
           enableUser: true
           showEpisodeNumber: true
+    - Calibre:
+        icon: calibre.svg
+        href: https://calibre.rbrb.in
+        description: Library — the desktop GUI, over Caddy
+        server: tower
+        container: calibre-calibre-1
+        # No widget: homepage ships one for calibre-web, which is a different
+        # application from the calibre this box runs.
+    # audiobookshelf lands here when ticket 47 adds it.
+
+- Acquire:
     - Sonarr:
         icon: sonarr.svg
         href: https://sonarr.rbrb.in
@@ -75,8 +90,15 @@
           type: prowlarr
           url: http://prowlarr:9696
           key: '{{HOMEPAGE_VAR_PROWLARR_KEY}}'
+    - LazyLibrarian:
+        icon: lazylibrarian.svg
+        href: https://lazylibrarian.rbrb.in
+        description: Book acquisition
+        server: tower
+        container: lazylibrarian-lazylibrarian-1
+        # No widget: homepage has no lazylibrarian type.
 
-- Downloads:
+- Transport:
     - qBittorrent:
         icon: qbittorrent.svg
         href: https://qbittorrent.rbrb.in
@@ -103,23 +125,7 @@
           # The control server, reachable at last now that gluetun is on
           # `shared` (ticket 24). Unauthenticated by gluetun's own default.
           url: http://gluetun:8000
-
-- Books:
-    - Calibre:
-        icon: calibre.svg
-        href: https://calibre.rbrb.in
-        description: Library — the desktop GUI, over Caddy
-        server: tower
-        container: calibre-calibre-1
-        # No widget: homepage ships one for calibre-web, which is a different
-        # application from the calibre this box runs.
-    - LazyLibrarian:
-        icon: lazylibrarian.svg
-        href: https://lazylibrarian.rbrb.in
-        description: Book acquisition
-        server: tower
-        container: lazylibrarian-lazylibrarian-1
-        # No widget: homepage has no lazylibrarian type.
+    # unpackerr lands here when ticket 48 adds it.
 
 - Infrastructure:
     - Komodo:

@@ -5,19 +5,23 @@ color: slate
 headerStyle: clean
 useEqualHeights: true
 disableCollapse: true
+# Groups cut by use vs machinery rather than by subject (ticket 39). The old
+# Media group held plex beside the five services that feed it, so nothing on
+# the page said which one you actually wanted. Books dissolved: calibre is
+# something you open, lazylibrarian is something that fetches.
 layout:
-  Media:
+  "Watch & Read":
     style: row
-    columns: 4
+    columns: 3
     icon: mdi-play-circle
-  Downloads:
+  Acquire:
     style: row
-    columns: 2
+    columns: 3
+    icon: mdi-magnify
+  Transport:
+    style: row
+    columns: 3
     icon: mdi-download
-  Books:
-    style: row
-    columns: 2
-    icon: mdi-book-open-variant
   Infrastructure:
     style: row
     columns: 3

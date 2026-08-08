@@ -1,16 +1,36 @@
 ---
+# Order is resources, search, weather, clock (ticket 39). `search` carries
+# Tailwind's `grow`, so at position two it absorbs the slack and pushes the
+# weather and the clock right -- no width is set anywhere.
 - resources:
     cpu: true
     memory: true
-    disk: /
+    uptime: true
+    # Both paths are bind-mounted read-only in compose.yaml. The widget reads
+    # mounted container volumes only, so before those binds `disk: /` reported
+    # the container's own overlay -- the image, a constant (ticket 39).
+    # /mnt/user0 is not the second readout: it reports identically to
+    # /mnt/user. The array and the cache pool are the two real figures.
+    disk:
+      - /mnt/user
+      - /mnt/cache
     cputemp: false
+- search:
+    provider: duckduckgo
+    focus: false
+    target: _blank
+- openmeteo:
+    label: Home
+    # Coordinates are a secret, not a setting: this repo is public, and TZ
+    # already gives away the metro. homepage substitutes HOMEPAGE_VAR_* into
+    # any config file, not just services.yaml.
+    latitude: '{{HOMEPAGE_VAR_LAT}}'
+    longitude: '{{HOMEPAGE_VAR_LON}}'
+    units: metric
+    cache: 5
 - datetime:
     text_size: x1
     format:
       dateStyle: short
       timeStyle: short
       hourCycle: h23
-- search:
-    provider: duckduckgo
-    focus: false
-    target: _blank

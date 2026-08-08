@@ -20,6 +20,11 @@ services:
       # HTTP 500 if it cannot write here.
       - ./config:/app/config
       - ${APPDATA}/homepage/logs:/app/config/logs
+      # Ticket 39, for the resources widget alone. It reads mounted container
+      # volumes only, so without these its disk figure was the container's own
+      # overlay. Read-only: homepage never writes outside /app/config.
+      - /mnt/user:/mnt/user:ro
+      - /mnt/cache:/mnt/cache:ro
     # Ticket 38, for the gatus widget alone. gatus is host-networked, so it has
     # no name on `shared` to dial. Docker resolves this to the bridge gateway at
     # create time -- unlike the subnet address, nothing here is a literal.

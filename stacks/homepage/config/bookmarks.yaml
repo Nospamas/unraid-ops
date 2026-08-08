@@ -1,7 +1,26 @@
 ---
 # Tracked even when empty: homepage seeds any skeleton file missing from here,
 # and an untracked file in the clone collides the day git grows one by that name.
-- Box:
+#
+# Bookmarks hold what a tile cannot -- nothing here runs on this box (ticket 39).
+- Ops:
+    - unraid-ops:
+        - abbr: GH
+          href: https://github.com/Nospamas/unraid-ops
+    - Cloudflare:
+        - abbr: CF
+          href: https://dash.cloudflare.com/
+    - Tailscale:
+        - abbr: TS
+          href: https://login.tailscale.com/admin/machines
+
+- Reference:
+    - TRaSH Guides:
+        - abbr: TR
+          href: https://trash-guides.info/
+    - Servarr wiki:
+        - abbr: SW
+          href: https://wiki.servarr.com/
     - Unraid forums:
         - abbr: UF
           href: https://forums.unraid.net/
