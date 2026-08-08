@@ -6,7 +6,6 @@
 - resources:
     cpu: true
     memory: true
-    uptime: true
     # Both paths are bind-mounted read-only in compose.yaml. The widget reads
     # mounted container volumes only, so before those binds `disk: /` reported
     # the container's own overlay -- the image, a constant (ticket 39).
