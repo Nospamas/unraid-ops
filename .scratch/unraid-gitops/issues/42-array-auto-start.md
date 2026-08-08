@@ -14,6 +14,7 @@ touches: []
 # 42 — Make the array come back on its own after a reboot
 
 Blocked by: —
+Claimed by: wayfinder session, 2026-08-07
 
 ## Question
 
