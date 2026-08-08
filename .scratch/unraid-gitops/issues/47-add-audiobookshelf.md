@@ -14,6 +14,7 @@ touches: []
 # 47 — Add audiobookshelf
 
 Blocked by: —
+Claimed by: claude session, 2026-08-08
 
 ## Question
 
