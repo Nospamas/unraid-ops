@@ -149,6 +149,15 @@ discussion.
   fact; ntfy's browser door turned out to be the gap — home-ops watches the
   other door — and got probed rather than excepted.
 
+- [46 — Add recyclarr](issues/46-add-recyclarr.md) — recyclarr runs from git and
+  owns quality profiles, custom formats and quality definitions; **naming stays
+  hand-set**, because it is the only half anyone had tuned and a silent revert
+  there reaches files on disk. The ticket's premise was wrong — both *arr held
+  zero custom formats, so this introduced a 2160p policy rather than codifying
+  one, and it governs nothing until the library is moved onto it. First headless
+  Stack: nothing watches it, `x-watch` says so, and that is argued per Stack
+  rather than inherited.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -176,16 +185,12 @@ discussion.
   keeping one canonical name. If the bare domain turns out to be the one rb
   actually types, the redirect points the wrong way.
 
-- **What watches a service with no web UI.**
-  [44](issues/44-probe-step-in-the-routine.md) closed the gap for *fronted*
-  services, and can only ever cover those — gatus probes HTTP, so a headless
-  container is outside the check by construction.
-  [46](issues/46-add-recyclarr.md) and [48](issues/48-add-unpackerr.md) are both
-  about to add one. The claim that Komodo covers it is untested: `StackStateChange`
-  fires on a **mix** of container states, and a single-container Stack that has
-  exited is not a mix — the same reasoning that made gatus necessary in [29].
-  Sharp once someone checks what Komodo actually sends for an exited
-  single-container Stack.
+- **Which library items get the 2160p policy, and when.**
+  [46](issues/46-add-recyclarr.md) created the profiles; nothing uses them — 187
+  series and 1736 movies are all still on `Any`. Not a chore: the array has 23T
+  free against 1736 movies averaging 14G, so moving them wholesale queues an
+  upgrade backlog that does not fit. Sharp once someone decides whether this is
+  a policy for **new** acquisitions only or a backfill with a budget.
 
 - **Whether a watchdog sits beside Renovate.**
   [49](issues/49-renovate-never-saw-linuxserver.md) went undetected for months
