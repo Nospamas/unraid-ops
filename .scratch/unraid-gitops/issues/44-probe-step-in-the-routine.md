@@ -14,6 +14,7 @@ touches: [docs/adding-a-service.md]
 # 44 — Give the routine its gatus-probe step
 
 Blocked by: —
+Claimed by: claude session, 2026-08-07
 
 ## Question
 
