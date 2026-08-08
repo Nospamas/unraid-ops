@@ -52,8 +52,12 @@ services:
       UN_RADARR_0_PATHS_0: /downloads
 
       # An HTTP listener, so this is probed and tiled like everything else
-      # rather than arguing an `x-watch` sentence [46]. Its default is
-      # 0.0.0.0:5656 already; stated because the label below depends on it.
+      # rather than arguing an `x-watch` sentence [46]. **Both keys, always**:
+      # unpackerr's `Enabled()` is `Metrics && ListenAddr != ""`, so the address
+      # alone starts nothing and logs `Webserver Disabled` while the container
+      # sits `Up` -- a green reconcile with no listener, which is exactly what
+      # CLAUDE.md warns is not a running service.
+      UN_WEBSERVER_METRICS: "true"
       UN_WEBSERVER_LISTEN_ADDR: 0.0.0.0:5656
     env_file:
       # UN_SONARR_0_API_KEY, UN_RADARR_0_API_KEY. Written by pre_deploy.
