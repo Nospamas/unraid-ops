@@ -2,7 +2,7 @@
 
 services:
   prowlarr:
-    image: lscr.io/linuxserver/prowlarr:2.3.0.5236-ls133@sha256:475853535de3de8441b87c1457c30f2e695f4831228b12b6b7274e9da409d874
+    image: lscr.io/linuxserver/prowlarr:2.5.2.5491-ls156@sha256:1295cff29d10b486c0d8324d1559a552140a5932bf8b3d87e398654414f63f92
     restart: unless-stopped
     environment:
       PUID: ${PUID}
