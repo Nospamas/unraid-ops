@@ -14,6 +14,7 @@ touches: []
 # 41 — Dispose of the five orphan Unraid templates
 
 Blocked by: —
+Claimed by: wayfinder session, 2026-08-07
 
 ## Question
 
