@@ -94,6 +94,34 @@ nothing here verifies that what git says arrived.
 The other three Stacks holding secrets — caddy, calibre and download — have the
 same untracked file: [51](51-track-secrets-in-remaining-stacks.md).
 
+### homepage does not honour `style: row`, and the config is not the problem
+
+The four groups rendered side by side as columns rather than stacked rows.
+Everything that could be checked, checks out:
+
+- `settings.yaml` **inside the container** carries `style: row` on all four.
+- The server-rendered page payload carries
+  `"Watch & Read": {"style": "row", "columns": 3}` — so homepage parsed it.
+- `/api/services` returns group names byte-identical to the layout keys, which is
+  what `index.jsx` matches on. Nothing is unmatched.
+- `group.jsx` is identical at `v1.13.2` and `main`, so it is not a version skew.
+
+Yet `.services-list` renders `flex flex-col`, which is the `style !== "row"`
+branch. The likely mechanism is in `group.jsx`: `flex-1` and `basis-full` land on
+the same element, `flex-1` is shorthand that also sets `flex-basis`, and Tailwind
+emits the `flex` utility after `flexBasis` — so at equal specificity the group
+never takes its full width.
+
+Worked around in `custom.css` with an id-scoped override, mirroring homepage's
+own `columnMap` breakpoints so the rule and the `columns: 3` setting cannot drift.
+`maxGroupColumns` is **not** the knob — documented as applying "only for groups
+with the default `style: columns`, not groups with `style: row`", minimum 5.
+
+**Not verified rendering.** Services are client-rendered, so `curl` cannot show
+the applied classes and nothing here could confirm it short of a browser. This is
+the third CSS rule this ticket has shipped unseen; the first matched nothing at
+all. Look at it before believing it.
+
 ### Then verify, because a green reconcile is not a running service
 
 `compose.yaml` gained two read-only binds, so this is a **recreate**, not a

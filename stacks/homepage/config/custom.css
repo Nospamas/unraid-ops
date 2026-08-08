@@ -38,3 +38,47 @@
 #widgets-wrap .information-widget-openmeteo {
   margin-left: auto;
 }
+
+/* One group per row, services across it -- `style: row` in settings.yaml, which
+   homepage is not honouring (ticket 39).
+
+   It is configured correctly and homepage parses it correctly: the group names
+   in services.yaml match the layout keys exactly, and the server ships
+   `"Watch & Read": {style: row}` in the page payload. But the group still
+   renders with `flex flex-col` services, and `group.jsx` puts `flex-1` and
+   `basis-full` on the same element -- `flex-1` is shorthand that also sets
+   flex-basis, and Tailwind emits it after `basis-full`, so at equal specificity
+   the group never gets its full width.
+
+   Hence an id-scoped override rather than a settings change. Both containers
+   are covered because which one is used depends on whether homepage matched the
+   layout entry, which is the thing in question. `maxGroupColumns` is not the
+   knob: it is documented as applying "only for groups with the default
+   `style: columns`, not groups with `style: row`", and its minimum is 5. */
+#layout-groups > .services-group,
+#services > .services-group {
+  flex-basis: 100%;
+}
+
+/* Mirrors homepage's own columnMap for `columns: 3` -- 1 column, 2 from md,
+   3 from lg -- so this stays consistent with the setting it is standing in for. */
+#layout-groups .services-list,
+#services .services-list {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  column-gap: 0.5rem;
+}
+
+@media (min-width: 768px) {
+  #layout-groups .services-list,
+  #services .services-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  #layout-groups .services-list,
+  #services .services-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
