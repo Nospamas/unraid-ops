@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://schemas.recyclarr.dev/v8/config-schema.json
+#
+# Ticket 46. THIS FILE IS THE OWNERSHIP BOUNDARY -- recyclarr writes only what
+# is listed here, and reverts a UI edit to any of it on the next sync, silently.
+#
+#   owned  quality profiles, custom formats and their scores, quality
+#          definitions (the size limits)
+#   not    media naming, media management, indexers, root folders, download
+#          clients -- absent on purpose. Both apps' naming schemes are hand-set
+#          to TRaSH's and renaming is ON, so a silent revert there would reach
+#          files on disk.
+#
+# The box held zero custom formats and six stock profiles when this landed, so
+# this is not codifying a policy that existed. It introduces one: 2160p.
+
+sonarr:
+  sonarr:
+    base_url: http://sonarr:8989
+    api_key: !env_var SONARR_API_KEY
+
+    quality_definition:
+      type: series
+
+    quality_profiles:
+      # Zeroes the score of any custom format not listed below, so the profile
+      # is wholly this file's rather than a merge with whatever is in sonarr.
+      - trash_id: d1498e7d189fbe6c7110ceaabb7473e6 # WEB-2160p
+        reset_unmatched_scores:
+          enabled: true
+
+    custom_format_groups:
+      add:
+        - trash_id: e3f37512790f00d0e89e54fe5e790d1c # [Optional] Golden Rule UHD
+        - trash_id: 74aff4168620ed49dcc67e92b2c2a5b4 # [Optional] Language Profiles
+        - trash_id: 85fae4a2294965b75710ef2989c850eb # [Streaming Services] HD/UHD boost
+        - trash_id: 59c3af66780d08332fdc64e68297098f # [Unwanted] Unwanted Formats
+
+radarr:
+  radarr:
+    base_url: http://radarr:7878
+    api_key: !env_var RADARR_API_KEY
+
+    quality_definition:
+      type: movie
+
+    quality_profiles:
+      - trash_id: 64fb5f9858489bdac2af690e27c8f42f # UHD Bluray + WEB
+        reset_unmatched_scores:
+          enabled: true
+
+    custom_format_groups:
+      add:
+        - trash_id: ff204bbcecdd487d1cefcefdbf0c278d # [Optional] Golden Rule UHD
+        - trash_id: a3ac6af01d78e4f21fcb75f601ac96df # [Unwanted] Unwanted Formats

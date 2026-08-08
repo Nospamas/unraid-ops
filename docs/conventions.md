@@ -44,17 +44,17 @@ komodo/             sync.toml (the ResourceSync + the Server), procedures.toml
 scripts/            check-exposure.sh, check-probes.sh, komodo.sh, host.sh
 
 stacks/<name>/      komodo.toml + compose.yaml, always
-  conf/Caddyfile    caddy only — global options + the (internal) snippet
-  conf/Corefile     coredns only
-  config/           homepage only — git owns these outright, they are files
-  secrets.sops.env  caddy, homepage, download, calibre
+  conf/             git-owned config, bind-mounted read-only — caddy's
+                    Caddyfile, coredns' Corefile, gatus' config.yaml,
+                    recyclarr's recyclarr.yml
+  config/           homepage only — git owns these outright and writes there
+  secrets.sops.env  caddy, homepage, download, calibre, recyclarr
 ```
 
-Eleven Stacks, twelve containers: `caddy`, `coredns`, `homepage`,
-`dockerproxy`, `download` (gluetun + qbittorrent), `sonarr`, `radarr`,
-`prowlarr`, `lazylibrarian`, `plex`, `calibre`. Built so far: `dockerproxy`,
-`homepage`, `caddy`, `coredns`, the four *arr Stacks [21], `calibre` [22] and
-`plex` [23] and `download` [24]. Nothing is left to migrate.
+Sixteen Stacks, seventeen containers — the eleven of the foundation map, then
+`ntfy` and `gatus` [29], `tautulli` [35], `bazarr` [36] and `recyclarr` [46].
+`download` is the only Stack holding two containers. Nothing is left to
+migrate; what arrives now is new.
 
 `bootstrap/` is in git so a rebuild starts from a file, and **never gets a
 `komodo.toml`**: Core can redeploy itself but Periphery cannot, and upstream
@@ -158,6 +158,15 @@ opt-out key: every fronted Service passes today, ntfy included, and one that
 should not be probed is a conversation rather than a flag. The check is
 deliberately **one-way** — a stale probe left behind by a removed service fails
 loudly on its own, which is exactly what a missing probe never does.
+
+**A Stack with no listener is outside both paths, and says so** [46]. gatus
+speaks HTTP, and `StackStateChange` reads container state — so a scheduled job
+that fails while its container stays `Up` is invisible to both. It declares
+`x-watch` on the Service: a sentence naming what notices, where
+`nothing, because …` is legal and **argued per Stack rather than inherited**.
+Recyclarr earns it — a stopped sync is stale library policy, fixed by running it
+again — and that reasoning buys unpackerr nothing, whose failure stalls imports.
+Unlike `x-published`, no check enforces this yet [53].
 
 **Probe an exact status, not `< 400`.** Six of the ten services answer something
 other than 200 when unauthenticated — 302, 303 and 401 are all healthy. The two

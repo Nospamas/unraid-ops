@@ -183,7 +183,11 @@ Stack missing from it is never deployed. Then commit and push, and run
 `procedures.toml` — only `just reconcile` can, because it syncs before running
 the Procedure. Until it runs, every scheduled reconcile fails.
 
-## 7b. Probe it
+## 7b. Probe it — or say what watches it instead
+
+**A Stack with no HTTP listener has nothing to probe**, and gatus only speaks
+HTTP, so it is outside the alerting story by construction. That Stack skips to
+7c rather than skipping the question. Everything else continues here.
 
 Add an endpoint to [stacks/gatus/conf/config.yaml](../stacks/gatus/conf/config.yaml).
 `scripts/check-probes.sh` fails step 8 without one, because a missing probe is
@@ -216,6 +220,33 @@ Commit and push. **The cron applies this one** — step 7's warning is about
 `procedures.toml` specifically, not a general rule. `conf/config.yaml` is a
 tracked config file with `requires = "restart"`, so the scheduled reconcile
 picks it up.
+
+## 7c. Headless: state what watches it
+
+A Stack with no listener declares `x-watch` on the Service — a sentence naming
+what notices when it stops, and why that is enough:
+
+```yaml
+recyclarr:
+  x-watch: >-
+    nothing. A sync that stops leaves the *arr holding their last-synced
+    settings, which is stale policy rather than a broken service [46].
+```
+
+**`nothing, because …` is a legal answer and it has to be earned each time** —
+this is argued per Stack, never inherited [46]. Komodo does not cover the gap:
+`StackStateChange` fires on container state, and a scheduled job that fails
+while its container stays `Up` changes none. Two things the sentence has to
+answer:
+
+- **How bad is the silence?** Recyclarr going quiet costs a stale library policy
+  and is fixed by running it again. A job whose failure stalls work — unpackerr
+  leaving archives unextracted — does not get recyclarr's answer for free.
+- **What would surface it anyway?** A downstream probe that would fail, a human
+  who would notice within a day, or nothing at all. Say which.
+
+Nothing enforces this yet, which is a gap of exactly the kind [44] describes —
+see [53](../.scratch/unraid-gitops/issues/53-lint-the-headless-statement.md).
 
 ## 8. Check it
 
@@ -269,6 +300,14 @@ UI; the file itself is cleartext, and `/boot` is the flash drive.
   must be **writable** — it seeds missing skeleton files at boot and serves HTTP
   500 if it cannot. The repo ships the complete skeleton so nothing is seeded
   untracked into the clone; logs go to `${APPDATA}/homepage/logs`.
+- **recyclarr owns settings inside sonarr and radarr**, and reverts a UI edit to
+  any of them on the next sync with no error anywhere.
+  [stacks/recyclarr/conf/recyclarr.yml](../stacks/recyclarr/conf/recyclarr.yml)
+  is the boundary — it writes only what that file lists. Today: quality
+  profiles, custom formats and their scores, and quality definitions. **Media
+  naming and media management are deliberately absent** — both apps' naming is
+  hand-set to TRaSH's with renaming ON, so a silent revert there would rename
+  files on disk [46]. Tune those in the UI; tune anything else in the repo.
 - **CoreDNS** binds an explicit host address, `100.126.56.26:53`, not a port on
   every interface. Docker cannot bind that before `tailscale0` is up, so a
   reconcile racing a reboot fails until `restart: unless-stopped` catches up. Its

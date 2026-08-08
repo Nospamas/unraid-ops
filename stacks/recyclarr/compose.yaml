@@ -1,0 +1,43 @@
+# Ticket 46. Syncs TRaSH-guides custom formats, their scores, the quality
+# profiles carrying them, and the quality definitions into sonarr and radarr.
+#
+# The first Stack with nothing to probe: no caddy label, no hostname, no HTTP
+# listener at all. `x-watch` below is what stands in for the probe -- 46 ruled
+# that a headless Stack argues its own case rather than inheriting a blanket
+# answer, so the key is a sentence, not a flag.
+
+services:
+  recyclarr:
+    x-watch: >-
+      nothing. A sync that stops leaves the *arr holding their last-synced
+      settings, which is a stale library policy rather than a broken service --
+      recoverable by running it again, and no worse than the un-synced state
+      the box was in before this Stack existed [46]. unpackerr does not inherit
+      this; its failure stalls imports [48].
+    image: ghcr.io/recyclarr/recyclarr:8.7.1@sha256:73303ba5ee647b6492fee917d3a781c6e59b6cab08f9dfce9482a950846f564f
+    restart: unless-stopped
+    # Not a linuxserver image; see the note in stacks/ntfy/compose.yaml.
+    user: "${PUID}:${PGID}"
+    environment:
+      TZ: ${TZ}
+      # Cron mode: the container stays up and syncs on this schedule. It does
+      # not sync at start, so the first run is `docker exec ... recyclarr sync`.
+      CRON_SCHEDULE: "@daily"
+    env_file:
+      # Written by pre_deploy. Absent on a laptop, where `just lint` runs.
+      - path: secrets.env
+        required: false
+    volumes:
+      # /config is writable because recyclarr keeps `state/` there and it cannot
+      # be relocated -- RECYCLARR_DATA_DIR moves only `resources/` and `logs/`.
+      - ${APPDATA}/recyclarr:/config
+      # Directory, never the file -- docs/conventions.md, 'Tracked files'. Every
+      # *.yml under `configs/` is loaded as if passed to --config, which is what
+      # keeps the git-owned half out of the writable half.
+      - ./conf:/config/configs:ro
+    networks:
+      - shared
+
+networks:
+  shared:
+    external: true

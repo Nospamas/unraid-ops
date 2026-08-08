@@ -1,0 +1,29 @@
+[[stack]]
+name = "recyclarr"
+
+[stack.config]
+server = "tower"
+repo = "Nospamas/unraid-ops"
+branch = "main"
+run_directory = "stacks/recyclarr"
+project_name = "recyclarr"
+additional_env_files = ["../../common.env"]
+
+# The sync config is the whole point of this Stack and git owns it, so without
+# this an edit would reach the box and change nothing -- the loop tracks only
+# the compose file. `restart`, not `redeploy`: it arrives through a bind mount.
+config_files = [
+  # `redeploy`, not `restart`: pre_deploy decrypts this to secrets.env, and
+  # env_file is read at container *creation* [50].
+  { path = "secrets.sops.env", requires = "redeploy" },
+  { path = "conf/recyclarr.yml", requires = "restart" },
+]
+
+# recyclarr runs as 99:100 from PID 1 and writes `state/` into /config; docker
+# would otherwise create the target root:root [11].
+pre_deploy.command = """
+docker network inspect shared >/dev/null 2>&1 || docker network create shared
+mkdir -p /mnt/user/appdata/recyclarr
+chown 99:100 /mnt/user/appdata/recyclarr
+(umask 077; sops -d secrets.sops.env > secrets.env)
+"""
