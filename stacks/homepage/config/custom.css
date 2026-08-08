@@ -15,10 +15,26 @@
 }
 
 /* Search onto a row of its own, below resources/weather/clock (ticket 39).
-   homepage groups those last three into one right-hand flex container, so the
-   split has to happen inside it: full basis makes search wrap. Matched by the
-   widget's own class rather than by position, so reordering widgets.yaml
-   cannot silently move this rule onto the clock. */
-#widgets-wrap > div > div:has(.information-widget-search) {
+   homepage puts weather, clock and search in one right-hand flex container, so
+   `flex-basis` on search alone would only give it its own line *within* that
+   container -- indented to wherever resources ends. `display: contents`
+   dissolves the container instead, making all three direct items of
+   #widgets-wrap, which is what lets search span the full width.
+
+   **Search is a <form>, not a div.** The first version of this rule said
+   `div:has(.information-widget-search)` and matched nothing at all -- CSS fails
+   silently, and the page looked exactly like a config that had not deployed. */
+#widgets-wrap > div:has(.information-widget-search) {
+  display: contents;
+}
+
+#widgets-wrap .information-widget-search {
   flex-basis: 100%;
+}
+
+/* Once the container is dissolved, this is the only thing holding weather and
+   the clock together at the right -- #widgets-wrap's own `justify-between`
+   would otherwise space all three evenly across the row. */
+#widgets-wrap .information-widget-openmeteo {
+  margin-left: auto;
 }

@@ -182,6 +182,13 @@ config_files = [
 `restart` where the file arrives through a bind mount, `redeploy` where the
 container reads it only at creation.
 
+**A Stack with secrets must list `secrets.sops.env` too, as `redeploy`** [50].
+It is not tracked by default, so editing a secret diffs to nothing and no deploy
+runs — `pre_deploy` never re-decrypts it and the container keeps the environment
+it was created with. This fails in the worst way available: the reconcile is
+green, git holds the right value, and the service reports its own error as if the
+value were wrong.
+
 **Bind the directory, never the file** [16]. A git pull replaces a file instead
 of writing it in place, and the run directory is on shfs — so a single-file bind
 goes `stale file handle` the first time the file changes, and stays broken.

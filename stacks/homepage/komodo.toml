@@ -13,6 +13,11 @@ additional_env_files = ["../../common.env"]
 # file by default — without this a config-only push is invisible. `restart`,
 # not `redeploy`: these arrive through a bind mount.
 config_files = [
+  # `redeploy`, not `restart`: pre_deploy decrypts this to secrets.env, and
+  # env_file is read at container *creation*. Untracked, a secret edit diffed
+  # to nothing and nothing ran -- the coordinates sat in git for an hour while
+  # the widget reported an API error [50].
+  { path = "secrets.sops.env", requires = "redeploy" },
   { path = "config/settings.yaml", requires = "restart" },
   { path = "config/services.yaml", requires = "restart" },
   { path = "config/widgets.yaml", requires = "restart" },

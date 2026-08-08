@@ -66,6 +66,34 @@ failures are mechanical — one bound check and one sign check against `TZ` — 
 this is the second time a homepage secret has been wrong in a way nothing caught
 [38]. Not ticketed; noted here in case a third makes the case.
 
+### The coordinates were right and the widget still failed
+
+Corrected values were committed and pushed, and weather still read `API Error`.
+The container's environment held **neither** `HOMEPAGE_VAR_LAT` nor
+`HOMEPAGE_VAR_LON` — so openmeteo was being handed the literal
+`{{HOMEPAGE_VAR_LAT}}` string, and the coordinates were never the failing part
+the second time.
+
+`secrets.sops.env` was **not in `config_files`**. `DeployStackIfChanged` diffs
+the compose file plus tracked files only, so a commit touching just the secret
+diffed to nothing, no deploy ran, `pre_deploy` never re-decrypted, and the
+container kept the environment it was created with. `secrets.env` on the box was
+last written at 01:15:03 UTC — **one second before the container was created**,
+and an hour before the coordinates existed.
+
+Fixed by tracking it as `redeploy`, since `env_file` is read at creation and a
+restart would not have helped either. The rule is now in
+[conventions.md](../../../docs/conventions.md), *Tracked files*.
+
+**This is the third time the same shape has bitten this Stack**: 38's keys were
+never added, 39's CSS selector matched nothing, and this. All three are silent —
+a green reconcile, a correct-looking repo, and a service reporting its own error
+as though the value were wrong. The lesson is not about secrets; it is that
+nothing here verifies that what git says arrived.
+
+The other three Stacks holding secrets — caddy, calibre and download — have the
+same untracked file: [51](51-track-secrets-in-remaining-stacks.md).
+
 ### Then verify, because a green reconcile is not a running service
 
 `compose.yaml` gained two read-only binds, so this is a **recreate**, not a
