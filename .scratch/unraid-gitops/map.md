@@ -117,6 +117,14 @@ discussion.
   resources/search/weather/clock whose disk figure is real for the first time:
   nothing was ever mounted, so it had been reading the container's own overlay.
 
+- [41 — Dispose of the five orphan Unraid
+  templates](issues/41-orphan-unraid-templates.md) — all ten files gone. The
+  record was redundant with git down to lazylibrarian's `DOCKER_MODS`, and it was
+  never a rollback — but the ticket's "hold no secrets" was wrong:
+  `my-calibre.xml` and its `.bak-19` held the live GUI password cleartext, and it
+  is reused. The routine never disposed of a template, which is why five were
+  sitting there; step 8b does now.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a

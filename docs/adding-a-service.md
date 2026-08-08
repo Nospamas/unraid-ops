@@ -138,7 +138,8 @@ just adopt <container> --apply
 That drops the name from unraid's autostart list *and* removes the container.
 Nothing is lost — every byte of state is on the appdata bind, and the template
 under `/boot/config/plugins/dockerMan/templates-user/` is the rollback: **Add
-Container → pick it → Apply** puts it back on the same appdata.
+Container → pick it → Apply** puts it back on the same appdata. It stops being
+a rollback the moment the Stack proves out — step 8b disposes of it.
 
 The recipe **refuses a container that already has a compose project** — that
 one is adopted in place by `project_name` (step 3), and removing it would
@@ -191,6 +192,22 @@ just verify-secrets   # every *.sops.env still decrypts
 
 - `https://<name>.rbrb.in` answers from the LAN and the tailnet, and nowhere else.
 - **[adopt]** the service's own settings survived — indexers, libraries, history.
+
+## 8b. **[adopt, unraid-managed only]** Delete the template
+
+```sh
+ssh root@tower rm /boot/config/plugins/dockerMan/templates-user/my-<name>.xml
+```
+
+Step 5b's rollback is now a hazard. The template names the container `<name>`
+while the Stack runs `<name>-<name>-1`, so **Add Container → Apply** starts a
+*second* container on the same appdata rather than failing on the name — and the
+Docker tab and Community Applications' *Previous Apps* both offer it. Deleting
+the file is enough; nothing caches it —
+[ticket 41](../.scratch/unraid-gitops/issues/41-orphan-unraid-templates.md).
+
+**Read it for secrets before deleting.** `Mask="true"` only hides a value in the
+UI; the file itself is cleartext, and `/boot` is the flash drive.
 
 ---
 
