@@ -54,6 +54,12 @@ which `TZ=America/Vancouver` contradicts.
 
 Correct values: `HOMEPAGE_VAR_LAT=48.468`, `HOMEPAGE_VAR_LON=-123.458`.
 
+**Corrected and verified 2026-08-07.** Not by range-checking a second time — that
+is what let the first pair through the eye — but by making the call homepage
+makes. Open-Meteo returned live data and **independently resolved the timezone to
+`America/Vancouver`**, matching `common.env`, at 77 m elevation. A dropped sign
+puts the box in the ocean, so a non-zero elevation is the cheap tell.
+
 Diagnosed by decrypting and range-checking rather than by reading the error,
 which says only `API Error` and names neither field. **Worth a validator?** Both
 failures are mechanical — one bound check and one sign check against `TZ` — and
@@ -66,7 +72,14 @@ this is the second time a homepage secret has been wrong in a way nothing caught
 restart — `config_files` covers the config half but the compose change is what
 Komodo diffs. Check the workload, not the update log.
 
-- The header reads **resources / search / weather / clock**, in that order.
+Confirmed live 2026-08-07 against the served page: all four groups render
+(`Watch & Read`, `Acquire`, `Transport`, `Infrastructure`), the resources block
+carries **five** readouts, and all four header widgets are present. The array
+showed 24.6 TB free and the cache 893 GB — the binds took, so the overlay bug is
+gone. What is left below is what only an eye can settle.
+
+- The header reads **resources / weather / clock**, with **search on its own row
+  below** — revised from the order first written [39].
 - The resources block shows **five** readouts — cpu, memory, uptime, and two
   disks. The array is 59T at ~62%, the cache pool 932G at ~10%. **If the disk
   figure looks like a small full-ish volume, the binds did not take** — that is
