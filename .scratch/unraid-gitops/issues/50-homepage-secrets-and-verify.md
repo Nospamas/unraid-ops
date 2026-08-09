@@ -14,6 +14,7 @@ touches: [stacks/homepage/secrets.sops.env, stacks/homepage/config/widgets.yaml]
 # 50 — Land homepage's five secrets and verify the reworked page
 
 Blocked by: 39
+Claimed by: claude session, 2026-08-08
 
 ## Question
 
