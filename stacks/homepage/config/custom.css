@@ -8,8 +8,8 @@
   column-gap: 2rem;
 }
 
-/* Five readouts now share the resources block -- cpu, memory, uptime and two
-   disks -- where there were three. */
+/* Four readouts now share the resources block -- cpu, memory and two disks --
+   where there were three. */
 #information-widgets .information-widget-resource {
   margin-right: 1.25rem;
 }

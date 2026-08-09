@@ -2,19 +2,23 @@
 id: "50"
 title: Land homepage's five secrets and verify the reworked page
 type: task
-status: open
+status: closed
 description: >
-  Five values only rb can supply — tautulli's, bazarr's and audiobookshelf's
-  API keys, and the latitude/longitude the weather widget reads from sops. A
-  ticket rather than a hand-off note because 38 wrote exactly this requirement
-  as prose and closed anyway, leaving two widgets erroring for a month.
-touches: [stacks/homepage/secrets.sops.env, stacks/homepage/config/widgets.yaml]
+  All five landed and all ten widgets verified returning live data — but only
+  after three silent failures, two of them in the delivery rather than the
+  values. The check that finally settled it is homepage's own widget proxy,
+  callable from the box per service, which is what nothing had been doing.
+touches:
+  - stacks/homepage/secrets.sops.env
+  - stacks/homepage/config/widgets.yaml
+  - stacks/homepage/config/custom.css
+  - stacks/homepage/komodo.toml
 ---
 
 # 50 — Land homepage's five secrets and verify the reworked page
 
+Resolved: 2026-08-08
 Blocked by: 39
-Claimed by: claude session, 2026-08-08
 
 ## Question
 
@@ -157,6 +161,61 @@ gone. What is left below is what only an eye can settle.
 answer on this ticket so the theme stops being the one thing on the page nobody
 ever chose.
 
+## Answer
+
+All five values are in, and the running container carries all nine
+`HOMEPAGE_VAR_*`. It was created **16 seconds after** the commit that added the
+audiobookshelf key — the `redeploy` tracking above working as intended, where
+before it was the whole failure.
+
+### The check that was missing is homepage's own proxy
+
+Every widget call goes through `/api/services/proxy`, server-side, so it can be
+made from the box without a browser:
+
+```sh
+curl -H 'Host: home.rbrb.in' \
+  'http://<homepage-ip>:3000/api/services/proxy?group=<group>&service=<service>&endpoint=<endpoint>'
+```
+
+The `Host` header is not optional — homepage rejects anything else with *Host
+validation failed*. The endpoint names are not documented; they are the second
+argument to `useWidgetAPI` in each `/app/src/widgets/<type>/component.jsx`.
+
+All ten swept 2026-08-08, all returning live data: **tautulli** `get_activity`
+(0 streams), **bazarr** `episodes`/`movies` (`total: 0`), **audiobookshelf**
+`libraries` (the `Audiobooks` library), plus plex, sonarr, radarr, prowlarr,
+qbittorrent, gluetun, gatus and ntfy. rb confirmed all three new tiles render
+that data rather than an error.
+
+**This answers the ticket's own complaint** — *nothing here verifies that what
+git says arrived*. Two of this Stack's three silent failures would have been
+caught by that one sweep: 38's missing keys, and the untracked-secret one above.
+It does not catch 39's CSS selector matching nothing, which stays an eye
+problem. Ticketed as [55](55-verify-the-widgets-from-the-box.md).
+
+The **coordinate validator** floated above is not worth building separately: the
+information widgets answer on `/api/widgets/<type>` on the same terms, and
+`resources?type=disk&target=/mnt/user` returned 64 TB at 61.6% — proving the
+disk binds took, server-side, which 39 could only confirm by eye. `openmeteo` is
+the one that resists, because the client passes the coordinates as query
+params rather than the server reading them from config.
+
+### The two things only an eye could settle
+
+- **Theme — `zinc`, chosen.** rb judged it on the live page against slate. The
+  one line on the dashboard nobody had ever picked is now picked.
+- **The `style: row` override works.** One group per row, three columns wide —
+  so the fourth CSS rule this Stack shipped unseen is the first to be looked at,
+  and it holds. `#layout-groups > .services-group { flex-basis: 100% }` is doing
+  what `style: row` would have.
+
+### Correction: four readouts, not five
+
+`uptime` was dropped from `widgets.yaml` after the verification list above was
+written, so the resources block is cpu, memory and two disks. `custom.css`'s
+comment still claimed five and has been corrected.
+
 ## Hand-offs
 
-The whole ticket. Every step needs rb.
+None. Every step needed rb and every step is done.

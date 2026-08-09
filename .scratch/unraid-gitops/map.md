@@ -174,6 +174,15 @@ discussion.
   extraction landed a 7.8G file rb could not move, [19]'s failure reintroduced by
   a Stack that read as correct.
 
+- [50 — Land homepage's five secrets and verify the reworked
+  page](issues/50-homepage-secrets-and-verify.md) — all five landed and all ten
+  widgets verified returning live data, but only after three silent failures,
+  two of them in the delivery rather than the values. **The check that finally
+  settled it is homepage's own widget proxy**, callable from the box per
+  service, which is what nothing had been doing — [55]. Theme is `zinc`, chosen
+  on the live page, and the `style: row` override is the first CSS rule this
+  Stack shipped that anyone has looked at.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -189,7 +198,8 @@ discussion.
   rb sets its language profiles. [38] adds a first concrete cost: homepage now
   holds a sops copy of each service's API key, and a rebuild rotates both —
   [39](issues/39-rework-homepage-dashboard.md) raised that from four keys to six
-  by keeping every widget rather than culling.
+  by keeping every widget rather than culling, and
+  [50](issues/50-homepage-secrets-and-verify.md) landed the seventh.
 - **Whether the 550G of music gets managed or served.**
   [45](issues/45-pick-from-the-survey.md) found `music-rb` and `music-reg` on the
   share — unindexed, unplayed, and organised differently from each other.
