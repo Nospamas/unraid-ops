@@ -100,6 +100,11 @@ change; it already carries `conf/recyclarr.yml` at `requires = "restart"`.
 
 ## Left over
 
-The two profiles 46 created stay in sonarr and radarr as orphans. Recyclarr
-writes quality profiles but never deletes them, and neither app is asked about
-profiles it was not given.
+**One** orphan, not two. Recyclarr writes quality profiles and never deletes
+them, so sonarr keeps 46's `WEB-2160p` (id 7) beside the new
+`WEB-2160p (Combined)` (id 8) until someone removes it by hand.
+
+Radarr has no orphan: it held only the six stock profiles before this sync, and
+its id sequence skips 7, so 46's `UHD Bluray + WEB` was created and deleted at
+some point before today. The map's fog entry credits 46 with profiles in both
+apps [46]; for radarr that had already stopped being true.
