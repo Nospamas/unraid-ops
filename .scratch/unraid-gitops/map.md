@@ -192,6 +192,14 @@ discussion.
   is not naming and reaches no file on disk, so the boundary now names the key
   rather than the section.
 
+- [57 — Reconcile once a day at 3am, not every 15
+  minutes](issues/57-reconcile-once-a-day.md) — the timer is the backstop and
+  `just reconcile` is the path, so the window costs nothing. **The value first
+  written was not 3am**: Komodo's cron is six fields, seconds first, so `3 0 *
+  * * ?` is hourly at `HH:00:03`. Unrelated to
+  `KOMODO_RESOURCE_POLL_INTERVAL`, which is Core reading the ResourceSync and
+  deploys nothing [11].
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a

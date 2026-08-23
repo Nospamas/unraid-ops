@@ -15,8 +15,8 @@ needs GitHub to reach Core, and Komodo is not published.
 [16](issues/16-deploy-caddy.md) landed the proxy that would front it, so what is
 left is the *scope* question, not a technical one.
 
-**Sharp when** publishing Komodo is on the table. Until then 15 minutes is the
-answer, not a defect.
+**Sharp when** publishing Komodo is on the table. Until then the answer is a
+daily cron plus `just reconcile` on demand [57], not a defect.
 
 *Raised by map 01.*
 

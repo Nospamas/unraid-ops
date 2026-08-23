@@ -124,7 +124,7 @@ compose path resolution breaks
    [komodo/sync.toml](../komodo/sync.toml), and then declares itself. Without
    this step a rebuilt box is a running Komodo that has never heard of this
    repo. The recipe is idempotent, and `just reconcile` afterwards deploys
-   without waiting for the 15-minute poll.
+   without waiting for the daily 3am cron.
 
    **`bootstrap` is dry-run by default** — it changes the box out of band, so it
    is gated like `host-ports`

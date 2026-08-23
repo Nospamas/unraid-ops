@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 GitOps for Docker on an Unraid box. Container definitions live here; Komodo
-reconciles them onto the host on a 15-minute poll.
+reconciles them onto the host once a day, at 3am.
 
 ## Read before you work
 

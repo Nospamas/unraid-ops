@@ -86,7 +86,8 @@ and the Stack rebinds the same appdata. Only Portainer's three (`plex`,
 
 ## The reconcile loop
 
-`komodo/procedures.toml` holds one Procedure, `reconcile`, on a 15-minute cron.
+`komodo/procedures.toml` holds one Procedure, `reconcile`, on a daily 3am cron
+[57] — `just reconcile` is how a change lands sooner, and is the normal way.
 Two stages, because a ResourceSync **applies nothing on its own** — it only
 reports pending changes:
 
@@ -110,7 +111,7 @@ discarded, and no Stack deploys at all.
 `just reconcile` runs the sync **bare first**, then the Procedure, which is why
 one command still covers it; the Procedure's own sync stage then finds no
 changes. But **the cron only runs the Procedure**, so a `procedures.toml` edit
-that lands without `just reconcile` fails every 15 minutes until someone runs
+that lands without `just reconcile` fails once a day until someone runs
 it. That failure is now loud rather than silent — see below.
 
 ## Alerting

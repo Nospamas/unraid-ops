@@ -7,8 +7,9 @@ description = "Sync resources from git, then deploy the Stacks that changed"
 
 [procedure.config]
 schedule_format = "Cron"
-# Six fields — seconds are required.
-schedule = "0 */15 * * * ?"
+# Six fields — seconds are required, so the hour is the *third*: a `3` in
+# the first slot is second 3 of every hour, not 3am [57].
+schedule = "0 0 3 * * ?"
 schedule_enabled = true
 schedule_timezone = "America/Vancouver"
 schedule_alert = false
