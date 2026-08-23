@@ -22,6 +22,9 @@ touches:
 
 Blocked by: —
 Resolved: 2026-08-07
+Amended by: [56](56-port-home-ops-quality-profiles.md) — both profiles replaced, and
+`propers_and_repacks` moved into the owned set. The boundary table below is
+superseded there; the reasoning under it still holds.
 
 ## Question
 

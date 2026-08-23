@@ -304,10 +304,11 @@ UI; the file itself is cleartext, and `/boot` is the flash drive.
   any of them on the next sync with no error anywhere.
   [stacks/recyclarr/conf/recyclarr.yml](../stacks/recyclarr/conf/recyclarr.yml)
   is the boundary — it writes only what that file lists. Today: quality
-  profiles, custom formats and their scores, and quality definitions. **Media
-  naming and media management are deliberately absent** — both apps' naming is
-  hand-set to TRaSH's with renaming ON, so a silent revert there would rename
-  files on disk [46]. Tune those in the UI; tune anything else in the repo.
+  profiles, custom formats and their scores, quality definitions, and
+  `propers_and_repacks`. **Media naming is deliberately absent** — both apps'
+  naming is hand-set to TRaSH's with renaming ON, so a silent revert there would
+  rename files on disk [46]. Tune that in the UI; tune anything else in the repo.
+  `media_management` is otherwise not owned: only the one key listed is.
 - **CoreDNS** binds an explicit host address, `100.126.56.26:53`, not a port on
   every interface. Docker cannot bind that before `tailscale0` is up, so a
   reconcile racing a reboot fails until `restart: unless-stopped` catches up. Its

@@ -183,6 +183,15 @@ discussion.
   on the live page, and the `style: row` override is the first CSS rule this
   Stack shipped that anyone has looked at.
 
+- [56 — Port home-ops' quality profiles, and widen 46's boundary by one
+  key](issues/56-port-home-ops-quality-profiles.md) — the 2160p policy [46]
+  invented is replaced by the one home-ops researched against the TRaSH JSON:
+  remux out, x265 in, `SQP-1 (2160p)` for radarr. **Cheap only because nothing
+  is assigned to 46's profiles** — the swap costs no library reassignment.
+  Carries `propers_and_repacks`, which 46 had ruled out as media_management; it
+  is not naming and reaches no file on disk, so the boundary now names the key
+  rather than the section.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -212,8 +221,9 @@ discussion.
   actually types, the redirect points the wrong way.
 
 - **Which library items get the 2160p policy, and when.**
-  [46](issues/46-add-recyclarr.md) created the profiles; nothing uses them — 187
-  series and 1736 movies are all still on `Any`. Not a chore: the array has 23T
+  [46](issues/46-add-recyclarr.md) created the profiles and
+  [56](issues/56-port-home-ops-quality-profiles.md) replaced them; nothing uses
+  either pair — 187 series and 1736 movies are all still on `Any`. Not a chore: the array has 23T
   free against 1736 movies averaging 14G, so moving them wholesale queues an
   upgrade backlog that does not fit. Sharp once someone decides whether this is
   a policy for **new** acquisitions only or a backfill with a budget.
