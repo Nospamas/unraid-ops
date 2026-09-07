@@ -8,7 +8,7 @@
 
 services:
   bazarr:
-    image: lscr.io/linuxserver/bazarr:v1.6.0-ls357@sha256:e464484e7e6cff8ee189036c9ba96977ab054104ea18067ecf6171d0f3f3f8f2
+    image: lscr.io/linuxserver/bazarr:v1.6.0-ls362@sha256:a20fb11a440d704a9d61c283aa26462aad33dc63223b173f8d8c77d33e8e9d59
     restart: unless-stopped
     environment:
       PUID: ${PUID}
