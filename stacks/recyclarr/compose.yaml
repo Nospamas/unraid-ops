@@ -14,7 +14,7 @@ services:
       recoverable by running it again, and no worse than the un-synced state
       the box was in before this Stack existed [46]. unpackerr does not inherit
       this; its failure stalls imports [48].
-    image: ghcr.io/recyclarr/recyclarr:8.7.1@sha256:73303ba5ee647b6492fee917d3a781c6e59b6cab08f9dfce9482a950846f564f
+    image: ghcr.io/recyclarr/recyclarr:8.7.2@sha256:6e69e009e1cd7493ff6093e8e187b5d3788c75b4a2c0c5127b6a1beda1c19728
     restart: unless-stopped
     # Not a linuxserver image; see the note in stacks/ntfy/compose.yaml.
     user: "${PUID}:${PGID}"
