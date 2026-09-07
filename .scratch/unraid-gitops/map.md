@@ -200,6 +200,15 @@ discussion.
   `KOMODO_RESOURCE_POLL_INTERVAL`, which is Core reading the ResourceSync and
   deploys nothing [11].
 
+- [58 — `minimumReleaseAge` parked every container
+  image](issues/58-minimum-release-age-parks-every-image.md) — Renovate reads
+  release dates only from Docker Hub's `tag_last_pushed`, and under the default
+  `timestamp-required` a missing one is pending **forever**, so the 3-day soak
+  held every image behind "Pending Status Checks" — which names Renovate's
+  internal checks, not CI. Dropped; ghcr.io stays, because moving the lookup to
+  Docker Hub would undo [49]'s registry decision to buy a soak that [57]'s daily
+  reconcile already provides.
+
 ## Not yet specified
 
 - **Whether git should own tautulli's and bazarr's own settings.** Not a
@@ -258,7 +267,10 @@ discussion.
 - **Whether a watchdog sits beside Renovate.**
   [49](issues/49-renovate-never-saw-linuxserver.md) went undetected for months
   because Renovate going quiet looks exactly like nothing being released — no
-  error, no PR, no dashboard entry. Diun notifies on new build tags and speaks
+  error, no PR, no dashboard entry. **Now twice**:
+  [58](issues/58-minimum-release-age-parks-every-image.md) was silent from the
+  day [49] landed and hid better, since its dashboard entry read as work in
+  progress rather than absence. Two instances in the same place is the argument. Diun notifies on new build tags and speaks
   ntfy natively, so the plumbing from [29] is already there. It cannot replace
   Renovate — it resolves no digest and writes no file, which is [12]'s declined
   `poll_for_updates` — but beside it, it catches the silence. Three things it
