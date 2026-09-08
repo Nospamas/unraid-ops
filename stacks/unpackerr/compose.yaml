@@ -11,7 +11,7 @@
 
 services:
   unpackerr:
-    image: ghcr.io/unpackerr/unpackerr:0.15.2@sha256:89e13608521ece21dd300c39229fd595a55fbf4b8152771af5670a7455b5c747
+    image: ghcr.io/unpackerr/unpackerr:v0.16.1@sha256:406586865431b40b29353d899fb75a788f5384743f7f381444db5fe55d206914
     restart: unless-stopped
     # Not a linuxserver image -- a plain Go binary, so it reads no PUID/PGID and
     # no UMASK; see stacks/ntfy/compose.yaml [29].
