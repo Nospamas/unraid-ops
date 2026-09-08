@@ -2,7 +2,7 @@
 
 services:
   homepage:
-    image: ghcr.io/gethomepage/homepage:v2.1.0@sha256:d0aeae2e24387af7267d38c8573692b61e0543aa083c689ad04f32267fe6706a
+    image: ghcr.io/gethomepage/homepage:v2.2.0@sha256:753eeb0cc22ab7baad39ed47cbd1aae14e193dd1b264e965f193a9ea1d1e1bdd
     restart: unless-stopped
     environment:
       PUID: ${PUID}
