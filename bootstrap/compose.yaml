@@ -46,7 +46,7 @@ services:
       - /mnt/cache/appdata/komodo/ferretdb/state:/state
 
   core:
-    image: ghcr.io/moghtech/komodo-core:2.3.1@sha256:768faad246f19f4c1ddfbb675346a7fe9a5010506d31ed4a21251199387004a2
+    image: ghcr.io/moghtech/komodo-core:2.3.3@sha256:bca73d0eee143066228fb9b80c38a5a2726e573ad2758f7aa92b5c91a8aef1c7
     container_name: komodo-core
     init: true
     restart: unless-stopped
@@ -76,7 +76,7 @@ services:
       - /mnt/user/appdata/komodo/backups:/backups
 
   periphery:
-    image: ghcr.io/moghtech/komodo-periphery:2.3.1@sha256:637bf3c03a84f04821c902eba12f63e527ea1f781a350489aa34f17f48f36e57
+    image: ghcr.io/moghtech/komodo-periphery:2.3.3@sha256:fa3f1a641a265216066676950d5eecdf506955a7bafe2f01996135ae93115cd5
     container_name: komodo-periphery
     init: true
     restart: unless-stopped
