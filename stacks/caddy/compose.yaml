@@ -1,6 +1,6 @@
 services:
   caddy:
-    image: ghcr.io/serfriz/caddy-cloudflare-dockerproxy:2.11.4@sha256:4296453f51cfb9a87d6d4c57f2f188b4506e601ed8941875f0537c3cf8e64c67
+    image: ghcr.io/serfriz/caddy-cloudflare-dockerproxy:2.11.4@sha256:963c4d0bcfa9e327d002bdf6f4741e06ab1ee9ea084e8ff4aab386d8dd982e38
     restart: unless-stopped
     # Published ports would show every tailnet client as the bridge gateway,
     # and 05's guard would 403 it.
