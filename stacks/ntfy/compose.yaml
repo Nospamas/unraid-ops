@@ -15,7 +15,7 @@
 
 services:
   ntfy:
-    image: binwiederhier/ntfy:v2.29.0@sha256:4c599cf0818965782f93f652bd843e92714992e84d6b88ad17713dc0951cda1f
+    image: binwiederhier/ntfy:v2.31.0@sha256:803b2aaeb94df76c8b32ecd91039dc80b0fddb7041dcaf082b33bcdfd4ba39ad
     restart: unless-stopped
     # The entrypoint is the bare binary and takes no default subcommand.
     command: serve
