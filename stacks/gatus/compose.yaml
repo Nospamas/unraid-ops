@@ -40,6 +40,10 @@ services:
     environment:
       TZ: ${TZ}
       GATUS_CONFIG_PATH: /config/config.yaml
+    env_file:
+      # UNPACKERR_METRICS_KEY. Written by pre_deploy.
+      - path: secrets.env
+        required: false
     volumes:
       # Directory, never the file -- docs/conventions.md, 'Tracked files'.
       - ./conf:/config:ro

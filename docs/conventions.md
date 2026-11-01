@@ -48,7 +48,7 @@ stacks/<name>/      komodo.toml + compose.yaml, always
                     Caddyfile, coredns' Corefile, gatus' config.yaml,
                     recyclarr's recyclarr.yml
   config/           homepage only — git owns these outright and writes there
-  secrets.sops.env  caddy, homepage, download, calibre, recyclarr
+  secrets.sops.env  caddy, homepage, download, calibre, recyclarr, unpackerr, gatus
 ```
 
 Sixteen Stacks, seventeen containers — the eleven of the foundation map, then

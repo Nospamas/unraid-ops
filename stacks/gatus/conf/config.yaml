@@ -186,14 +186,15 @@ endpoints:
 
   - name: unpackerr
     group: services
-    # `/` is a 200 that proves only that something answers -- the handler
-    # is `fmt.Fprint(w, "Welcome!\n")` and nothing else, a literal that cannot
-    # fail while the process lives [35, 36]. `/metrics` is the same listener
-    # reporting on itself, and the body names both *arr it is polling, so this
-    # catches a broken API key or a renamed container that a status alone would
-    # not. Registered unconditionally with the webserver, so no setting moves it.
+    # `/` is the static UI, a 200 that proves only that something answers
+    # [35, 36]. `/metrics` is the same listener reporting on itself, and the
+    # body names both *arr it is polling, so this catches a broken API key or a
+    # renamed container that a status alone would not. It needs a key since 1.x
+    # [59], and only `UN_WEBSERVER_METRICS` registers it.
     url: https://unpackerr.rbrb.in/metrics
     interval: 60s
+    headers:
+      Authorization: Bearer ${UNPACKERR_METRICS_KEY}
     client:
       ignore-redirect: true
     conditions:
@@ -238,7 +239,7 @@ endpoints:
     interval: 60s
     conditions:
       - '[STATUS] == 200'
-      - '[BODY].public_ip == 187.15.91.66'
+      - '[BODY].public_ip == 187.15.91.60'
     alerts:
       - type: ntfy
 
@@ -250,7 +251,7 @@ endpoints:
     interval: 60s
     conditions:
       - '[STATUS] == 200'
-      - '[BODY].last_external_address_v4 == 187.15.91.66'
+      - '[BODY].last_external_address_v4 == 187.15.91.60'
     alerts:
       - type: ntfy
 

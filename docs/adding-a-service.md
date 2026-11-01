@@ -341,10 +341,10 @@ UI; the file itself is cleartext, and `/boot` is the flash drive.
 - **unpackerr watches a folder; it does not scan one.** Its watcher baselines
   whatever is already in `${MEDIA}/downloads` at startup, so a release that was
   sitting there before the Stack existed is never extracted. `touch` the release
-  directory to fire an event. Its webserver also needs **both**
-  `UN_WEBSERVER_METRICS` and `UN_WEBSERVER_LISTEN_ADDR` — `Enabled()` is the two
-  ANDed, so the address alone logs `Webserver Disabled` while the container sits
-  `Up` [48].
+  directory to fire an event [48]. `/metrics` exists only with
+  `UN_WEBSERVER_METRICS`, and since 1.x answers only an API key; with no `/config`
+  bind, the UI password and that key both live in `secrets.sops.env` or a new
+  one is generated on every recreate [59].
 - **gatus is host-networked**, so caddy-docker-proxy never sees its labels — it
   reads only containers on `shared`. `status.rbrb.in` lives in the Caddyfile
   instead, alongside `komodo` and `unraid` [29]. Adding a probe means editing

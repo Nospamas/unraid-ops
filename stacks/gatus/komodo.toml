@@ -14,6 +14,8 @@ additional_env_files = ["../../common.env"]
 # compose file. `restart`, not `redeploy`: it arrives through a bind mount.
 config_files = [
   { path = "conf/config.yaml", requires = "restart" },
+  # `redeploy`, not `restart`: env_file is read at container *creation* [50].
+  { path = "secrets.sops.env", requires = "redeploy" },
 ]
 
 # gatus runs as 99:100 and writes its sqlite database here; docker would
@@ -22,4 +24,5 @@ pre_deploy.command = """
 docker network inspect shared >/dev/null 2>&1 || docker network create shared
 mkdir -p /mnt/user/appdata/gatus
 chown 99:100 /mnt/user/appdata/gatus
+(umask 077; sops -d secrets.sops.env > secrets.env)
 """

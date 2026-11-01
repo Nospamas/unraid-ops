@@ -39,6 +39,9 @@ services:
 
       # The watched folder.
       UN_FOLDER_0_PATH: /downloads
+      # 1.x dropped the container's implicit 1s poll for fsnotify alone, and
+      # upstream wants a poll on a bind mount; this one is shfs [59].
+      UN_FOLDER_0_INTERVAL: 1s
       # Nothing is ever deleted: `delete_after` is the timer and `delete_files`
       # /`delete_original` are the switches, both off by default. Set to 0 so
       # the intent is stated rather than inherited -- the archives are what
@@ -60,20 +63,24 @@ services:
       UN_RADARR_0_PATHS_0: /downloads
 
       # An HTTP listener, so this is probed and tiled like everything else
-      # rather than arguing an `x-watch` sentence [46]. **Both keys, always**:
-      # unpackerr's `Enabled()` is `Metrics && ListenAddr != ""`, so the address
-      # alone starts nothing and logs `Webserver Disabled` while the container
-      # sits `Up` -- a green reconcile with no listener, which is exactly what
-      # CLAUDE.md warns is not a running service.
+      # rather than arguing an `x-watch` sentence [46]. The address starts the
+      # UI; `/metrics` is registered only with UN_WEBSERVER_METRICS, and without
+      # it the probe's URL falls through to the UI [59].
       UN_WEBSERVER_METRICS: "true"
       UN_WEBSERVER_LISTEN_ADDR: 0.0.0.0:5656
+      # `/metrics` takes only an API key, never a session or `noauth`, so gatus
+      # holds a key scoped to it alone [59].
+      UN_WEBSERVER_ROLES_metrics_PERMISSIONS_0: system:metrics:read
+      UN_WEBSERVER_API_KEYS_0_NAME: gatus
+      UN_WEBSERVER_API_KEYS_0_ROLES_0: metrics
     env_file:
-      # UN_SONARR_0_API_KEY, UN_RADARR_0_API_KEY. Written by pre_deploy.
+      # UN_SONARR_0_API_KEY, UN_RADARR_0_API_KEY, UN_WEBSERVER_API_KEYS_0_KEY,
+      # UN_WEBSERVER_UI_PASSWORD. Written by pre_deploy.
       - path: secrets.env
         required: false
     volumes:
-      # No /config bind: unpackerr is configured entirely by environment and
-      # keeps no state between restarts.
+      # No /config bind: git owns the configuration, so the UI's Save has
+      # nowhere to write and its queue history is lost on a recreate [59].
       #
       # Long syntax for `create_host_path: false` alone -- pre_deploy cannot
       # prepare a media path, so a missing tree fails the deploy instead of
