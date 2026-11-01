@@ -259,7 +259,9 @@ reach the LAN or `shared`. gluetun's route-level auth (`/gluetun/auth/config.tom
 would harden it further and is not done.
 
 When the pin legitimately moves, the literal in `stacks/gatus/conf/config.yaml`
-moves in the same commit, and re-authorising the trackers is the human half.
+moves in the same commit. The trackers need no re-authorising: they object only
+to many IP changes in a short period, and one disconnect a month or so is fine
+[59].
 
 ## qbittorrent must bind `tun0` by name — added 2026-08-05
 

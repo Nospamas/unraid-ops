@@ -56,15 +56,12 @@ the image's revision, `f58fab2`.
 
 gluetun reconnected on 2026-10-14 and landed on `187.15.91.60`, so `vpn-exit-ip`
 and `qbittorrent-bound-to-tunnel` had been red against a stale `.66`. Traffic
-stayed on `tun0`. The literal moved in the same commit, per [06].
+stayed on `tun0`. The literal moved in the same commit, per [06]. No tracker
+re-authorisation: they object only to many IP changes in a short period, and one
+disconnect a month or so is fine.
 
 ### Verified
 
 `Up` on v1.0.1, UID 99, `Umask: 2`, `Polling: /downloads @ 1s`. gatus green on
 both conditions with the scoped key. A throwaway zip extracted in the watched
 folder to `775`/`664` `nobody:users`, source untouched, then removed.
-
-## Hand-offs
-
-- **Re-authorise `187.15.91.60` with the trackers** — the human half of the pin
-  [06].
