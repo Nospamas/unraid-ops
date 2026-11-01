@@ -208,6 +208,11 @@ discussion.
   internal checks, not CI. Dropped; ghcr.io stays, because moving the lookup to
   Docker Hub would undo [49]'s registry decision to buy a soak that [57]'s daily
   reconcile already provides.
+- [59 — Land unpackerr 1.x](issues/59-unpackerr-1x.md) — Renovate's 1.x bump
+  merged with no Stack changes, but 1.x answers /metrics only to an API key,
+  dropped the container's implicit poll, and mints a new UI password per recreate
+  without /config. gatus now holds a key scoped to system:metrics:read, the poll
+  is explicit, and git stays the only config.
 
 ## Not yet specified
 
