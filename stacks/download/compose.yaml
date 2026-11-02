@@ -66,7 +66,7 @@ services:
       caddy.reverse_proxy: "{{upstreams 30024}}"
 
   qbittorrent:
-    image: lscr.io/linuxserver/qbittorrent:5.2.3_v2.0.14-ls475@sha256:8d48fa8c619caadfb103f04efea8747e2a2762d6c7551690919cffb987e61cee
+    image: lscr.io/linuxserver/qbittorrent:5.3.0_v2.1.2-ls486@sha256:05c1454f9a32967affc1f34f67f8cc0cc57dd805dca45489fe797095a6286556
     restart: unless-stopped
     # gluetun owns the namespace, so this Service declares no network, no port
     # and no label of its own. `service:`, not `container:`, cannot cross
