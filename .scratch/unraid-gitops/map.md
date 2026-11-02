@@ -213,6 +213,10 @@ discussion.
   dropped the container's implicit poll, and mints a new UI password per recreate
   without /config. gatus now holds a key scoped to system:metrics:read, the poll
   is explicit, and git stays the only config.
+- [60 — Release linuxserver and plex to
+  automerge](issues/60-release-linuxserver-and-plex-to-automerge.md) — [49]'s
+  approval gate is gone and plex is released; caddy and majors stay human,
+  lazylibrarian stays off.
 
 ## Not yet specified
 

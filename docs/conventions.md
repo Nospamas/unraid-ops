@@ -180,11 +180,9 @@ reconcile that legitimately redeploys a Stack takes it down for seconds, and
 paging on that is how a channel gets muted; short blips stay visible in the
 status page's history.
 
-**Nothing watches tower from off tower.** ntfy and gatus both die with the box,
-so silence is indistinguishable from health. Closing that needs home-ops probing
-tower over the tailnet — see [29]'s brief. Until it lands, `stacks/ntfy/**` and
-`stacks/gatus/**` are human-merge in Renovate, because nothing would notice a bad
-bump to the watcher.
+**home-ops watches tower from off tower** [29] [43]. ntfy and gatus both die with
+the box, so on their own silence is indistinguishable from health. That closed on
+2026-08-06, and `stacks/ntfy/**` and `stacks/gatus/**` automerge because of it.
 
 ## Tracked files
 
@@ -508,8 +506,9 @@ human reads. Both are maintained by Renovate, so the readable part cannot drift.
 
 **Renovate, and only Renovate** [12]. Komodo's `auto_update` and
 `poll_for_updates` are used nowhere and could not be — a pinned digest cannot
-drift. Minor and patch bumps automerge; `download`, `plex`, `caddy` and `coredns`
-are human-merged, and `bootstrap/` is human-merged *and* hand-applied.
+drift. Minor and patch bumps automerge, plex and every linuxserver image included
+[60]; `caddy` and every major are human-merged, and `bootstrap/` is human-merged
+*and* hand-applied.
 
 **A linuxserver image needs its versioning declared, or Renovate offers nothing**
 [49]. The default `docker` versioning only considers candidates whose suffix is
@@ -564,7 +563,7 @@ later installed from Community Applications.
 
 `reconcile` is a big act and stays ungated: the cron performs the identical
 Procedure whether anyone types it or not, so the decision was the merge, where
-[12]'s human-merge carve-outs already put the guard.
+the human-merge carve-outs [12] [60] put the guard.
 
 A gated recipe:
 

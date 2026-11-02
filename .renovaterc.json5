@@ -69,12 +69,6 @@
       matchPackageNames: ["ghcr.io/linuxserver/lazylibrarian"],
       enabled: false,
     },
-    {
-      // TEMPORARY — delete once the backlog is drained [49].
-      description: "linuxserver — first pass lands on the dashboard, not the box",
-      matchPackageNames: ["ghcr.io/linuxserver/**"],
-      dependencyDashboardApproval: true,
-    },
 
     {
       // qbittorrent lives in gluetun's netns, so they never bump apart [06, 24, 29].
@@ -83,15 +77,13 @@
       groupName: "download stack",
     },
     {
-      // Nothing off-box proves a playable stream or a working Caddy [12, 29].
-      description: "plex, caddy — human merge",
-      matchFileNames: [
-        "stacks/plex/**",
-        "stacks/caddy/**",
-      ],
+      // Fronts every hostname on 80/443; a bad one is a human's to roll back [12, 29, 60].
+      description: "caddy — human merge",
+      matchFileNames: ["stacks/caddy/**"],
       automerge: false,
     },
     // ntfy and gatus released to automerge: home-ops probes both off-box [29].
+    // plex released: sitting unpatched on the internet is the larger risk [60].
 
     // Nothing reconciles bootstrap; a human runs `just bootstrap --apply` [12].
     {
