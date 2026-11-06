@@ -7,7 +7,7 @@
 
 services:
   calibre:
-    image: lscr.io/linuxserver/calibre:v8.16.2-ls382@sha256:296486899c825c5106b0de5672c0b14188ae7e45003b2c33b767c6bc32090ee2
+    image: lscr.io/linuxserver/calibre:v9.18.0-ls431@sha256:5b5c0cba9fa70d65b5d92da73b8d486d4acf0d03ea648062586c4e3789700d89
     restart: unless-stopped
     environment:
       PUID: ${PUID}
