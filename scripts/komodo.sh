@@ -225,6 +225,20 @@ cmd_alert_test() {
     done
 }
 
+# The failed Updates of the last N days, nested errors included -- what a
+# "Procedure reconcile failed" alert links to, without the web UI. Read-only.
+cmd_failures() {
+    local days="${1:-3}" since id
+    since=$((($(date +%s) - days * 86400) * 1000))
+    login
+    for id in $(api read "$(jq -n --argjson t "$since" \
+        '{type:"ListUpdates",params:{query:{success:false,start_ts:{"$gte":$t}}}}')" |
+        jq -r '.updates[].id'); do
+        get_update "$id" | jq -r '"\(.start_ts / 1000 | strflocaltime("%a %m-%d %H:%M")) \(.operation) \(.target.type)"'
+        show_update "$id" "  "
+    done
+}
+
 case "${1:-}" in
     bootstrap)
         shift
@@ -238,6 +252,10 @@ case "${1:-}" in
     redeploy)
         shift
         cmd_redeploy "$@"
+        ;;
+    failures)
+        shift
+        cmd_failures "$@"
         ;;
     *)
         cat >&2 <<'EOF'
@@ -254,6 +272,8 @@ usage: komodo.sh <command>
   redeploy <stack>      destroy one Stack's containers and build them again,
                         for the deploy that left them broken with an unchanged
                         config hash. Dry run without --apply.
+  failures [days]       print the failed Updates of the last N days (default
+                        3), with the nested error a Procedure alert hides.
 EOF
         exit 1
         ;;

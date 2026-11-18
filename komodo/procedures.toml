@@ -8,8 +8,10 @@ description = "Sync resources from git, then deploy the Stacks that changed"
 [procedure.config]
 schedule_format = "Cron"
 # Six fields — seconds are required, so the hour is the *third*: a `3` in
-# the first slot is second 3 of every hour, not 3am [57].
-schedule = "0 0 3 * * ?"
+# the first slot is second 3 of every hour, not 3am [57]. Off the hour: at
+# HH:00 the world's crons exhaust GHCR's per-namespace pull limit for
+# linuxserver, and every pull of theirs fails [61].
+schedule = "0 37 3 * * ?"
 schedule_enabled = true
 schedule_timezone = "America/Vancouver"
 schedule_alert = false

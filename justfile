@@ -38,9 +38,13 @@ bootstrap *args:
 alert-test:
     bash scripts/komodo.sh alert-test
 
-# Reconcile the box now, rather than waiting for the 15-minute poll. Ungated
+# Reconcile the box now, rather than waiting for the 3am run. Ungated
 reconcile:
     bash scripts/komodo.sh reconcile
+
+# Show the last N days of failed Komodo Updates, nested errors included. Ungated
+failures days="3":
+    bash scripts/komodo.sh failures {{ days }}
 
 # Destroy one Stack's containers and build them again -- pass --apply to commit
 redeploy stack *args:

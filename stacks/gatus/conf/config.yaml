@@ -239,7 +239,7 @@ endpoints:
     interval: 60s
     conditions:
       - '[STATUS] == 200'
-      - '[BODY].public_ip == 187.15.91.60'
+      - '[BODY].public_ip == 187.15.91.67'
     alerts:
       - type: ntfy
 
@@ -251,7 +251,7 @@ endpoints:
     interval: 60s
     conditions:
       - '[STATUS] == 200'
-      - '[BODY].last_external_address_v4 == 187.15.91.60'
+      - '[BODY].last_external_address_v4 == 187.15.91.67'
     alerts:
       - type: ntfy
 

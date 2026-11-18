@@ -217,6 +217,12 @@ discussion.
   automerge](issues/60-release-linuxserver-and-plex-to-automerge.md) — [49]'s
   approval gate is gone and plex is released; caddy and majors stay human,
   lazylibrarian stays off.
+- [61 — The nightly reconcile has failed every night since
+  automerge](issues/61-reconcile-fails-on-ghcr-limit.md) — sixteen straight
+  nights, each a `toomanyrequests` from GHCR's per-namespace limit on
+  `linuxserver`, shared with the world and exhausted at HH:00 when everyone's
+  cron fires. The schedule moves to 3:37, and `just failures` reads the error an
+  alert only links to.
 
 ## Not yet specified
 
